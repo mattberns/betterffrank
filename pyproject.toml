@@ -1,0 +1,16 @@
+[project]
+name = "betterffrank"
+version = "0.1.0"
+description = "Backtested preseason fantasy football (12-team PPR) rankings that beat ADP and tie expert consensus, measured on value-over-replacement."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "lightgbm>=4.7.0",
+    "numpy>=2.5.1",
+    "pandas>=3.0.3",
+    "polars>=1.43.0",
+    "pyarrow>=25.0.0",
+    "requests>=2.34.2",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.18.0",
+]

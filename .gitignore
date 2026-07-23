@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local editor / assistant config (machine-specific paths)
+.claude/
+
+# Third-party commercial data — not redistributed (see README "Data").
+# FantasyPros ECR scrape archive + FantasyPros ADP export. The derived
+# data/processed/ecr.parquet IS committed, so the pipeline reproduces from
+# there without these raw sources.
+data/raw/db_fpecr.parquet
+data/raw/adp/fantasypros_2025_adp.csv
