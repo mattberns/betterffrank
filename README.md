@@ -10,8 +10,8 @@ selection):
 
 | Metric (mean VORP Spearman, walk-forward) | Model | Baseline | Verdict |
 | --- | --- | --- | --- |
-| vs **ECR** (2018–2025) | **0.5233** | 0.5179 | **edges ECR**, 7 of 8 seasons, p = 0.152 one-sided (positive, not yet significant) |
-| vs **ADP** (2018–2025) | **0.5233** | 0.5028 | **beats ADP**, 7 of 8 seasons, p = 0.016 one-sided (certified; 0.031 two-sided) |
+| vs **ECR** (2018–2025) | **0.5229** | 0.5179 | **edges ECR**, 5 of 8 seasons, p = 0.180 one-sided (positive, not significant) |
+| vs **ADP** (2018–2025) | **0.5229** | 0.5028 | **beats ADP**, 7 of 8 seasons, p = 0.020 one-sided (certified; 0.039 two-sided) |
 
 The defensible claim is deliberately narrow: **the model beats the drafting
 market and edges the expert consensus.** ECR is the primary benchmark; the
@@ -58,9 +58,9 @@ players' *actual* end-of-season value over replacement. Best correlation wins
 the year. No board sees the season before predicting it, and the model's
 knobs were frozen on 2012–2017 before any test season was scored.
 
-Over eight rounds the challenger beats ADP 7 of 8 (average 0.5233 vs 0.5028;
-p = 0.016 one-sided, so the record is very unlikely to be luck) and edges
-ECR 7 of 8 (0.5233 vs 0.5179; the average gap is small enough that the ECR
+Over eight rounds the challenger beats ADP 7 of 8 (average 0.5229 vs 0.5028;
+p = 0.020 one-sided, so the record is very unlikely to be luck) and edges
+ECR 5 of 8 (0.5229 vs 0.5179; the average gap is small enough that the ECR
 result is best read as "matches the experts, probably a touch better").
 Note ECR itself beats ADP; the experts are the stronger champion, which is
 why the margin over them is thinner.
@@ -232,9 +232,9 @@ any raw file.
 ## Caveats
 
 See the integrity ledger and caveats in [`reports/REPORT.md`](reports/REPORT.md).
-In short: the ADP win (+0.0206 over 2018–2025) is certified at p = 0.016
-one-sided (0.031 two-sided); the ECR edge (+0.0054) is positive but not yet
-significant (p = 0.152); seasons 2018–2020
+In short: the ADP win (+0.0201 over 2018–2025) is certified at p = 0.020
+one-sided (0.039 two-sided); the ECR edge (+0.0050) is positive but not
+significant (p = 0.180); seasons 2018–2020
 briefly served as tuning folds during the 2026-07-23 protocol work before
 moving to the test set (all selections were re-derived from scratch on
 2012–2017 and reproduced exactly); the 2015–2020 ECR comes from a different

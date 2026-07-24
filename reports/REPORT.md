@@ -64,50 +64,62 @@ served as tuning folds during that day's intermediate work before landing in
 the test set; to purge contamination, every selection (feature blocks,
 vs_adp transformation) was re-derived from scratch on 2012-2017, and
 reproduced identically. The test set was consulted 4 times on 2026-07-23 and
-three times on 2026-07-24 (7 total); future looks should stay rare. All three
-2026-07-24 looks were a-priori data-corrections to the VORP conversion, each
-derived/validated on the 2012-2017 tune window first, then scored once on test
-(not selections over test outcomes): (1) the drafted-slot curve swap (§1),
-(2) the QB8 streaming replacement, and (3) the conservative TE8 streaming
-replacement — QB8/TE8 levels fixed from a tune-window streaming simulation
-(`bff/streaming.py`). Residual caveat: an operator who has seen 2018-2020
-results cannot fully unsee them.
+five times on 2026-07-24 (9 total); future looks should stay rare. Three of
+the 2026-07-24 looks were a-priori data-corrections to the VORP conversion,
+each derived/validated on the 2012-2017 tune window first, then scored once
+on test (not selections over test outcomes): (1) the drafted-slot curve swap
+(§1), (2) the QB8 streaming replacement, and (3) the conservative TE8
+streaming replacement — QB8/TE8 levels fixed from a tune-window streaming
+simulation (`bff/streaming.py`). The other two: (4) a coach_scheme candidate
+block passed the pre-registered tune gate under the then-current QB12/TE12
+metric (+0.0023 ≥ +0.0020) and was scored once on test (ADP p = 0.047) —
+that look was VOIDED when the streaming metric redefined the target minutes
+later, and the block was rolled back after failing the re-derived gate under
+QB8/TE8 (+0.0008); (5) a reconciliation look re-scoring the final 51-feature
+model under the final metric, needed because the QB8/TE8 look sequence had
+accidentally run on a tree still carrying the provisional coach_scheme block
+(53 features) — it produced the §3 headline. Waiving the failed gate to keep
+coach_scheme (whose presence coincided with a stronger p = 0.016) was
+considered and REJECTED as test-set selection. Residual caveat: an operator
+who has seen 2018-2020 results cannot fully unsee them.
 
 ## 3. Headline (test seasons 2018-2025)
 
 | | mean spearman_vorp |
 |---|---|
-| **model** | **0.5233** |
+| **model** | **0.5229** |
 | ECR baseline | 0.5179 |
 | ADP baseline | 0.5028 |
 
 | Comparison | mean delta | seasons won | p (one-sided / two-sided) |
 |---|---|---|---|
-| vs **ECR** (primary benchmark) | **+0.0054** | 7 of 8 | 0.152 / 0.305 |
-| vs **ADP** | **+0.0206** | 7 of 8 | **0.016 / 0.031** |
+| vs **ECR** (primary benchmark) | **+0.0050** | 5 of 8 | 0.180 / 0.359 |
+| vs **ADP** | **+0.0201** | 7 of 8 | **0.020 / 0.039** |
 
-**The claim: beats ADP (certified, p = 0.016 one-sided, 0.031 two-sided);
-edges ECR (+0.0054, positive, not yet significant).** Per-season deltas:
+**The claim: beats ADP (certified at 0.05, p = 0.020 one-sided / 0.039
+two-sided); edges ECR (+0.0050, positive, not significant).** Per-season
+deltas:
 
 | season | model | vs ADP | vs ECR |
 |---|---|---|---|
-| 2018 | 0.4506 | −0.0163 | +0.0155 |
-| 2019 | 0.5022 | +0.0295 | +0.0086 |
-| 2020 | 0.5391 | +0.0173 | +0.0014 |
-| 2021 | 0.5304 | +0.0084 | +0.0037 |
-| 2022 | 0.5914 | +0.0292 | +0.0181 |
-| 2023 | 0.5823 | +0.0346 | +0.0151 |
-| 2024 | 0.4762 | +0.0102 | −0.0266 |
-| 2025 | 0.5145 | +0.0520 | +0.0075 |
+| 2018 | 0.4497 | −0.0172 | +0.0146 |
+| 2019 | 0.5057 | +0.0329 | +0.0121 |
+| 2020 | 0.5349 | +0.0131 | −0.0027 |
+| 2021 | 0.5373 | +0.0153 | +0.0107 |
+| 2022 | 0.5897 | +0.0275 | +0.0164 |
+| 2023 | 0.5833 | +0.0356 | +0.0162 |
+| 2024 | 0.4778 | +0.0118 | −0.0249 |
+| 2025 | 0.5044 | +0.0419 | −0.0025 |
 
 Note the ECR baseline itself beats ADP (0.5179 vs 0.5028): expert consensus
 is a better draft signal than market ADP, which is why the model's margin
-over ECR is much smaller than over ADP. The two streaming replacements (§1)
-built the current standing: QB8 first pushed the ADP claim over the line
-(p 0.051 → 0.023) and grew the ECR edge (+0.0015 → +0.0054); the conservative
-TE8 then strengthened the ADP certification further (p 0.023 → 0.016, now 7/8
-seasons) and held the ECR edge (7/8 seasons). Beating ADP is certified at 0.05
-both-sided; the ECR edge is positive but not yet significant.
+over ECR is much smaller than over ADP. The streaming replacements (§1)
+built the ADP certification: under the old QB12/TE12 metric the claim sat at
+p = 0.051; under QB8/TE8 it certifies at 0.020/0.039. (Intermediate looks in
+the QB8→TE8 sequence were accidentally scored on a 53-feature tree that
+carried a provisional coach_scheme block — see the ledger; the numbers here
+are the reconciled 51-feature model.) The ECR edge is positive but modest
+and not significant; 2024 remains the model's worst ECR season (−0.0249).
 
 ## 4. Features (53)
 
@@ -160,9 +172,10 @@ re-test only via `bff.select_features`):
 | snap share | −0.0020 | r = 0.53 with has_prior; adds little over volume shares |
 | rookie×vacated landing spot | hurt the joint | redundant with rookie_pedigree + vacated interactions |
 | rookie_log_pick | (dropped pre-score) | r = 0.917 with rookie_pedigree |
-| qb_rush (2026-07-24 zero-fetch round) | −0.0028 | hurt the tune window |
-| adp_gap (same round) | −0.0025 | hurt; one column collinear |
-| ol_proxy (same round) | −0.0000 | no signal |
+| coach_scheme (2026-07-24 zero-fetch round) | +0.0008 | passed the +0.0020 gate under QB12/TE12 (+0.0023) but failed it under the final QB8/TE8 streaming metric; its edge was partly replacement-pricing artifact (see ledger, look 4) |
+| qb_rush (same round) | −0.0026 | hurt the tune window (deltas under the final streaming metric) |
+| adp_gap (same round) | −0.0037 | hurt; adp_gap_behind collinear (r = 0.927 with team_pass_fp_share_prior) |
+| ol_proxy (same round) | −0.0003 | no signal |
 
 The broad finding: most "expert" stats are already priced into the
 ECR/ADP/prior-volume feature set. What survived is orthogonal information —

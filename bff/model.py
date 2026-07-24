@@ -12,17 +12,18 @@ per season. No blend weight. ADP enters separately as a signal:
 vs_adp = log((ecr_rank+10)/(adp_rank+10)), 0.0 exactly when ECR is missing;
 positive means the market drafts him earlier than the experts rank him.
 
-Features (53): base bias set (age curve, ppg mismatch, games missed, rookie
+Features (51): base bias set (age curve, ppg mismatch, games missed, rookie
 pedigree, TD share, team change, draft pedigree) + vs_adp + 17 preseason
 context features + 3 position interactions + the curated 8-feature
 opportunity block + the 11-column EXP_FEATURES expansion (season-level ppg
 trend, career durability, injury-report history, draft round buckets,
-contract commitment) selected block-wise on the 2012-2017 tune window,
-plus the 2-column coach_scheme block (2026-07-24 zero-fetch round)
+contract commitment) selected block-wise on the 2012-2017 tune window
 (kept: trend/injury/draft_capital/contracts; rejected: redzone, snaps,
-vegas, landing_spot). Drops vs the legacy feature set are justified only by
-feature-feature correlation or near-constancy (no outcome data). See
-reports/REPORT.md for all measured numbers.
+vegas, landing_spot, and the whole 2026-07-24 zero-fetch round —
+coach_scheme/qb_rush/ol_proxy/adp_gap — under the streaming metric). Drops
+vs the legacy feature set are justified only by feature-feature correlation
+or near-constancy (no outcome data). See reports/REPORT.md for all measured
+numbers.
 
 Leakage: predictions for season t use only seasons < t stats/outcomes,
 season-t PRESEASON facts (ADP, ECR, April draft, offseason rosters, week-1
@@ -112,13 +113,14 @@ EXP_FEATURES = [
     "apy_cap_pct", "contract_year", "rookie_deal_yr",                 # contracts
     "draft_r1", "draft_r23", "rb_early_rookie",                       # draft capital
 ]
-# 2026-07-24 zero-fetch round: coach_scheme kept (tune +0.0023, gate
-# ≥ +0.0020; correlations clean; coef sanity on 2011-2017 fit). qb_rush
-# (−0.0028), adp_gap (−0.0025, one collinear col), ol_proxy (−0.0000)
-# rejected. See reports/REPORT.md §4.
+# 2026-07-24 zero-fetch round: verdicts under the QB12/TE12 metric were
+# coach_scheme +0.0023 (provisionally promoted), others rejected. The
+# REPL_RANKS streaming change (QB8/TE8) redefined the metric BEFORE the ship
+# decision, so the promotion was rolled back and all four blocks re-derived
+# on the tune window under the new metric. See reports/REPORT.md §4.
 SCHEME_FEATURES = ["coach_pass_oe", "coach_pass_shift"]
 FEATURES = (BASE_FEATURES + MARKET_FEATURES + CTX_FEATURES + INTERACTIONS
-            + OPP_FEATURES + EXP_FEATURES + SCHEME_FEATURES)
+            + OPP_FEATURES + EXP_FEATURES)
 
 # Candidate feature blocks for tune-window selection (2012-2017 ONLY; see
 # reports/REPORT.md). Columns exist in build_dataset()

@@ -4,21 +4,29 @@ Goal: preseason fantasy football rankings (12-team PPR redraft) that beat
 market ADP and tie/beat FantasyPros ECR, evaluated on draft value (VORP),
 walk-forward with zero leakage. Protocol (2026-07-23, authoritative: `reports/REPORT.md`): tune 2012-2017 (6 folds,
 spearman_vorp, frozen grid), test 2018-2025 (S=8, sign-flip floor 0.0039 —
-significance at 0.05 is reachable). Current standing (53-feature model,
+significance at 0.05 is reachable). Current standing (51-feature model,
 offset-log vs_adp, drafted-slot VORP curve, QB8+TE8 streaming replacement):
-model 0.5233 / ECR 0.5179 / ADP 0.5028 mean spearman_vorp; **beats ADP
-+0.0206 (7/8, p_one = 0.016 — CERTIFIED at 0.05, two-sided 0.031); edges ECR
-+0.0054 (7/8, p_one = 0.152, positive but not yet significant)** — the primary
+model 0.5229 / ECR 0.5179 / ADP 0.5028 mean spearman_vorp; **beats ADP
++0.0201 (7/8, p_one = 0.020 — CERTIFIED at 0.05, two-sided 0.039); edges ECR
++0.0050 (5/8, p_one = 0.180, positive but not significant)** — the primary
 benchmark is ECR. Integrity ledger: 2018-2020 briefly served as tune folds
 during the 2026-07-23 protocol work before moving to test (all selections
 re-derived from scratch on 2012-2017; they reproduced exactly). Test-set
-looks: FOUR on 2026-07-23, THREE on 2026-07-24 (SEVEN total) — count future
-looks, keep them rare. The three 2026-07-24 looks were a-priori data-corrections
-to the VORP conversion, each tune-window-validated before one test look:
+looks: FOUR on 2026-07-23, FIVE on 2026-07-24 (NINE total) — count future
+looks, keep them rare. Three 07-24 looks were a-priori data-corrections to
+the VORP conversion, each tune-window-validated before one test look:
 (1) finish-rank → drafted-slot curve, (2) QB12 → QB8 and (3) TE12 → TE8
-streaming replacements (derived by `bff/streaming.py`; see "The metric"). Same-day history (07-23):
-ECR window widened to 2015-2025 via Wayback backfill (`bff/ecr_wayback.py`);
-feature expansion 40 → 51 (07-23) → 53 (coach_scheme, 07-24). All current numbers and methodology live in
+streaming replacements (derived by `bff/streaming.py`; see "The metric").
+Look 4: a coach_scheme block passed the tune gate under QB12/TE12 (+0.0023),
+scored once on test, then VOIDED when the streaming metric landed; it failed
+the re-derived gate (+0.0008 < +0.0020) and was rolled back (waiving the
+gate after seeing its test number was rejected as test-set selection). Look
+5: the 51-feature reconciliation under the final metric = the current
+standing. Same-day history (07-23): ECR window widened to 2015-2025 via
+Wayback backfill (`bff/ecr_wayback.py`); feature expansion 40 → 51. The
+zero-fetch candidate round (07-24, `bff/candidate_features.py`) shipped
+NOTHING: coach_scheme/qb_rush/ol_proxy/adp_gap all live as inert
+CANDIDATE_BLOCKS. All current numbers and methodology live in
 `reports/REPORT.md` (the ONLY report file — no versioned reports).
 
 Run everything from the repo root with `uv run python ...`. Stack: polars +
