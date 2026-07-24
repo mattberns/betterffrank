@@ -33,7 +33,12 @@ MEAN_SEASONS = range(2018, 2026)  # 2018-2025 inclusive (test set, S=8)
 
 # replacement rank per position (1QB league): pool player at this actual-points
 # rank within position defines replacement level for VORP
-REPL_RANKS = {"QB": 8, "RB": 30, "WR": 36, "TE": 12}  # QB8 = streaming-aware (2026-07-24; see REPORT §1)
+# VORP replacement level per position. Streamable positions (QB, TE in 1-QB/
+# 1-TE leagues) use a STREAMING-AWARE rank, derived by bff/streaming.py — you
+# fill a punted QB/TE off waivers each week, so replacement beats the last
+# starter's season. RB/WR are NOT streamable (scarcity is real) → roster-demand
+# depth. QB8/TE8 set 2026-07-24 (see REPORT §1); RB30/WR36 unchanged.
+REPL_RANKS = {"QB": 8, "RB": 30, "WR": 36, "TE": 8}
 
 METRICS = [
     "spearman", "ndcg100", "top24_hit", "top50_hit",

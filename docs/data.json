@@ -9,64 +9,64 @@
   },
   "headline": {
     "vs_ecr": {
-      "model": 0.5193,
-      "baseline": 0.5139,
+      "model": 0.5233,
+      "baseline": 0.5179,
       "delta": 0.0054,
       "n_seasons": 8,
       "span": "2018-2025",
-      "wins": 6,
-      "p_one": 0.1641,
+      "wins": 7,
+      "p_one": 0.1523,
       "power_floor": 0.0039,
       "good": true,
       "verdict": "edges ECR"
     }
   },
   "secondary": {
-    "raw_spearman": 0.3997,
-    "ndcg100_vorp": 0.8901,
-    "top24_hit_vorp": 0.4375,
+    "raw_spearman": 0.403,
+    "ndcg100_vorp": 0.8881,
+    "top24_hit_vorp": 0.4583,
     "top50_hit": 0.58
   },
   "seasons": [
     {
       "season": 2018,
-      "model": 0.448,
-      "ecr": 0.4321
+      "model": 0.4506,
+      "ecr": 0.4352
     },
     {
       "season": 2019,
-      "model": 0.4892,
-      "ecr": 0.4762
+      "model": 0.5022,
+      "ecr": 0.4936
     },
     {
       "season": 2020,
-      "model": 0.5418,
-      "ecr": 0.5422
+      "model": 0.5391,
+      "ecr": 0.5376
     },
     {
       "season": 2021,
-      "model": 0.5174,
-      "ecr": 0.5154
+      "model": 0.5304,
+      "ecr": 0.5267
     },
     {
       "season": 2022,
-      "model": 0.5956,
-      "ecr": 0.5795
+      "model": 0.5914,
+      "ecr": 0.5734
     },
     {
       "season": 2023,
-      "model": 0.578,
-      "ecr": 0.5614
+      "model": 0.5823,
+      "ecr": 0.5672
     },
     {
       "season": 2024,
-      "model": 0.4758,
-      "ecr": 0.5029
+      "model": 0.4762,
+      "ecr": 0.5027
     },
     {
       "season": 2025,
-      "model": 0.5085,
-      "ecr": 0.5013
+      "model": 0.5145,
+      "ecr": 0.507
     }
   ],
   "features": [
@@ -1866,89 +1866,17 @@
     },
     {
       "rank": 20,
-      "name": "Trey McBride",
-      "pos": "TE",
-      "team": "ARI",
-      "ecr": 15,
-      "pos_rank": 1,
-      "delta": -5,
-      "vorp": 70.0,
-      "scarcity_gain": -5,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "played a near-full season last year (durability); outproduced his market rank last season (+6.4 PPR pts/game vs market-implied); TE1 slot priced above ECR (-5 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": -0.0247,
-          "raw": 0.412
-        },
-        {
-          "feat": "vs_adp",
-          "label": "ECR vs ADP gap",
-          "group": "market",
-          "value": -0.0175,
-          "raw": -0.519
-        },
-        {
-          "feat": "team_pass_rate_prior",
-          "label": "Team pass rate (prior)",
-          "group": "context",
-          "value": -0.0125,
-          "raw": 0.63
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": 0.0123,
-          "raw": 0.0
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": 0.0119,
-          "raw": 6.416
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": 0.0102,
-          "raw": 0.69
-        },
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": -0.0102,
-          "raw": 0.044
-        }
-      ]
-    },
-    {
-      "rank": 21,
       "name": "DeVonta Smith",
       "pos": "WR",
       "team": "PHI",
       "ecr": 24,
       "pos_rank": 12,
-      "delta": 3,
+      "delta": 4,
       "vorp": 69.5,
       "scarcity_gain": -4,
-      "feature_gain": 7,
+      "feature_gain": 8,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); WR12 slot priced above ECR (-4 ranks from positional scarcity, +7 from features)",
+      "reason": "played a near-full season last year (durability); WR12 slot priced above ECR (-4 ranks from positional scarcity, +8 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -2005,6 +1933,78 @@
           "group": "base",
           "value": -0.0097,
           "raw": 2.303
+        }
+      ]
+    },
+    {
+      "rank": 21,
+      "name": "Trey McBride",
+      "pos": "TE",
+      "team": "ARI",
+      "ecr": 15,
+      "pos_rank": 1,
+      "delta": -6,
+      "vorp": 66.7,
+      "scarcity_gain": -6,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "played a near-full season last year (durability); outproduced his market rank last season (+6.4 PPR pts/game vs market-implied); TE1 slot priced above ECR (-6 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": -0.0247,
+          "raw": 0.412
+        },
+        {
+          "feat": "vs_adp",
+          "label": "ECR vs ADP gap",
+          "group": "market",
+          "value": -0.0175,
+          "raw": -0.519
+        },
+        {
+          "feat": "team_pass_rate_prior",
+          "label": "Team pass rate (prior)",
+          "group": "context",
+          "value": -0.0125,
+          "raw": 0.63
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": 0.0123,
+          "raw": 0.0
+        },
+        {
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
+          "group": "base",
+          "value": 0.0119,
+          "raw": 6.416
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": 0.0102,
+          "raw": 0.69
+        },
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": -0.0102,
+          "raw": 0.044
         }
       ]
     },
@@ -2377,10 +2377,10 @@
       "pos_rank": 13,
       "delta": 14,
       "vorp": 62.9,
-      "scarcity_gain": 11,
-      "feature_gain": 3,
+      "scarcity_gain": 12,
+      "feature_gain": 2,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); carry share rising over the final 6 games [opp velocity]; RB13 slot priced above ECR (+11 ranks from positional scarcity, +3 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); carry share rising over the final 6 games [opp velocity]; RB13 slot priced above ECR (+12 ranks from positional scarcity, +2 from features)",
       "contribs": [
         {
           "feat": "opp_ts_l4f4",
@@ -2449,10 +2449,10 @@
       "pos_rank": 13,
       "delta": -6,
       "vorp": 61.9,
-      "scarcity_gain": 1,
-      "feature_gain": -7,
+      "scarcity_gain": 2,
+      "feature_gain": -8,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+6.4 PPR pts/game vs market-implied); TD-efficient on real opportunity last season [opp]; WR13 slot priced above ECR (+1 ranks from positional scarcity, -7 from features)",
+      "reason": "outproduced his market rank last season (+6.4 PPR pts/game vs market-implied); TD-efficient on real opportunity last season [opp]; WR13 slot priced above ECR (+2 ranks from positional scarcity, -8 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -2514,89 +2514,17 @@
     },
     {
       "rank": 29,
-      "name": "Brock Bowers",
-      "pos": "TE",
-      "team": "LV",
-      "ecr": 21,
-      "pos_rank": 2,
-      "delta": -8,
-      "vorp": 60.6,
-      "scarcity_gain": -8,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "team offensive environment [context]; TD-efficient on real opportunity last season [opp]; TE2 slot priced above ECR (-8 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": -0.0152,
-          "raw": 5.0
-        },
-        {
-          "feat": "vs_adp",
-          "label": "ECR vs ADP gap",
-          "group": "market",
-          "value": -0.0141,
-          "raw": -0.416
-        },
-        {
-          "feat": "rookie_deal_yr",
-          "label": "On rookie contract",
-          "group": "contract",
-          "value": 0.0113,
-          "raw": 3.0
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": -0.011,
-          "raw": 0.052
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": 0.01,
-          "raw": 0.689
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": 0.0099,
-          "raw": 0.0
-        },
-        {
-          "feat": "coach_change",
-          "label": "Coaching change",
-          "group": "context",
-          "value": 0.0096,
-          "raw": 1.0
-        }
-      ]
-    },
-    {
-      "rank": 30,
       "name": "Jeremiyah Love",
       "pos": "RB",
       "team": "ARI",
       "ecr": 35,
       "pos_rank": 14,
-      "delta": 5,
+      "delta": 6,
       "vorp": 59.2,
       "scarcity_gain": 8,
-      "feature_gain": -3,
+      "feature_gain": -2,
       "is_steal": false,
-      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); RB14 slot priced above ECR (+8 ranks from positional scarcity, -3 from features)",
+      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); RB14 slot priced above ECR (+8 ranks from positional scarcity, -2 from features)",
       "contribs": [
         {
           "feat": "is_rookie",
@@ -2652,6 +2580,78 @@
           "label": "Early-drafted rookie RB",
           "group": "draft",
           "value": -0.0139,
+          "raw": 1.0
+        }
+      ]
+    },
+    {
+      "rank": 30,
+      "name": "Brock Bowers",
+      "pos": "TE",
+      "team": "LV",
+      "ecr": 21,
+      "pos_rank": 2,
+      "delta": -9,
+      "vorp": 57.3,
+      "scarcity_gain": -9,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "team offensive environment [context]; TD-efficient on real opportunity last season [opp]; TE2 slot priced above ECR (-9 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": -0.0152,
+          "raw": 5.0
+        },
+        {
+          "feat": "vs_adp",
+          "label": "ECR vs ADP gap",
+          "group": "market",
+          "value": -0.0141,
+          "raw": -0.416
+        },
+        {
+          "feat": "rookie_deal_yr",
+          "label": "On rookie contract",
+          "group": "contract",
+          "value": 0.0113,
+          "raw": 3.0
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": -0.011,
+          "raw": 0.052
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": 0.01,
+          "raw": 0.689
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": 0.0099,
+          "raw": 0.0
+        },
+        {
+          "feat": "coach_change",
+          "label": "Coaching change",
+          "group": "context",
+          "value": 0.0096,
           "raw": 1.0
         }
       ]
@@ -3601,10 +3601,10 @@
       "pos_rank": 4,
       "delta": 12,
       "vorp": 44.6,
-      "scarcity_gain": 3,
-      "feature_gain": 9,
+      "scarcity_gain": 4,
+      "feature_gain": 8,
       "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; QB4 slot priced above ECR (+3 ranks from positional scarcity, +9 from features)",
+      "reason": "TD-efficient on real opportunity last season [opp]; QB4 slot priced above ECR (+4 ranks from positional scarcity, +8 from features)",
       "contribs": [
         {
           "feat": "opp_boom_rate",
@@ -3666,89 +3666,17 @@
     },
     {
       "rank": 45,
-      "name": "Colston Loveland",
-      "pos": "TE",
-      "team": "CHI",
-      "ecr": 38,
-      "pos_rank": 3,
-      "delta": -7,
-      "vorp": 39.9,
-      "scarcity_gain": -7,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "TE3 slot priced above ECR (-7 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": -0.0476,
-          "raw": 0.191
-        },
-        {
-          "feat": "opp_ts_slope",
-          "label": "Target-share trend",
-          "group": "opportunity",
-          "value": 0.0344,
-          "raw": 0.014
-        },
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": -0.0131,
-          "raw": 0.671
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": -0.0104,
-          "raw": 0.163
-        },
-        {
-          "feat": "draft_ovr_log",
-          "label": "Draft slot (log)",
-          "group": "base",
-          "value": -0.0097,
-          "raw": 2.303
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": -0.0097,
-          "raw": 0.593
-        },
-        {
-          "feat": "draft_r1",
-          "label": "First-round pick",
-          "group": "draft",
-          "value": 0.0071,
-          "raw": 1.0
-        }
-      ]
-    },
-    {
-      "rank": 46,
       "name": "Josh Jacobs",
       "pos": "RB",
       "team": "GB",
       "ecr": 45,
       "pos_rank": 16,
-      "delta": -1,
+      "delta": 0,
       "vorp": 38.5,
-      "scarcity_gain": -1,
+      "scarcity_gain": 0,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+8.1 PPR pts/game vs market-implied); RB16 slot priced above ECR (-1 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+8.1 PPR pts/game vs market-implied); RB16 slot priced above ECR (+0 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -3809,18 +3737,18 @@
       ]
     },
     {
-      "rank": 47,
+      "rank": 46,
       "name": "Javonte Williams",
       "pos": "RB",
       "team": "DAL",
       "ecr": 47,
       "pos_rank": 18,
-      "delta": 0,
+      "delta": 1,
       "vorp": 38.5,
-      "scarcity_gain": 0,
+      "scarcity_gain": 1,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.6 PPR pts/game vs market-implied); RB18 slot priced above ECR (+0 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+7.6 PPR pts/game vs market-implied); RB18 slot priced above ECR (+1 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -3881,18 +3809,18 @@
       ]
     },
     {
-      "rank": 48,
+      "rank": 47,
       "name": "Travis Etienne Jr.",
       "pos": "RB",
       "team": "NO",
       "ecr": 48,
       "pos_rank": 17,
-      "delta": 0,
+      "delta": 1,
       "vorp": 38.5,
-      "scarcity_gain": 0,
+      "scarcity_gain": 1,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.4 PPR pts/game vs market-implied); played a near-full season last year (durability); RB17 slot priced above ECR (+0 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+7.4 PPR pts/game vs market-implied); played a near-full season last year (durability); RB17 slot priced above ECR (+1 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -3953,18 +3881,18 @@
       ]
     },
     {
-      "rank": 49,
+      "rank": 48,
       "name": "Malik Nabers",
       "pos": "WR",
       "team": "NYG",
       "ecr": 40,
       "pos_rank": 24,
-      "delta": -9,
+      "delta": -8,
       "vorp": 38.4,
       "scarcity_gain": -1,
-      "feature_gain": -8,
+      "feature_gain": -7,
       "is_steal": false,
-      "reason": "WR24 slot priced above ECR (-1 ranks from positional scarcity, -8 from features)",
+      "reason": "WR24 slot priced above ECR (-1 ranks from positional scarcity, -7 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -4025,18 +3953,18 @@
       ]
     },
     {
-      "rank": 50,
+      "rank": 49,
       "name": "Justin Herbert",
       "pos": "QB",
       "team": "LAC",
       "ecr": 67,
       "pos_rank": 5,
-      "delta": 17,
+      "delta": 18,
       "vorp": 37.4,
-      "scarcity_gain": -19,
+      "scarcity_gain": -18,
       "feature_gain": 36,
       "is_steal": false,
-      "reason": "QB5 slot priced above ECR (-19 ranks from positional scarcity, +36 from features)",
+      "reason": "QB5 slot priced above ECR (-18 ranks from positional scarcity, +36 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -4097,19 +4025,33 @@
       ]
     },
     {
-      "rank": 51,
-      "name": "Tyler Warren",
+      "rank": 50,
+      "name": "Colston Loveland",
       "pos": "TE",
-      "team": "IND",
-      "ecr": 53,
-      "pos_rank": 4,
-      "delta": 2,
-      "vorp": 32.8,
-      "scarcity_gain": 2,
+      "team": "CHI",
+      "ecr": 38,
+      "pos_rank": 3,
+      "delta": -12,
+      "vorp": 36.5,
+      "scarcity_gain": -12,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); TE4 slot priced above ECR (+2 ranks from positional scarcity, +0 from features)",
+      "reason": "TE3 slot priced above ECR (-12 ranks from positional scarcity, +0 from features)",
       "contribs": [
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": -0.0476,
+          "raw": 0.191
+        },
+        {
+          "feat": "opp_ts_slope",
+          "label": "Target-share trend",
+          "group": "opportunity",
+          "value": 0.0344,
+          "raw": 0.014
+        },
         {
           "feat": "has_prior",
           "label": "Has prior-season stats",
@@ -4118,69 +4060,55 @@
           "raw": 1.0
         },
         {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0192,
-          "raw": 0.0
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
           "group": "base",
-          "value": 0.0123,
-          "raw": 0.0
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.0103,
-          "raw": -0.015
-        },
-        {
-          "feat": "career_missed_rate",
-          "label": "Career missed-game rate",
-          "group": "trend",
-          "value": 0.0101,
-          "raw": 0.0
+          "value": -0.0131,
+          "raw": 0.671
         },
         {
           "feat": "draft_competition",
           "label": "Rookie draft competition",
           "group": "context",
-          "value": 0.0099,
-          "raw": 0.0
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": -0.008,
-          "raw": 0.601
+          "value": -0.0104,
+          "raw": 0.163
         },
         {
           "feat": "draft_ovr_log",
           "label": "Draft slot (log)",
           "group": "base",
-          "value": -0.0074,
-          "raw": 2.639
+          "value": -0.0097,
+          "raw": 2.303
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": -0.0097,
+          "raw": 0.593
+        },
+        {
+          "feat": "draft_r1",
+          "label": "First-round pick",
+          "group": "draft",
+          "value": 0.0071,
+          "raw": 1.0
         }
       ]
     },
     {
-      "rank": 52,
+      "rank": 51,
       "name": "DJ Moore",
       "pos": "WR",
       "team": "BUF",
       "ecr": 51,
       "pos_rank": 25,
-      "delta": -1,
+      "delta": 0,
       "vorp": 32.8,
       "scarcity_gain": -12,
-      "feature_gain": 11,
+      "feature_gain": 12,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); TD-efficient on real opportunity last season [opp]; WR25 slot priced above ECR (-12 ranks from positional scarcity, +11 from features)",
+      "reason": "played a near-full season last year (durability); TD-efficient on real opportunity last season [opp]; WR25 slot priced above ECR (-12 ranks from positional scarcity, +12 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -4241,18 +4169,18 @@
       ]
     },
     {
-      "rank": 53,
+      "rank": 52,
       "name": "Caleb Williams",
       "pos": "QB",
       "team": "CHI",
       "ecr": 66,
       "pos_rank": 6,
-      "delta": 13,
+      "delta": 14,
       "vorp": 30.4,
       "scarcity_gain": -3,
-      "feature_gain": 16,
+      "feature_gain": 17,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); QB6 slot priced above ECR (-3 ranks from positional scarcity, +16 from features)",
+      "reason": "played a near-full season last year (durability); QB6 slot priced above ECR (-3 ranks from positional scarcity, +17 from features)",
       "contribs": [
         {
           "feat": "draft_ovr_log",
@@ -4313,18 +4241,18 @@
       ]
     },
     {
-      "rank": 54,
+      "rank": 53,
       "name": "TreVeyon Henderson",
       "pos": "RB",
       "team": "NE",
       "ecr": 61,
       "pos_rank": 19,
-      "delta": 7,
+      "delta": 8,
       "vorp": 29.8,
       "scarcity_gain": -7,
-      "feature_gain": 14,
+      "feature_gain": 15,
       "is_steal": false,
-      "reason": "carry share rising over the final 6 games [opp velocity]; played a near-full season last year (durability); RB19 slot priced above ECR (-7 ranks from positional scarcity, +14 from features)",
+      "reason": "carry share rising over the final 6 games [opp velocity]; played a near-full season last year (durability); RB19 slot priced above ECR (-7 ranks from positional scarcity, +15 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -4385,6 +4313,78 @@
       ]
     },
     {
+      "rank": 54,
+      "name": "Tyler Warren",
+      "pos": "TE",
+      "team": "IND",
+      "ecr": 53,
+      "pos_rank": 4,
+      "delta": -1,
+      "vorp": 29.5,
+      "scarcity_gain": -1,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "played a near-full season last year (durability); TE4 slot priced above ECR (-1 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0192,
+          "raw": 0.0
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": 0.0123,
+          "raw": 0.0
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": -0.0103,
+          "raw": -0.015
+        },
+        {
+          "feat": "career_missed_rate",
+          "label": "Career missed-game rate",
+          "group": "trend",
+          "value": 0.0101,
+          "raw": 0.0
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": 0.0099,
+          "raw": 0.0
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": -0.008,
+          "raw": 0.601
+        },
+        {
+          "feat": "draft_ovr_log",
+          "label": "Draft slot (log)",
+          "group": "base",
+          "value": -0.0074,
+          "raw": 2.639
+        }
+      ]
+    },
+    {
       "rank": 55,
       "name": "Cam Skattebo",
       "pos": "RB",
@@ -4393,10 +4393,10 @@
       "pos_rank": 20,
       "delta": -1,
       "vorp": 19.4,
-      "scarcity_gain": 0,
-      "feature_gain": -1,
+      "scarcity_gain": 1,
+      "feature_gain": -2,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+8.9 PPR pts/game vs market-implied); TD-efficient on real opportunity last season [opp]; RB20 slot priced above ECR (+0 ranks from positional scarcity, -1 from features)",
+      "reason": "outproduced his market rank last season (+8.9 PPR pts/game vs market-implied); TD-efficient on real opportunity last season [opp]; RB20 slot priced above ECR (+1 ranks from positional scarcity, -2 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -4464,7 +4464,7 @@
       "ecr": 71,
       "pos_rank": 5,
       "delta": 15,
-      "vorp": 18.3,
+      "vorp": 14.9,
       "scarcity_gain": 5,
       "feature_gain": 10,
       "is_steal": false,
@@ -4537,10 +4537,10 @@
       "pos_rank": 26,
       "delta": -8,
       "vorp": 14.4,
-      "scarcity_gain": 0,
-      "feature_gain": -8,
+      "scarcity_gain": 1,
+      "feature_gain": -9,
       "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+6.5 PPR pts/game vs market-implied); WR26 slot priced above ECR (+0 ranks from positional scarcity, -8 from features)",
+      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+6.5 PPR pts/game vs market-implied); WR26 slot priced above ECR (+1 ranks from positional scarcity, -9 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -4609,10 +4609,10 @@
       "pos_rank": 27,
       "delta": -8,
       "vorp": 14.4,
-      "scarcity_gain": -2,
-      "feature_gain": -6,
+      "scarcity_gain": -1,
+      "feature_gain": -7,
       "is_steal": false,
-      "reason": "improved expected QB play [context]; WR27 slot priced above ECR (-2 ranks from positional scarcity, -6 from features)",
+      "reason": "improved expected QB play [context]; WR27 slot priced above ECR (-1 ranks from positional scarcity, -7 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -5184,7 +5184,7 @@
       "ecr": 69,
       "pos_rank": 6,
       "delta": 3,
-      "vorp": 13.9,
+      "vorp": 10.5,
       "scarcity_gain": 13,
       "feature_gain": -10,
       "is_steal": false,
@@ -5538,89 +5538,17 @@
     },
     {
       "rank": 71,
-      "name": "Kyle Pitts Sr.",
-      "pos": "TE",
-      "team": "ATL",
-      "ecr": 79,
-      "pos_rank": 7,
-      "delta": 8,
-      "vorp": 6.9,
-      "scarcity_gain": 8,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); TE7 slot priced above ECR (+8 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "draft_ovr_log",
-          "label": "Draft slot (log)",
-          "group": "base",
-          "value": -0.0159,
-          "raw": 1.386
-        },
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": -0.0144,
-          "raw": 0.06
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0129,
-          "raw": 0.059
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": 0.0123,
-          "raw": 0.0
-        },
-        {
-          "feat": "opp_ts_slope",
-          "label": "Target-share trend",
-          "group": "opportunity",
-          "value": 0.0119,
-          "raw": 0.005
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.0103,
-          "raw": -0.015
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": 0.0099,
-          "raw": 0.0
-        }
-      ]
-    },
-    {
-      "rank": 72,
       "name": "D'Andre Swift",
       "pos": "RB",
       "team": "CHI",
       "ecr": 62,
       "pos_rank": 24,
-      "delta": -10,
+      "delta": -9,
       "vorp": 3.9,
-      "scarcity_gain": -10,
+      "scarcity_gain": -9,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.7 PPR pts/game vs market-implied); RB24 slot priced above ECR (-10 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+7.7 PPR pts/game vs market-implied); RB24 slot priced above ECR (-9 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -5681,18 +5609,18 @@
       ]
     },
     {
-      "rank": 73,
+      "rank": 72,
       "name": "David Montgomery",
       "pos": "RB",
       "team": "HOU",
       "ecr": 63,
       "pos_rank": 23,
-      "delta": -10,
+      "delta": -9,
       "vorp": 3.9,
-      "scarcity_gain": -10,
+      "scarcity_gain": -9,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); RB23 slot priced above ECR (-10 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); RB23 slot priced above ECR (-9 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -5753,18 +5681,18 @@
       ]
     },
     {
-      "rank": 74,
+      "rank": 73,
       "name": "Bhayshul Tuten",
       "pos": "RB",
       "team": "JAX",
       "ecr": 68,
       "pos_rank": 26,
-      "delta": -6,
+      "delta": -5,
       "vorp": 3.9,
-      "scarcity_gain": -6,
+      "scarcity_gain": -5,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; RB26 slot priced above ECR (-6 ranks from positional scarcity, +0 from features)",
+      "reason": "TD-efficient on real opportunity last season [opp]; RB26 slot priced above ECR (-5 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -5825,18 +5753,18 @@
       ]
     },
     {
-      "rank": 75,
+      "rank": 74,
       "name": "Jaylen Warren",
       "pos": "RB",
       "team": "PIT",
       "ecr": 70,
       "pos_rank": 25,
-      "delta": -5,
+      "delta": -4,
       "vorp": 3.9,
-      "scarcity_gain": -5,
+      "scarcity_gain": -4,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.4 PPR pts/game vs market-implied); steady week-to-week, not spike-week dependent [opp]; RB25 slot priced above ECR (-5 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+7.4 PPR pts/game vs market-implied); steady week-to-week, not spike-week dependent [opp]; RB25 slot priced above ECR (-4 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "arriving_vet_usage",
@@ -5897,18 +5825,18 @@
       ]
     },
     {
-      "rank": 76,
+      "rank": 75,
       "name": "Tony Pollard",
       "pos": "RB",
       "team": "TEN",
       "ecr": 81,
       "pos_rank": 27,
-      "delta": 5,
+      "delta": 6,
       "vorp": 3.9,
-      "scarcity_gain": 4,
+      "scarcity_gain": 5,
       "feature_gain": 1,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); RB27 slot priced above ECR (+4 ranks from positional scarcity, +1 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); RB27 slot priced above ECR (+5 ranks from positional scarcity, +1 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -5969,18 +5897,18 @@
       ]
     },
     {
-      "rank": 77,
+      "rank": 76,
       "name": "Jadarian Price",
       "pos": "RB",
       "team": "SEA",
       "ecr": 75,
       "pos_rank": 28,
-      "delta": -2,
+      "delta": -1,
       "vorp": 3.9,
-      "scarcity_gain": -3,
+      "scarcity_gain": -2,
       "feature_gain": 1,
       "is_steal": false,
-      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); RB28 slot priced above ECR (-3 ranks from positional scarcity, +1 from features)",
+      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); RB28 slot priced above ECR (-2 ranks from positional scarcity, +1 from features)",
       "contribs": [
         {
           "feat": "is_rookie",
@@ -6041,18 +5969,18 @@
       ]
     },
     {
-      "rank": 78,
+      "rank": 77,
       "name": "Chuba Hubbard",
       "pos": "RB",
       "team": "CAR",
       "ecr": 83,
       "pos_rank": 29,
-      "delta": 5,
+      "delta": 6,
       "vorp": 3.9,
-      "scarcity_gain": -2,
+      "scarcity_gain": -1,
       "feature_gain": 7,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; RB29 slot priced above ECR (-2 ranks from positional scarcity, +7 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; RB29 slot priced above ECR (-1 ranks from positional scarcity, +7 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -6113,90 +6041,18 @@
       ]
     },
     {
-      "rank": 79,
-      "name": "Sam LaPorta",
+      "rank": 78,
+      "name": "Kyle Pitts Sr.",
       "pos": "TE",
-      "team": "DET",
-      "ecr": 86,
-      "pos_rank": 8,
-      "delta": 7,
-      "vorp": 3.4,
-      "scarcity_gain": 7,
+      "team": "ATL",
+      "ecr": 79,
+      "pos_rank": 7,
+      "delta": 1,
+      "vorp": 3.5,
+      "scarcity_gain": 1,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "TE8 slot priced above ECR (+7 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": -0.0318,
-          "raw": 8.0
-        },
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "rookie_deal_yr",
-          "label": "On rookie contract",
-          "group": "contract",
-          "value": 0.017,
-          "raw": 4.0
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": 0.0099,
-          "raw": 0.0
-        },
-        {
-          "feat": "draft_r23",
-          "label": "Second/third-round pick",
-          "group": "draft",
-          "value": 0.0066,
-          "raw": 1.0
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": 0.0048,
-          "raw": 4.784
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": -0.0045,
-          "raw": 0.222
-        },
-        {
-          "feat": "vs_adp",
-          "label": "ECR vs ADP gap",
-          "group": "market",
-          "value": 0.0041,
-          "raw": 0.134
-        }
-      ]
-    },
-    {
-      "rank": 80,
-      "name": "Travis Kelce",
-      "pos": "TE",
-      "team": "KC",
-      "ecr": 100,
-      "pos_rank": 9,
-      "delta": 20,
-      "vorp": 3.4,
-      "scarcity_gain": 20,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "played a near-full season last year (durability); TE9 slot priced above ECR (+20 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); TE7 slot priced above ECR (+1 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -6204,13 +6060,27 @@
           "group": "base",
           "value": 0.0253,
           "raw": 1.0
+        },
+        {
+          "feat": "draft_ovr_log",
+          "label": "Draft slot (log)",
+          "group": "base",
+          "value": -0.0159,
+          "raw": 1.386
         },
         {
           "feat": "opp_ts_l4f4",
           "label": "Target share: last 4 vs first 4",
           "group": "opportunity",
-          "value": -0.0199,
-          "raw": 0.082
+          "value": -0.0144,
+          "raw": 0.06
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0129,
+          "raw": 0.059
         },
         {
           "feat": "games_missed",
@@ -6223,8 +6093,15 @@
           "feat": "opp_ts_slope",
           "label": "Target-share trend",
           "group": "opportunity",
-          "value": 0.0107,
-          "raw": 0.004
+          "value": 0.0119,
+          "raw": 0.005
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": -0.0103,
+          "raw": -0.015
         },
         {
           "feat": "draft_competition",
@@ -6232,43 +6109,22 @@
           "group": "context",
           "value": 0.0099,
           "raw": 0.0
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.0084,
-          "raw": -0.012
-        },
-        {
-          "feat": "career_missed_rate",
-          "label": "Career missed-game rate",
-          "group": "trend",
-          "value": 0.0081,
-          "raw": 0.03
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": 0.0066,
-          "raw": -0.031
         }
       ]
     },
     {
-      "rank": 81,
+      "rank": 79,
       "name": "Michael Pittman Jr.",
       "pos": "WR",
       "team": "PIT",
       "ecr": 84,
       "pos_rank": 36,
-      "delta": 3,
+      "delta": 5,
       "vorp": 0.0,
-      "scarcity_gain": 3,
+      "scarcity_gain": 5,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); WR36 slot priced above ECR (+3 ranks from positional scarcity, +0 from features)",
+      "reason": "played a near-full season last year (durability); WR36 slot priced above ECR (+5 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "opp_ts_l4f4",
@@ -6329,18 +6185,18 @@
       ]
     },
     {
-      "rank": 82,
+      "rank": 80,
       "name": "Rhamondre Stevenson",
       "pos": "RB",
       "team": "NE",
       "ecr": 82,
       "pos_rank": 30,
-      "delta": 0,
+      "delta": 2,
       "vorp": 0.0,
-      "scarcity_gain": 6,
-      "feature_gain": -6,
+      "scarcity_gain": 7,
+      "feature_gain": -5,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.1 PPR pts/game vs market-implied); TD-efficient on real opportunity last season [opp]; RB30 slot priced above ECR (+6 ranks from positional scarcity, -6 from features)",
+      "reason": "outproduced his market rank last season (+7.1 PPR pts/game vs market-implied); TD-efficient on real opportunity last season [opp]; RB30 slot priced above ECR (+7 ranks from positional scarcity, -5 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -6401,18 +6257,90 @@
       ]
     },
     {
-      "rank": 83,
+      "rank": 81,
+      "name": "Sam LaPorta",
+      "pos": "TE",
+      "team": "DET",
+      "ecr": 86,
+      "pos_rank": 8,
+      "delta": 5,
+      "vorp": 0.0,
+      "scarcity_gain": 6,
+      "feature_gain": -1,
+      "is_steal": false,
+      "reason": "TE8 slot priced above ECR (+6 ranks from positional scarcity, -1 from features)",
+      "contribs": [
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": -0.0318,
+          "raw": 8.0
+        },
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "rookie_deal_yr",
+          "label": "On rookie contract",
+          "group": "contract",
+          "value": 0.017,
+          "raw": 4.0
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": 0.0099,
+          "raw": 0.0
+        },
+        {
+          "feat": "draft_r23",
+          "label": "Second/third-round pick",
+          "group": "draft",
+          "value": 0.0066,
+          "raw": 1.0
+        },
+        {
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
+          "group": "base",
+          "value": 0.0048,
+          "raw": 4.784
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": -0.0045,
+          "raw": 0.222
+        },
+        {
+          "feat": "vs_adp",
+          "label": "ECR vs ADP gap",
+          "group": "market",
+          "value": 0.0041,
+          "raw": 0.134
+        }
+      ]
+    },
+    {
+      "rank": 82,
       "name": "Parker Washington",
       "pos": "WR",
       "team": "JAX",
       "ecr": 90,
       "pos_rank": 39,
-      "delta": 7,
+      "delta": 8,
       "vorp": 0.0,
-      "scarcity_gain": 8,
+      "scarcity_gain": 9,
       "feature_gain": -1,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; WR39 slot priced above ECR (+8 ranks from positional scarcity, -1 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; WR39 slot priced above ECR (+9 ranks from positional scarcity, -1 from features)",
       "contribs": [
         {
           "feat": "opp_ts_l4f4",
@@ -6473,18 +6401,18 @@
       ]
     },
     {
-      "rank": 84,
+      "rank": 83,
       "name": "Chris Godwin Jr.",
       "pos": "WR",
       "team": "TB",
       "ecr": 80,
       "pos_rank": 40,
-      "delta": -4,
+      "delta": -3,
       "vorp": 0.0,
-      "scarcity_gain": -4,
+      "scarcity_gain": -3,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "WR40 slot priced above ECR (-4 ranks from positional scarcity, +0 from features)",
+      "reason": "WR40 slot priced above ECR (-3 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -6545,18 +6473,18 @@
       ]
     },
     {
-      "rank": 85,
+      "rank": 84,
       "name": "Michael Wilson",
       "pos": "WR",
       "team": "ARI",
       "ecr": 91,
       "pos_rank": 38,
-      "delta": 6,
+      "delta": 7,
       "vorp": 0.0,
-      "scarcity_gain": 4,
+      "scarcity_gain": 5,
       "feature_gain": 2,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); outproduced his market rank last season (+6.0 PPR pts/game vs market-implied); WR38 slot priced above ECR (+4 ranks from positional scarcity, +2 from features)",
+      "reason": "played a near-full season last year (durability); outproduced his market rank last season (+6.0 PPR pts/game vs market-implied); WR38 slot priced above ECR (+5 ranks from positional scarcity, +2 from features)",
       "contribs": [
         {
           "feat": "opp_ts_l4f4",
@@ -6617,18 +6545,18 @@
       ]
     },
     {
-      "rank": 86,
+      "rank": 85,
       "name": "Jordyn Tyson",
       "pos": "WR",
       "team": "NO",
       "ecr": 85,
       "pos_rank": 37,
-      "delta": -1,
+      "delta": 0,
       "vorp": 0.0,
-      "scarcity_gain": -3,
+      "scarcity_gain": -2,
       "feature_gain": 2,
       "is_steal": false,
-      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); WR37 slot priced above ECR (-3 ranks from positional scarcity, +2 from features)",
+      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); WR37 slot priced above ECR (-2 ranks from positional scarcity, +2 from features)",
       "contribs": [
         {
           "feat": "is_rookie",
@@ -6689,18 +6617,18 @@
       ]
     },
     {
-      "rank": 87,
+      "rank": 86,
       "name": "Josh Downs",
       "pos": "WR",
       "team": "IND",
       "ecr": 95,
       "pos_rank": 41,
-      "delta": 8,
+      "delta": 9,
       "vorp": 0.0,
       "scarcity_gain": -14,
-      "feature_gain": 22,
+      "feature_gain": 23,
       "is_steal": false,
-      "reason": "WR41 slot priced above ECR (-14 ranks from positional scarcity, +22 from features)",
+      "reason": "WR41 slot priced above ECR (-14 ranks from positional scarcity, +23 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -6761,18 +6689,18 @@
       ]
     },
     {
-      "rank": 88,
+      "rank": 87,
       "name": "Jayden Daniels",
       "pos": "QB",
       "team": "WAS",
       "ecr": 55,
       "pos_rank": 8,
-      "delta": -33,
+      "delta": -32,
       "vorp": 0.0,
-      "scarcity_gain": 5,
+      "scarcity_gain": 6,
       "feature_gain": -38,
       "is_steal": false,
-      "reason": "QB8 slot priced above ECR (+5 ranks from positional scarcity, -38 from features)",
+      "reason": "QB8 slot priced above ECR (+6 ranks from positional scarcity, -38 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -6833,18 +6761,18 @@
       ]
     },
     {
-      "rank": 89,
+      "rank": 88,
       "name": "RJ Harvey",
       "pos": "RB",
       "team": "DEN",
       "ecr": 89,
       "pos_rank": 31,
-      "delta": 0,
+      "delta": 1,
       "vorp": 0.0,
-      "scarcity_gain": -5,
-      "feature_gain": 5,
+      "scarcity_gain": -1,
+      "feature_gain": 2,
       "is_steal": false,
-      "reason": "carry share rising over the final 6 games [opp velocity]; outproduced his market rank last season (+6.8 PPR pts/game vs market-implied); played a near-full season last year (durability); RB31 slot priced above ECR (-5 ranks from positional scarcity, +5 from features)",
+      "reason": "carry share rising over the final 6 games [opp velocity]; outproduced his market rank last season (+6.8 PPR pts/game vs market-implied); played a near-full season last year (durability); RB31 slot priced above ECR (-1 ranks from positional scarcity, +2 from features)",
       "contribs": [
         {
           "feat": "opp_cs_l6_delta",
@@ -6905,33 +6833,19 @@
       ]
     },
     {
-      "rank": 90,
-      "name": "George Kittle",
+      "rank": 89,
+      "name": "Travis Kelce",
       "pos": "TE",
-      "team": "SF",
-      "ecr": 106,
-      "pos_rank": 11,
-      "delta": 16,
+      "team": "KC",
+      "ecr": 100,
+      "pos_rank": 9,
+      "delta": 11,
       "vorp": 0.0,
-      "scarcity_gain": 16,
+      "scarcity_gain": 11,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+8.2 PPR pts/game vs market-implied); improved expected QB play [context]; TE11 slot priced above ECR (+16 ranks from positional scarcity, +0 from features)",
+      "reason": "played a near-full season last year (durability); TE9 slot priced above ECR (+11 ranks from positional scarcity, +0 from features)",
       "contribs": [
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": -0.0312,
-          "raw": 0.126
-        },
-        {
-          "feat": "opp_ts_slope",
-          "label": "Target-share trend",
-          "group": "opportunity",
-          "value": 0.0301,
-          "raw": 0.012
-        },
         {
           "feat": "has_prior",
           "label": "Has prior-season stats",
@@ -6940,83 +6854,11 @@
           "raw": 1.0
         },
         {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": -0.0208,
-          "raw": 6.0
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": 0.0203,
-          "raw": 0.042
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": 0.0198,
-          "raw": 8.228
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": -0.0196,
-          "raw": 0.364
-        },
-        {
-          "feat": "qb_quality_delta",
-          "label": "QB quality delta",
-          "group": "context",
-          "value": 0.0184,
-          "raw": 7.887
-        }
-      ]
-    },
-    {
-      "rank": 91,
-      "name": "Jake Ferguson",
-      "pos": "TE",
-      "team": "DAL",
-      "ecr": 107,
-      "pos_rank": 10,
-      "delta": 16,
-      "vorp": 0.0,
-      "scarcity_gain": 16,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "played a near-full season last year (durability); TD-efficient on real opportunity last season [opp]; TE10 slot priced above ECR (+16 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
           "feat": "opp_ts_l4f4",
           "label": "Target share: last 4 vs first 4",
           "group": "opportunity",
-          "value": 0.0348,
-          "raw": -0.133
-        },
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_ts_slope",
-          "label": "Target-share trend",
-          "group": "opportunity",
-          "value": -0.0229,
-          "raw": -0.009
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": -0.0145,
-          "raw": 0.069
+          "value": -0.0199,
+          "raw": 0.082
         },
         {
           "feat": "games_missed",
@@ -7026,6 +6868,13 @@
           "raw": 0.0
         },
         {
+          "feat": "opp_ts_slope",
+          "label": "Target-share trend",
+          "group": "opportunity",
+          "value": 0.0107,
+          "raw": 0.004
+        },
+        {
           "feat": "draft_competition",
           "label": "Rookie draft competition",
           "group": "context",
@@ -7036,175 +6885,38 @@
           "feat": "opp_td_per_opp_vs_pos",
           "label": "TD rate vs position",
           "group": "opportunity",
-          "value": 0.0085,
-          "raw": 0.02
+          "value": -0.0084,
+          "raw": -0.012
         },
         {
-          "feat": "coach_pass_oe",
-          "label": "Coach pass oe",
-          "group": "other",
-          "value": -0.0082,
-          "raw": 0.034
-        }
-      ]
-    },
-    {
-      "rank": 92,
-      "name": "Isaiah Likely",
-      "pos": "TE",
-      "team": "NYG",
-      "ecr": 118,
-      "pos_rank": 13,
-      "delta": 26,
-      "vorp": 0.0,
-      "scarcity_gain": 26,
-      "feature_gain": 0,
-      "is_steal": true,
-      "reason": "scoring was not TD-dependent last year (low regression risk); TE13 slot priced above ECR (+26 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": -0.0203,
-          "raw": -0.992
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0192,
-          "raw": 0.0
+          "feat": "career_missed_rate",
+          "label": "Career missed-game rate",
+          "group": "trend",
+          "value": 0.0081,
+          "raw": 0.03
         },
         {
           "feat": "td_share_c",
           "label": "TD-share (regression proxy)",
           "group": "base",
-          "value": 0.0188,
-          "raw": -0.089
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.018,
-          "raw": -0.03
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": -0.0152,
-          "raw": 5.0
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": 0.0099,
-          "raw": 0.0
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": -0.0099,
-          "raw": 0.592
+          "value": 0.0066,
+          "raw": -0.031
         }
       ]
     },
     {
-      "rank": 93,
-      "name": "Dalton Kincaid",
-      "pos": "TE",
-      "team": "BUF",
-      "ecr": 115,
-      "pos_rank": 12,
-      "delta": 22,
-      "vorp": 0.0,
-      "scarcity_gain": 22,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; steady week-to-week, not spike-week dependent [opp]; TE12 slot priced above ECR (+22 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": 0.0214,
-          "raw": 0.044
-        },
-        {
-          "feat": "rookie_deal_yr",
-          "label": "On rookie contract",
-          "group": "contract",
-          "value": 0.017,
-          "raw": 4.0
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": -0.0152,
-          "raw": 5.0
-        },
-        {
-          "feat": "inj_recurrence",
-          "label": "Injury recurrence",
-          "group": "injury",
-          "value": -0.0147,
-          "raw": 1.0
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": -0.0134,
-          "raw": 0.575
-        },
-        {
-          "feat": "team_pass_rate_prior",
-          "label": "Team pass rate (prior)",
-          "group": "context",
-          "value": 0.0116,
-          "raw": 0.48
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": -0.0109,
-          "raw": 0.052
-        }
-      ]
-    },
-    {
-      "rank": 94,
+      "rank": 90,
       "name": "Rico Dowdle",
       "pos": "RB",
       "team": "PIT",
       "ecr": 87,
       "pos_rank": 32,
-      "delta": -7,
+      "delta": -3,
       "vorp": -1.2,
-      "scarcity_gain": 4,
-      "feature_gain": -11,
+      "scarcity_gain": 5,
+      "feature_gain": -8,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.3 PPR pts/game vs market-implied); played a near-full season last year (durability); RB32 slot priced above ECR (+4 ranks from positional scarcity, -11 from features)",
+      "reason": "outproduced his market rank last season (+7.3 PPR pts/game vs market-implied); played a near-full season last year (durability); RB32 slot priced above ECR (+5 ranks from positional scarcity, -8 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7265,18 +6977,18 @@
       ]
     },
     {
-      "rank": 95,
+      "rank": 91,
       "name": "Kyle Monangai",
       "pos": "RB",
       "team": "CHI",
       "ecr": 98,
       "pos_rank": 33,
-      "delta": 3,
+      "delta": 7,
       "vorp": -1.2,
-      "scarcity_gain": 3,
+      "scarcity_gain": 7,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); carry share rising over the final 6 games [opp velocity]; RB33 slot priced above ECR (+3 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); carry share rising over the final 6 games [opp velocity]; RB33 slot priced above ECR (+7 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7337,162 +7049,18 @@
       ]
     },
     {
-      "rank": 96,
-      "name": "Mark Andrews",
-      "pos": "TE",
-      "team": "BAL",
-      "ecr": 128,
-      "pos_rank": 14,
-      "delta": 32,
-      "vorp": -2.3,
-      "scarcity_gain": 31,
-      "feature_gain": 1,
-      "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); TE14 slot priced above ECR (+31 ranks from positional scarcity, +1 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": -0.0187,
-          "raw": 0.088
-        },
-        {
-          "feat": "team_pass_rate_prior",
-          "label": "Team pass rate (prior)",
-          "group": "context",
-          "value": 0.0173,
-          "raw": 0.444
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": -0.0168,
-          "raw": 0.558
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0129,
-          "raw": 0.059
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": 0.0123,
-          "raw": 0.0
-        },
-        {
-          "feat": "coach_change",
-          "label": "Coaching change",
-          "group": "context",
-          "value": 0.0096,
-          "raw": 1.0
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": -0.0081,
-          "raw": 1.811
-        }
-      ]
-    },
-    {
-      "rank": 97,
-      "name": "Dallas Goedert",
-      "pos": "TE",
-      "team": "PHI",
-      "ecr": 123,
-      "pos_rank": 15,
-      "delta": 26,
-      "vorp": -2.8,
-      "scarcity_gain": 27,
-      "feature_gain": -1,
-      "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+6.3 PPR pts/game vs market-implied); TE15 slot priced above ECR (+27 ranks from positional scarcity, -1 from features)",
-      "contribs": [
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": 0.0384,
-          "raw": 0.076
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": -0.036,
-          "raw": 0.17
-        },
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "coach_pass_oe",
-          "label": "Coach pass oe",
-          "group": "other",
-          "value": 0.0163,
-          "raw": -0.074
-        },
-        {
-          "feat": "inj_recurrence",
-          "label": "Injury recurrence",
-          "group": "injury",
-          "value": -0.0147,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": -0.0119,
-          "raw": 0.05
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": -0.0116,
-          "raw": 0.173
-        },
-        {
-          "feat": "ppg_mismatch",
-          "label": "PPG vs market-implied",
-          "group": "base",
-          "value": 0.0116,
-          "raw": 6.329
-        }
-      ]
-    },
-    {
-      "rank": 98,
+      "rank": 92,
       "name": "Jakobi Meyers",
       "pos": "WR",
       "team": "JAX",
       "ecr": 94,
       "pos_rank": 42,
-      "delta": -4,
+      "delta": 2,
       "vorp": -2.9,
-      "scarcity_gain": -4,
+      "scarcity_gain": 2,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; WR42 slot priced above ECR (-4 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; WR42 slot priced above ECR (+2 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7553,18 +7121,18 @@
       ]
     },
     {
-      "rank": 99,
+      "rank": 93,
       "name": "Aaron Jones Sr.",
       "pos": "RB",
       "team": "MIN",
       "ecr": 111,
       "pos_rank": 35,
-      "delta": 12,
+      "delta": 18,
       "vorp": -3.0,
-      "scarcity_gain": 12,
+      "scarcity_gain": 18,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); favorable age curve (age profile); RB35 slot priced above ECR (+12 ranks from positional scarcity, +0 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); favorable age curve (age profile); RB35 slot priced above ECR (+18 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7625,18 +7193,18 @@
       ]
     },
     {
-      "rank": 100,
+      "rank": 94,
       "name": "J.K. Dobbins",
       "pos": "RB",
       "team": "DEN",
       "ecr": 105,
       "pos_rank": 38,
-      "delta": 5,
+      "delta": 11,
       "vorp": -3.0,
-      "scarcity_gain": 5,
+      "scarcity_gain": 11,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+6.7 PPR pts/game vs market-implied); RB38 slot priced above ECR (+5 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+6.7 PPR pts/game vs market-implied); RB38 slot priced above ECR (+11 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -7697,18 +7265,18 @@
       ]
     },
     {
-      "rank": 101,
+      "rank": 95,
       "name": "Kenny Gainwell",
       "pos": "RB",
       "team": "TB",
       "ecr": 102,
       "pos_rank": 34,
-      "delta": 1,
+      "delta": 7,
       "vorp": -3.0,
-      "scarcity_gain": 1,
+      "scarcity_gain": 7,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+8.1 PPR pts/game vs market-implied); played a near-full season last year (durability); RB34 slot priced above ECR (+1 ranks from positional scarcity, +0 from features)",
+      "reason": "outproduced his market rank last season (+8.1 PPR pts/game vs market-implied); played a near-full season last year (durability); RB34 slot priced above ECR (+7 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7769,18 +7337,18 @@
       ]
     },
     {
-      "rank": 102,
+      "rank": 96,
       "name": "Rachaad White",
       "pos": "RB",
       "team": "WAS",
       "ecr": 109,
       "pos_rank": 37,
-      "delta": 7,
+      "delta": 13,
       "vorp": -3.0,
-      "scarcity_gain": 7,
+      "scarcity_gain": 13,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); scoring was not TD-dependent last year (low regression risk); RB37 slot priced above ECR (+7 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); scoring was not TD-dependent last year (low regression risk); RB37 slot priced above ECR (+13 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "opp_cs_l6_delta",
@@ -7841,18 +7409,18 @@
       ]
     },
     {
-      "rank": 103,
+      "rank": 97,
       "name": "Blake Corum",
       "pos": "RB",
       "team": "LAR",
       "ecr": 112,
       "pos_rank": 36,
-      "delta": 9,
+      "delta": 15,
       "vorp": -3.0,
-      "scarcity_gain": 9,
+      "scarcity_gain": 15,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); carry share rising over the final 6 games [opp velocity]; RB36 slot priced above ECR (+9 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); carry share rising over the final 6 games [opp velocity]; RB36 slot priced above ECR (+15 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7913,18 +7481,18 @@
       ]
     },
     {
-      "rank": 104,
+      "rank": 98,
       "name": "Tyrone Tracy Jr.",
       "pos": "RB",
       "team": "NYG",
       "ecr": 130,
       "pos_rank": 39,
-      "delta": 26,
+      "delta": 32,
       "vorp": -3.0,
-      "scarcity_gain": 22,
-      "feature_gain": 4,
+      "scarcity_gain": 24,
+      "feature_gain": 8,
       "is_steal": false,
-      "reason": "carry share rising over the final 6 games [opp velocity]; scoring was not TD-dependent last year (low regression risk); outproduced his market rank last season (+6.5 PPR pts/game vs market-implied); RB39 slot priced above ECR (+22 ranks from positional scarcity, +4 from features)",
+      "reason": "carry share rising over the final 6 games [opp velocity]; scoring was not TD-dependent last year (low regression risk); outproduced his market rank last season (+6.5 PPR pts/game vs market-implied); RB39 slot priced above ECR (+24 ranks from positional scarcity, +8 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -7985,18 +7553,306 @@
       ]
     },
     {
-      "rank": 105,
+      "rank": 99,
+      "name": "George Kittle",
+      "pos": "TE",
+      "team": "SF",
+      "ecr": 106,
+      "pos_rank": 11,
+      "delta": 7,
+      "vorp": -3.4,
+      "scarcity_gain": 7,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+8.2 PPR pts/game vs market-implied); improved expected QB play [context]; TE11 slot priced above ECR (+7 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": -0.0312,
+          "raw": 0.126
+        },
+        {
+          "feat": "opp_ts_slope",
+          "label": "Target-share trend",
+          "group": "opportunity",
+          "value": 0.0301,
+          "raw": 0.012
+        },
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": -0.0208,
+          "raw": 6.0
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": 0.0203,
+          "raw": 0.042
+        },
+        {
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
+          "group": "base",
+          "value": 0.0198,
+          "raw": 8.228
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": -0.0196,
+          "raw": 0.364
+        },
+        {
+          "feat": "qb_quality_delta",
+          "label": "QB quality delta",
+          "group": "context",
+          "value": 0.0184,
+          "raw": 7.887
+        }
+      ]
+    },
+    {
+      "rank": 100,
+      "name": "Jake Ferguson",
+      "pos": "TE",
+      "team": "DAL",
+      "ecr": 107,
+      "pos_rank": 10,
+      "delta": 7,
+      "vorp": -3.4,
+      "scarcity_gain": 7,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "played a near-full season last year (durability); TD-efficient on real opportunity last season [opp]; TE10 slot priced above ECR (+7 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": 0.0348,
+          "raw": -0.133
+        },
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_ts_slope",
+          "label": "Target-share trend",
+          "group": "opportunity",
+          "value": -0.0229,
+          "raw": -0.009
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": -0.0145,
+          "raw": 0.069
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": 0.0123,
+          "raw": 0.0
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": 0.0099,
+          "raw": 0.0
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": 0.0085,
+          "raw": 0.02
+        },
+        {
+          "feat": "coach_pass_oe",
+          "label": "Coach pass oe",
+          "group": "other",
+          "value": -0.0082,
+          "raw": 0.034
+        }
+      ]
+    },
+    {
+      "rank": 101,
+      "name": "Isaiah Likely",
+      "pos": "TE",
+      "team": "NYG",
+      "ecr": 118,
+      "pos_rank": 13,
+      "delta": 17,
+      "vorp": -3.4,
+      "scarcity_gain": 17,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "scoring was not TD-dependent last year (low regression risk); TE13 slot priced above ECR (+17 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
+          "group": "base",
+          "value": -0.0203,
+          "raw": -0.992
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0192,
+          "raw": 0.0
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": 0.0188,
+          "raw": -0.089
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": -0.018,
+          "raw": -0.03
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": -0.0152,
+          "raw": 5.0
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": 0.0099,
+          "raw": 0.0
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": -0.0099,
+          "raw": 0.592
+        }
+      ]
+    },
+    {
+      "rank": 102,
+      "name": "Dalton Kincaid",
+      "pos": "TE",
+      "team": "BUF",
+      "ecr": 115,
+      "pos_rank": 12,
+      "delta": 13,
+      "vorp": -3.4,
+      "scarcity_gain": 13,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "TD-efficient on real opportunity last season [opp]; steady week-to-week, not spike-week dependent [opp]; TE12 slot priced above ECR (+13 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": 0.0214,
+          "raw": 0.044
+        },
+        {
+          "feat": "rookie_deal_yr",
+          "label": "On rookie contract",
+          "group": "contract",
+          "value": 0.017,
+          "raw": 4.0
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": -0.0152,
+          "raw": 5.0
+        },
+        {
+          "feat": "inj_recurrence",
+          "label": "Injury recurrence",
+          "group": "injury",
+          "value": -0.0147,
+          "raw": 1.0
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": -0.0134,
+          "raw": 0.575
+        },
+        {
+          "feat": "team_pass_rate_prior",
+          "label": "Team pass rate (prior)",
+          "group": "context",
+          "value": 0.0116,
+          "raw": 0.48
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": -0.0109,
+          "raw": 0.052
+        }
+      ]
+    },
+    {
+      "rank": 103,
       "name": "Jacory Croskey-Merritt",
       "pos": "RB",
       "team": "WAS",
       "ecr": 125,
       "pos_rank": 40,
-      "delta": 20,
+      "delta": 22,
       "vorp": -3.6,
-      "scarcity_gain": 20,
+      "scarcity_gain": 22,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); RB40 slot priced above ECR (+20 ranks from positional scarcity, +0 from features)",
+      "reason": "played a near-full season last year (durability); RB40 slot priced above ECR (+22 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -8057,18 +7913,18 @@
       ]
     },
     {
-      "rank": 106,
+      "rank": 104,
       "name": "Jordan Mason",
       "pos": "RB",
       "team": "MIN",
       "ecr": 126,
       "pos_rank": 43,
-      "delta": 20,
+      "delta": 22,
       "vorp": -3.6,
-      "scarcity_gain": 20,
+      "scarcity_gain": 22,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; RB43 slot priced above ECR (+20 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; RB43 slot priced above ECR (+22 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -8129,18 +7985,18 @@
       ]
     },
     {
-      "rank": 107,
+      "rank": 105,
       "name": "Woody Marks",
       "pos": "RB",
       "team": "HOU",
       "ecr": 134,
       "pos_rank": 42,
-      "delta": 27,
+      "delta": 29,
       "vorp": -3.6,
-      "scarcity_gain": 27,
+      "scarcity_gain": 29,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "carry share rising over the final 6 games [opp velocity]; steady week-to-week, not spike-week dependent [opp]; RB42 slot priced above ECR (+27 ranks from positional scarcity, +0 from features)",
+      "reason": "carry share rising over the final 6 games [opp velocity]; steady week-to-week, not spike-week dependent [opp]; RB42 slot priced above ECR (+29 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -8201,18 +8057,18 @@
       ]
     },
     {
-      "rank": 108,
+      "rank": 106,
       "name": "Dylan Sampson",
       "pos": "RB",
       "team": "CLE",
       "ecr": 140,
       "pos_rank": 41,
-      "delta": 32,
+      "delta": 34,
       "vorp": -3.6,
       "scarcity_gain": -19,
-      "feature_gain": 51,
+      "feature_gain": 53,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); team offensive environment [context]; carry share rising over the final 6 games [opp velocity]; RB41 slot priced above ECR (-19 ranks from positional scarcity, +51 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); team offensive environment [context]; carry share rising over the final 6 games [opp velocity]; RB41 slot priced above ECR (-19 ranks from positional scarcity, +53 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -8273,6 +8129,150 @@
       ]
     },
     {
+      "rank": 107,
+      "name": "Mark Andrews",
+      "pos": "TE",
+      "team": "BAL",
+      "ecr": 128,
+      "pos_rank": 14,
+      "delta": 21,
+      "vorp": -5.7,
+      "scarcity_gain": 20,
+      "feature_gain": 1,
+      "is_steal": false,
+      "reason": "steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); TE14 slot priced above ECR (+20 ranks from positional scarcity, +1 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": -0.0187,
+          "raw": 0.088
+        },
+        {
+          "feat": "team_pass_rate_prior",
+          "label": "Team pass rate (prior)",
+          "group": "context",
+          "value": 0.0173,
+          "raw": 0.444
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": -0.0168,
+          "raw": 0.558
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0129,
+          "raw": 0.059
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": 0.0123,
+          "raw": 0.0
+        },
+        {
+          "feat": "coach_change",
+          "label": "Coaching change",
+          "group": "context",
+          "value": 0.0096,
+          "raw": 1.0
+        },
+        {
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
+          "group": "base",
+          "value": -0.0081,
+          "raw": 1.811
+        }
+      ]
+    },
+    {
+      "rank": 108,
+      "name": "Dallas Goedert",
+      "pos": "TE",
+      "team": "PHI",
+      "ecr": 123,
+      "pos_rank": 15,
+      "delta": 15,
+      "vorp": -6.2,
+      "scarcity_gain": 16,
+      "feature_gain": -1,
+      "is_steal": false,
+      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+6.3 PPR pts/game vs market-implied); TE15 slot priced above ECR (+16 ranks from positional scarcity, -1 from features)",
+      "contribs": [
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": 0.0384,
+          "raw": 0.076
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": -0.036,
+          "raw": 0.17
+        },
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "coach_pass_oe",
+          "label": "Coach pass oe",
+          "group": "other",
+          "value": 0.0163,
+          "raw": -0.074
+        },
+        {
+          "feat": "inj_recurrence",
+          "label": "Injury recurrence",
+          "group": "injury",
+          "value": -0.0147,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": -0.0119,
+          "raw": 0.05
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": -0.0116,
+          "raw": 0.173
+        },
+        {
+          "feat": "ppg_mismatch",
+          "label": "PPG vs market-implied",
+          "group": "base",
+          "value": 0.0116,
+          "raw": 6.329
+        }
+      ]
+    },
+    {
       "rank": 109,
       "name": "Wan'Dale Robinson",
       "pos": "WR",
@@ -8281,10 +8281,10 @@
       "pos_rank": 44,
       "delta": -21,
       "vorp": -10.0,
-      "scarcity_gain": -1,
-      "feature_gain": -20,
+      "scarcity_gain": 0,
+      "feature_gain": -21,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+6.5 PPR pts/game vs market-implied); WR44 slot priced above ECR (-1 ranks from positional scarcity, -20 from features)",
+      "reason": "outproduced his market rank last season (+6.5 PPR pts/game vs market-implied); WR44 slot priced above ECR (+0 ranks from positional scarcity, -21 from features)",
       "contribs": [
         {
           "feat": "draft_competition",
@@ -8353,10 +8353,10 @@
       "pos_rank": 45,
       "delta": -7,
       "vorp": -10.0,
-      "scarcity_gain": -13,
-      "feature_gain": 6,
+      "scarcity_gain": -12,
+      "feature_gain": 5,
       "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+6.7 PPR pts/game vs market-implied); WR45 slot priced above ECR (-13 ranks from positional scarcity, +6 from features)",
+      "reason": "TD-efficient on real opportunity last season [opp]; outproduced his market rank last season (+6.7 PPR pts/game vs market-implied); WR45 slot priced above ECR (-12 ranks from positional scarcity, +5 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -8490,89 +8490,17 @@
     },
     {
       "rank": 112,
-      "name": "Juwan Johnson",
-      "pos": "TE",
-      "team": "NO",
-      "ecr": 143,
-      "pos_rank": 16,
-      "delta": 31,
-      "vorp": -10.3,
-      "scarcity_gain": 31,
-      "feature_gain": 0,
-      "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); TE16 slot priced above ECR (+31 ranks from positional scarcity, +0 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0192,
-          "raw": 0.0
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": 0.0182,
-          "raw": -0.086
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.0171,
-          "raw": -0.028
-        },
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": 0.0157,
-          "raw": -0.058
-        },
-        {
-          "feat": "draft_ovr_log",
-          "label": "Draft slot (log)",
-          "group": "base",
-          "value": 0.0127,
-          "raw": 5.598
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": 0.0123,
-          "raw": 0.0
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": -0.0101,
-          "raw": 0.161
-        }
-      ]
-    },
-    {
-      "rank": 113,
       "name": "Zach Charbonnet",
       "pos": "RB",
       "team": "SEA",
       "ecr": 138,
       "pos_rank": 44,
-      "delta": 25,
+      "delta": 26,
       "vorp": -10.5,
       "scarcity_gain": 11,
-      "feature_gain": 14,
+      "feature_gain": 15,
       "is_steal": false,
-      "reason": "outproduced his market rank last season (+7.3 PPR pts/game vs market-implied); steady week-to-week, not spike-week dependent [opp]; TD-efficient on real opportunity last season [opp]; RB44 slot priced above ECR (+11 ranks from positional scarcity, +14 from features)",
+      "reason": "outproduced his market rank last season (+7.3 PPR pts/game vs market-implied); steady week-to-week, not spike-week dependent [opp]; TD-efficient on real opportunity last season [opp]; RB44 slot priced above ECR (+11 ranks from positional scarcity, +15 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -8633,18 +8561,18 @@
       ]
     },
     {
-      "rank": 114,
+      "rank": 113,
       "name": "Jayden Reed",
       "pos": "WR",
       "team": "GB",
       "ecr": 113,
       "pos_rank": 49,
-      "delta": -1,
+      "delta": 0,
       "vorp": -13.1,
-      "scarcity_gain": -1,
+      "scarcity_gain": 0,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "WR49 slot priced above ECR (-1 ranks from positional scarcity, +0 from features)",
+      "reason": "WR49 slot priced above ECR (+0 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -8705,18 +8633,18 @@
       ]
     },
     {
-      "rank": 115,
+      "rank": 114,
       "name": "Jordan Addison",
       "pos": "WR",
       "team": "MIN",
       "ecr": 108,
       "pos_rank": 47,
-      "delta": -7,
+      "delta": -6,
       "vorp": -13.1,
-      "scarcity_gain": -7,
+      "scarcity_gain": -6,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; WR47 slot priced above ECR (-7 ranks from positional scarcity, +0 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; WR47 slot priced above ECR (-6 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "opp_ts_l4f4",
@@ -8777,18 +8705,18 @@
       ]
     },
     {
-      "rank": 116,
+      "rank": 115,
       "name": "Ricky Pearsall",
       "pos": "WR",
       "team": "SF",
       "ecr": 97,
       "pos_rank": 46,
-      "delta": -19,
+      "delta": -18,
       "vorp": -13.1,
       "scarcity_gain": -13,
-      "feature_gain": -6,
+      "feature_gain": -5,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); improved expected QB play [context]; WR46 slot priced above ECR (-13 ranks from positional scarcity, -6 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); improved expected QB play [context]; WR46 slot priced above ECR (-13 ranks from positional scarcity, -5 from features)",
       "contribs": [
         {
           "feat": "games_missed",
@@ -8849,18 +8777,18 @@
       ]
     },
     {
-      "rank": 117,
+      "rank": 116,
       "name": "Khalil Shakir",
       "pos": "WR",
       "team": "BUF",
       "ecr": 116,
       "pos_rank": 50,
-      "delta": -1,
+      "delta": 0,
       "vorp": -13.1,
-      "scarcity_gain": -2,
+      "scarcity_gain": -1,
       "feature_gain": 1,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; WR50 slot priced above ECR (-2 ranks from positional scarcity, +1 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; WR50 slot priced above ECR (-1 ranks from positional scarcity, +1 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -8921,18 +8849,18 @@
       ]
     },
     {
-      "rank": 118,
+      "rank": 117,
       "name": "Jayden Higgins",
       "pos": "WR",
       "team": "HOU",
       "ecr": 121,
       "pos_rank": 48,
-      "delta": 3,
+      "delta": 4,
       "vorp": -13.1,
       "scarcity_gain": -5,
-      "feature_gain": 8,
+      "feature_gain": 9,
       "is_steal": false,
-      "reason": "TD-efficient on real opportunity last season [opp]; played a near-full season last year (durability); WR48 slot priced above ECR (-5 ranks from positional scarcity, +8 from features)",
+      "reason": "TD-efficient on real opportunity last season [opp]; played a near-full season last year (durability); WR48 slot priced above ECR (-5 ranks from positional scarcity, +9 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -8989,6 +8917,78 @@
           "group": "trend",
           "value": 0.0101,
           "raw": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 118,
+      "name": "Juwan Johnson",
+      "pos": "TE",
+      "team": "NO",
+      "ecr": 143,
+      "pos_rank": 16,
+      "delta": 25,
+      "vorp": -13.7,
+      "scarcity_gain": 25,
+      "feature_gain": 0,
+      "is_steal": false,
+      "reason": "scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); TE16 slot priced above ECR (+25 ranks from positional scarcity, +0 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0192,
+          "raw": 0.0
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": 0.0182,
+          "raw": -0.086
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": -0.0171,
+          "raw": -0.028
+        },
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": 0.0157,
+          "raw": -0.058
+        },
+        {
+          "feat": "draft_ovr_log",
+          "label": "Draft slot (log)",
+          "group": "base",
+          "value": 0.0127,
+          "raw": 5.598
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": 0.0123,
+          "raw": 0.0
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": -0.0101,
+          "raw": 0.161
         }
       ]
     },
@@ -9505,10 +9505,10 @@
       "pos_rank": 51,
       "delta": -6,
       "vorp": -17.8,
-      "scarcity_gain": 3,
-      "feature_gain": -9,
+      "scarcity_gain": 4,
+      "feature_gain": -10,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); WR51 slot priced above ECR (+3 ranks from positional scarcity, -9 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); WR51 slot priced above ECR (+4 ranks from positional scarcity, -10 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -11730,89 +11730,17 @@
     },
     {
       "rank": 157,
-      "name": "Chig Okonkwo",
-      "pos": "TE",
-      "team": "WAS",
-      "ecr": 149,
-      "pos_rank": 17,
-      "delta": -8,
-      "vorp": -34.2,
-      "scarcity_gain": -23,
-      "feature_gain": 15,
-      "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); TE17 slot priced above ECR (-23 ranks from positional scarcity, +15 from features)",
-      "contribs": [
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.0193,
-          "raw": -0.033
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0192,
-          "raw": 0.0
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": 0.0189,
-          "raw": -0.09
-        },
-        {
-          "feat": "team_pass_fp_share_prior",
-          "label": "Team pass-offense share",
-          "group": "context",
-          "value": -0.0129,
-          "raw": 0.577
-        },
-        {
-          "feat": "team_pass_rate_prior",
-          "label": "Team pass rate (prior)",
-          "group": "context",
-          "value": 0.0128,
-          "raw": 0.472
-        },
-        {
-          "feat": "opp_ts_l4f4",
-          "label": "Target share: last 4 vs first 4",
-          "group": "opportunity",
-          "value": -0.0124,
-          "raw": 0.052
-        },
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": 0.0123,
-          "raw": 0.0
-        }
-      ]
-    },
-    {
-      "rank": 158,
       "name": "Jordan Love",
       "pos": "QB",
       "team": "GB",
       "ecr": 117,
       "pos_rank": 17,
-      "delta": -41,
+      "delta": -40,
       "vorp": -37.3,
       "scarcity_gain": -50,
-      "feature_gain": 9,
+      "feature_gain": 10,
       "is_steal": false,
-      "reason": "QB17 slot priced above ECR (-50 ranks from positional scarcity, +9 from features)",
+      "reason": "QB17 slot priced above ECR (-50 ranks from positional scarcity, +10 from features)",
       "contribs": [
         {
           "feat": "opp_td_per_opp_vs_pos",
@@ -11873,6 +11801,78 @@
       ]
     },
     {
+      "rank": 158,
+      "name": "Chig Okonkwo",
+      "pos": "TE",
+      "team": "WAS",
+      "ecr": 149,
+      "pos_rank": 17,
+      "delta": -9,
+      "vorp": -37.5,
+      "scarcity_gain": -24,
+      "feature_gain": 15,
+      "is_steal": false,
+      "reason": "scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); TE17 slot priced above ECR (-24 ranks from positional scarcity, +15 from features)",
+      "contribs": [
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": -0.0193,
+          "raw": -0.033
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0192,
+          "raw": 0.0
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": 0.0189,
+          "raw": -0.09
+        },
+        {
+          "feat": "team_pass_fp_share_prior",
+          "label": "Team pass-offense share",
+          "group": "context",
+          "value": -0.0129,
+          "raw": 0.577
+        },
+        {
+          "feat": "team_pass_rate_prior",
+          "label": "Team pass rate (prior)",
+          "group": "context",
+          "value": 0.0128,
+          "raw": 0.472
+        },
+        {
+          "feat": "opp_ts_l4f4",
+          "label": "Target share: last 4 vs first 4",
+          "group": "opportunity",
+          "value": -0.0124,
+          "raw": 0.052
+        },
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": 0.0123,
+          "raw": 0.0
+        }
+      ]
+    },
+    {
       "rank": 159,
       "name": "Jonathon Brooks",
       "pos": "RB",
@@ -11881,10 +11881,10 @@
       "pos_rank": 51,
       "delta": -35,
       "vorp": -38.0,
-      "scarcity_gain": 20,
-      "feature_gain": -55,
+      "scarcity_gain": 26,
+      "feature_gain": -61,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); rookie with early-draft pedigree; played a near-full season last year (durability); RB51 slot priced above ECR (+20 ranks from positional scarcity, -55 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); rookie with early-draft pedigree; played a near-full season last year (durability); RB51 slot priced above ECR (+26 ranks from positional scarcity, -61 from features)",
       "contribs": [
         {
           "feat": "td_share_c",
@@ -12169,10 +12169,10 @@
       "pos_rank": 48,
       "delta": -26,
       "vorp": -38.0,
-      "scarcity_gain": 24,
-      "feature_gain": -50,
+      "scarcity_gain": 25,
+      "feature_gain": -51,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); RB48 slot priced above ECR (+24 ranks from positional scarcity, -50 from features)",
+      "reason": "played a near-full season last year (durability); RB48 slot priced above ECR (+25 ranks from positional scarcity, -51 from features)",
       "contribs": [
         {
           "feat": "draft_competition",
@@ -12457,10 +12457,10 @@
       "pos_rank": 18,
       "delta": -45,
       "vorp": -45.1,
-      "scarcity_gain": -52,
-      "feature_gain": 7,
+      "scarcity_gain": -46,
+      "feature_gain": 1,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); QB18 slot priced above ECR (-52 ranks from positional scarcity, +7 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); QB18 slot priced above ECR (-46 ranks from positional scarcity, +1 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -12522,17 +12522,89 @@
     },
     {
       "rank": 168,
+      "name": "Kyler Murray",
+      "pos": "QB",
+      "team": "MIN",
+      "ecr": 114,
+      "pos_rank": 20,
+      "delta": -54,
+      "vorp": -50.5,
+      "scarcity_gain": -43,
+      "feature_gain": -11,
+      "is_steal": false,
+      "reason": "QB20 slot priced above ECR (-43 ranks from positional scarcity, -11 from features)",
+      "contribs": [
+        {
+          "feat": "games_missed",
+          "label": "Games missed (prior yr)",
+          "group": "base",
+          "value": -0.0538,
+          "raw": 12.0
+        },
+        {
+          "feat": "draft_ovr_log",
+          "label": "Draft slot (log)",
+          "group": "base",
+          "value": -0.0254,
+          "raw": 0.0
+        },
+        {
+          "feat": "has_prior",
+          "label": "Has prior-season stats",
+          "group": "base",
+          "value": 0.0253,
+          "raw": 1.0
+        },
+        {
+          "feat": "opp_boom_rate",
+          "label": "Boom-week rate",
+          "group": "opportunity",
+          "value": 0.0192,
+          "raw": 0.0
+        },
+        {
+          "feat": "draft_competition",
+          "label": "Rookie draft competition",
+          "group": "context",
+          "value": 0.0099,
+          "raw": 0.0
+        },
+        {
+          "feat": "opp_td_per_opp_vs_pos",
+          "label": "TD rate vs position",
+          "group": "opportunity",
+          "value": -0.0097,
+          "raw": -0.014
+        },
+        {
+          "feat": "opp_fp_oe_pg",
+          "label": "Points over expected/game",
+          "group": "opportunity",
+          "value": 0.0087,
+          "raw": 12.076
+        },
+        {
+          "feat": "td_share_c",
+          "label": "TD-share (regression proxy)",
+          "group": "base",
+          "value": 0.0086,
+          "raw": -0.041
+        }
+      ]
+    },
+    {
+      "rank": 169,
       "name": "Hunter Henry",
       "pos": "TE",
       "team": "NE",
       "ecr": 156,
       "pos_rank": 18,
-      "delta": -12,
-      "vorp": -50.2,
-      "scarcity_gain": -12,
+      "delta": -13,
+      "vorp": -53.5,
+      "scarcity_gain": -13,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "played a near-full season last year (durability); TD-efficient on real opportunity last season [opp]; TE18 slot priced above ECR (-12 ranks from positional scarcity, +0 from features)",
+      "reason": "played a near-full season last year (durability); TD-efficient on real opportunity last season [opp]; TE18 slot priced above ECR (-13 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -12593,18 +12665,18 @@
       ]
     },
     {
-      "rank": 169,
+      "rank": 170,
       "name": "Kenyon Sadiq",
       "pos": "TE",
       "team": "NYJ",
       "ecr": 170,
       "pos_rank": 22,
-      "delta": 1,
-      "vorp": -50.2,
-      "scarcity_gain": 1,
+      "delta": 0,
+      "vorp": -53.5,
+      "scarcity_gain": 0,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); TE22 slot priced above ECR (+1 ranks from positional scarcity, +0 from features)",
+      "reason": "rookie with early-draft pedigree; scoring was not TD-dependent last year (low regression risk); played a near-full season last year (durability); TE22 slot priced above ECR (+0 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "is_rookie",
@@ -12665,18 +12737,18 @@
       ]
     },
     {
-      "rank": 170,
+      "rank": 171,
       "name": "T.J. Hockenson",
       "pos": "TE",
       "team": "MIN",
       "ecr": 166,
       "pos_rank": 23,
-      "delta": -4,
-      "vorp": -50.2,
-      "scarcity_gain": -4,
+      "delta": -5,
+      "vorp": -53.5,
+      "scarcity_gain": -5,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "TE23 slot priced above ECR (-4 ranks from positional scarcity, +0 from features)",
+      "reason": "TE23 slot priced above ECR (-5 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -12737,18 +12809,18 @@
       ]
     },
     {
-      "rank": 171,
+      "rank": 172,
       "name": "Brenton Strange",
       "pos": "TE",
       "team": "JAX",
       "ecr": 146,
       "pos_rank": 20,
-      "delta": -25,
-      "vorp": -50.2,
-      "scarcity_gain": -11,
+      "delta": -26,
+      "vorp": -53.5,
+      "scarcity_gain": -12,
       "feature_gain": -14,
       "is_steal": false,
-      "reason": "TE20 slot priced above ECR (-11 ranks from positional scarcity, -14 from features)",
+      "reason": "TE20 slot priced above ECR (-12 ranks from positional scarcity, -14 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -12809,18 +12881,18 @@
       ]
     },
     {
-      "rank": 172,
+      "rank": 173,
       "name": "Oronde Gadsden",
       "pos": "TE",
       "team": "LAC",
       "ecr": 157,
       "pos_rank": 19,
-      "delta": -15,
-      "vorp": -50.2,
-      "scarcity_gain": -14,
+      "delta": -16,
+      "vorp": -53.5,
+      "scarcity_gain": -15,
       "feature_gain": -1,
       "is_steal": false,
-      "reason": "steady week-to-week, not spike-week dependent [opp]; scoring was not TD-dependent last year (low regression risk); TE19 slot priced above ECR (-14 ranks from positional scarcity, -1 from features)",
+      "reason": "steady week-to-week, not spike-week dependent [opp]; scoring was not TD-dependent last year (low regression risk); TE19 slot priced above ECR (-15 ranks from positional scarcity, -1 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -12881,18 +12953,18 @@
       ]
     },
     {
-      "rank": 173,
+      "rank": 174,
       "name": "Dalton Schultz",
       "pos": "TE",
       "team": "HOU",
       "ecr": 165,
       "pos_rank": 21,
-      "delta": -8,
-      "vorp": -50.2,
-      "scarcity_gain": -8,
+      "delta": -9,
+      "vorp": -53.5,
+      "scarcity_gain": -9,
       "feature_gain": 0,
       "is_steal": false,
-      "reason": "scoring was not TD-dependent last year (low regression risk); steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); TE21 slot priced above ECR (-8 ranks from positional scarcity, +0 from features)",
+      "reason": "scoring was not TD-dependent last year (low regression risk); steady week-to-week, not spike-week dependent [opp]; played a near-full season last year (durability); TE21 slot priced above ECR (-9 ranks from positional scarcity, +0 from features)",
       "contribs": [
         {
           "feat": "has_prior",
@@ -12949,78 +13021,6 @@
           "group": "base",
           "value": 0.007,
           "raw": 5.279
-        }
-      ]
-    },
-    {
-      "rank": 174,
-      "name": "Kyler Murray",
-      "pos": "QB",
-      "team": "MIN",
-      "ecr": 114,
-      "pos_rank": 20,
-      "delta": -60,
-      "vorp": -50.5,
-      "scarcity_gain": -44,
-      "feature_gain": -16,
-      "is_steal": false,
-      "reason": "QB20 slot priced above ECR (-44 ranks from positional scarcity, -16 from features)",
-      "contribs": [
-        {
-          "feat": "games_missed",
-          "label": "Games missed (prior yr)",
-          "group": "base",
-          "value": -0.0538,
-          "raw": 12.0
-        },
-        {
-          "feat": "draft_ovr_log",
-          "label": "Draft slot (log)",
-          "group": "base",
-          "value": -0.0254,
-          "raw": 0.0
-        },
-        {
-          "feat": "has_prior",
-          "label": "Has prior-season stats",
-          "group": "base",
-          "value": 0.0253,
-          "raw": 1.0
-        },
-        {
-          "feat": "opp_boom_rate",
-          "label": "Boom-week rate",
-          "group": "opportunity",
-          "value": 0.0192,
-          "raw": 0.0
-        },
-        {
-          "feat": "draft_competition",
-          "label": "Rookie draft competition",
-          "group": "context",
-          "value": 0.0099,
-          "raw": 0.0
-        },
-        {
-          "feat": "opp_td_per_opp_vs_pos",
-          "label": "TD rate vs position",
-          "group": "opportunity",
-          "value": -0.0097,
-          "raw": -0.014
-        },
-        {
-          "feat": "opp_fp_oe_pg",
-          "label": "Points over expected/game",
-          "group": "opportunity",
-          "value": 0.0087,
-          "raw": 12.076
-        },
-        {
-          "feat": "td_share_c",
-          "label": "TD-share (regression proxy)",
-          "group": "base",
-          "value": 0.0086,
-          "raw": -0.041
         }
       ]
     },
@@ -13932,7 +13932,7 @@
         "vona12_WR": 36.15,
         "vona24_WR": 61.23,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -13951,7 +13951,7 @@
         "vona12_WR": 36.15,
         "vona24_WR": 61.23,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -13970,7 +13970,7 @@
         "vona12_WR": 36.15,
         "vona24_WR": 61.23,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -13989,7 +13989,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 54.01,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -14008,7 +14008,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 54.01,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -14027,7 +14027,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 54.01,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -14046,7 +14046,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 68.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -14065,7 +14065,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 68.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -14084,7 +14084,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 68.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 9.41
       },
@@ -14103,7 +14103,7 @@
         "vona12_WR": 34.78,
         "vona24_WR": 68.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 9.41
       },
@@ -14122,7 +14122,7 @@
         "vona12_WR": 11.16,
         "vona24_WR": 44.97,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 9.41
       },
@@ -14141,7 +14141,7 @@
         "vona12_WR": 5.85,
         "vona24_WR": 39.66,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 9.41
       },
@@ -14160,7 +14160,7 @@
         "vona12_WR": 25.08,
         "vona24_WR": 39.66,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 9.41
       },
@@ -14179,7 +14179,7 @@
         "vona12_WR": 25.08,
         "vona24_WR": 39.66,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14198,7 +14198,7 @@
         "vona12_WR": 25.08,
         "vona24_WR": 39.66,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14217,7 +14217,7 @@
         "vona12_WR": 19.23,
         "vona24_WR": 33.81,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14236,7 +14236,7 @@
         "vona12_WR": 19.23,
         "vona24_WR": 33.81,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14255,7 +14255,7 @@
         "vona12_WR": 19.23,
         "vona24_WR": 33.81,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14274,7 +14274,7 @@
         "vona12_WR": 33.81,
         "vona24_WR": 33.81,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14293,7 +14293,7 @@
         "vona12_WR": 33.81,
         "vona24_WR": 37.54,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 0.0,
         "vona24_TE": 30.17
       },
@@ -14312,7 +14312,7 @@
         "vona12_WR": 33.81,
         "vona24_WR": 37.54,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 9.41,
         "vona24_TE": 30.17
       },
@@ -14331,7 +14331,7 @@
         "vona12_WR": 33.81,
         "vona24_WR": 43.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 9.41,
         "vona24_TE": 30.17
       },
@@ -14350,7 +14350,7 @@
         "vona12_WR": 33.81,
         "vona24_WR": 43.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 9.41,
         "vona24_TE": 30.17
       },
@@ -14369,7 +14369,7 @@
         "vona12_WR": 33.81,
         "vona24_WR": 43.59,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 9.41,
         "vona24_TE": 30.17
       },
@@ -14388,7 +14388,7 @@
         "vona12_WR": 14.58,
         "vona24_WR": 24.36,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 9.41,
         "vona24_TE": 37.21
       },
@@ -14407,7 +14407,7 @@
         "vona12_WR": 14.58,
         "vona24_WR": 24.36,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 37.21
       },
@@ -14426,7 +14426,7 @@
         "vona12_WR": 14.58,
         "vona24_WR": 24.36,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 37.21
       },
@@ -14445,7 +14445,7 @@
         "vona12_WR": 14.58,
         "vona24_WR": 36.61,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 37.21
       },
@@ -14464,7 +14464,7 @@
         "vona12_WR": 14.58,
         "vona24_WR": 36.61,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 37.21
       },
@@ -14483,7 +14483,7 @@
         "vona12_WR": 14.58,
         "vona24_WR": 36.61,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 37.21
       },
@@ -14502,7 +14502,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 22.03,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 51.74
       },
@@ -14521,7 +14521,7 @@
         "vona12_WR": 3.73,
         "vona24_WR": 22.03,
         "best_TE": "Trey McBride",
-        "v_TE": 70.05,
+        "v_TE": 66.69,
         "vona12_TE": 30.17,
         "vona24_TE": 51.74
       },
@@ -14540,7 +14540,7 @@
         "vona12_WR": 3.73,
         "vona24_WR": 22.03,
         "best_TE": "Brock Bowers",
-        "v_TE": 60.63,
+        "v_TE": 57.27,
         "vona12_TE": 20.76,
         "vona24_TE": 42.32
       },
@@ -14559,7 +14559,7 @@
         "vona12_WR": 9.78,
         "vona24_WR": 22.03,
         "best_TE": "Brock Bowers",
-        "v_TE": 60.63,
+        "v_TE": 57.27,
         "vona12_TE": 20.76,
         "vona24_TE": 42.32
       },
@@ -14578,7 +14578,7 @@
         "vona12_WR": 9.78,
         "vona24_WR": 22.03,
         "best_TE": "Brock Bowers",
-        "v_TE": 60.63,
+        "v_TE": 57.27,
         "vona12_TE": 20.76,
         "vona24_TE": 42.32
       },
@@ -14597,7 +14597,7 @@
         "vona12_WR": 9.78,
         "vona24_WR": 22.03,
         "best_TE": "Brock Bowers",
-        "v_TE": 60.63,
+        "v_TE": 57.27,
         "vona12_TE": 20.76,
         "vona24_TE": 42.32
       },
@@ -14616,7 +14616,7 @@
         "vona12_WR": 9.78,
         "vona24_WR": 22.03,
         "best_TE": "Brock Bowers",
-        "v_TE": 60.63,
+        "v_TE": 57.27,
         "vona12_TE": 27.79,
         "vona24_TE": 42.32
       },
@@ -14635,7 +14635,7 @@
         "vona12_WR": 9.78,
         "vona24_WR": 22.03,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 7.03,
         "vona24_TE": 21.56
       },
@@ -14654,7 +14654,7 @@
         "vona12_WR": 9.78,
         "vona24_WR": 22.03,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 7.03,
         "vona24_TE": 21.56
       },
@@ -14673,7 +14673,7 @@
         "vona12_WR": 22.03,
         "vona24_WR": 22.03,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 7.03,
         "vona24_TE": 21.56
       },
@@ -14692,7 +14692,7 @@
         "vona12_WR": 22.03,
         "vona24_WR": 22.03,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 7.03,
         "vona24_TE": 21.56
       },
@@ -14711,7 +14711,7 @@
         "vona12_WR": 22.03,
         "vona24_WR": 22.03,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 7.03,
         "vona24_TE": 21.56
       },
@@ -14730,7 +14730,7 @@
         "vona12_WR": 22.03,
         "vona24_WR": 22.03,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 21.56,
         "vona24_TE": 21.56
       },
@@ -14749,7 +14749,7 @@
         "vona12_WR": 18.3,
         "vona24_WR": 36.78,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 21.56,
         "vona24_TE": 21.56
       },
@@ -14768,7 +14768,7 @@
         "vona12_WR": 18.3,
         "vona24_WR": 36.78,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 21.56,
         "vona24_TE": 21.56
       },
@@ -14787,7 +14787,7 @@
         "vona12_WR": 12.25,
         "vona24_WR": 30.73,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 21.56,
         "vona24_TE": 25.98
       },
@@ -14806,7 +14806,7 @@
         "vona12_WR": 12.25,
         "vona24_WR": 30.73,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 21.56,
         "vona24_TE": 25.98
       },
@@ -14825,7 +14825,7 @@
         "vona12_WR": 12.25,
         "vona24_WR": 30.73,
         "best_TE": "Colston Loveland",
-        "v_TE": 39.87,
+        "v_TE": 36.51,
         "vona12_TE": 21.56,
         "vona24_TE": 25.98
       },
@@ -14844,7 +14844,7 @@
         "vona12_WR": 12.25,
         "vona24_WR": 37.57,
         "best_TE": "Tyler Warren",
-        "v_TE": 32.84,
+        "v_TE": 29.48,
         "vona12_TE": 14.53,
         "vona24_TE": 18.95
       },
@@ -14863,7 +14863,7 @@
         "vona12_WR": 12.25,
         "vona24_WR": 37.57,
         "best_TE": "Tyler Warren",
-        "v_TE": 32.84,
+        "v_TE": 29.48,
         "vona12_TE": 14.53,
         "vona24_TE": 18.95
       },
@@ -14882,7 +14882,7 @@
         "vona12_WR": 12.25,
         "vona24_WR": 37.57,
         "best_TE": "Tyler Warren",
-        "v_TE": 32.84,
+        "v_TE": 29.48,
         "vona12_TE": 14.53,
         "vona24_TE": 18.95
       },
@@ -14901,7 +14901,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 25.32,
         "best_TE": "Tyler Warren",
-        "v_TE": 32.84,
+        "v_TE": 29.48,
         "vona12_TE": 14.53,
         "vona24_TE": 18.95
       },
@@ -14920,7 +14920,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 25.32,
         "best_TE": "Tyler Warren",
-        "v_TE": 32.84,
+        "v_TE": 29.48,
         "vona12_TE": 14.53,
         "vona24_TE": 25.95
       },
@@ -14939,7 +14939,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 25.32,
         "best_TE": "Tyler Warren",
-        "v_TE": 32.84,
+        "v_TE": 29.48,
         "vona12_TE": 14.53,
         "vona24_TE": 25.95
       },
@@ -14958,7 +14958,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 0.0,
         "vona24_TE": 11.42
       },
@@ -14977,7 +14977,7 @@
         "vona12_WR": 18.48,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 0.0,
         "vona24_TE": 11.42
       },
@@ -14996,7 +14996,7 @@
         "vona12_WR": 18.48,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 0.0,
         "vona24_TE": 11.42
       },
@@ -15015,7 +15015,7 @@
         "vona12_WR": 18.48,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 11.42
       },
@@ -15034,7 +15034,7 @@
         "vona12_WR": 18.48,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 11.42
       },
@@ -15053,7 +15053,7 @@
         "vona12_WR": 18.48,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 11.42
       },
@@ -15072,7 +15072,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 11.42
       },
@@ -15091,7 +15091,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 25.32,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 11.42
       },
@@ -15110,7 +15110,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 32.84,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 11.42
       },
@@ -15129,7 +15129,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 32.84,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 4.42,
         "vona24_TE": 14.95
       },
@@ -15148,7 +15148,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 35.7,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 11.42,
         "vona24_TE": 14.95
       },
@@ -15167,7 +15167,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 35.7,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 11.42,
         "vona24_TE": 14.95
       },
@@ -15186,7 +15186,7 @@
         "vona12_WR": 25.32,
         "vona24_WR": 35.7,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 11.42,
         "vona24_TE": 14.95
       },
@@ -15205,7 +15205,7 @@
         "vona12_WR": 6.84,
         "vona24_WR": 17.23,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 11.42,
         "vona24_TE": 14.95
       },
@@ -15224,7 +15224,7 @@
         "vona12_WR": 6.84,
         "vona24_WR": 17.23,
         "best_TE": "Harold Fannin Jr.",
-        "v_TE": 18.31,
+        "v_TE": 14.95,
         "vona12_TE": 11.42,
         "vona24_TE": 14.95
       },
@@ -15243,7 +15243,7 @@
         "vona12_WR": 6.84,
         "vona24_WR": 17.23,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 7.01,
         "vona24_TE": 10.53
       },
@@ -15262,7 +15262,7 @@
         "vona12_WR": 6.84,
         "vona24_WR": 17.23,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 7.01,
         "vona24_TE": 10.53
       },
@@ -15281,7 +15281,7 @@
         "vona12_WR": 6.84,
         "vona24_WR": 17.23,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 7.01,
         "vona24_TE": 10.53
       },
@@ -15300,7 +15300,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 10.39,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 7.01,
         "vona24_TE": 10.53
       },
@@ -15319,7 +15319,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 10.39,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 7.01,
         "vona24_TE": 10.53
       },
@@ -15338,7 +15338,7 @@
         "vona12_WR": 7.52,
         "vona24_WR": 10.39,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 7.01,
         "vona24_TE": 13.9
       },
@@ -15357,7 +15357,7 @@
         "vona12_WR": 7.52,
         "vona24_WR": 17.56,
         "best_TE": "Tucker Kraft",
-        "v_TE": 13.9,
+        "v_TE": 10.53,
         "vona12_TE": 10.53,
         "vona24_TE": 13.9
       },
@@ -15376,7 +15376,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15395,7 +15395,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15414,7 +15414,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15433,7 +15433,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15452,7 +15452,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15471,7 +15471,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15490,7 +15490,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15509,7 +15509,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15528,7 +15528,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15547,7 +15547,7 @@
         "vona12_WR": 10.39,
         "vona24_WR": 17.56,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 3.53,
         "vona24_TE": 6.89
       },
@@ -15566,7 +15566,7 @@
         "vona12_WR": 2.86,
         "vona24_WR": 13.13,
         "best_TE": "Kyle Pitts Sr.",
-        "v_TE": 6.89,
+        "v_TE": 3.53,
         "vona12_TE": 6.89,
         "vona24_TE": 6.89
       },
@@ -15585,7 +15585,7 @@
         "vona12_WR": 10.04,
         "vona24_WR": 13.13,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15604,7 +15604,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15623,7 +15623,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15642,7 +15642,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15661,7 +15661,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15680,7 +15680,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15699,7 +15699,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15718,7 +15718,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15737,7 +15737,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 10.26,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15756,7 +15756,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 27.22,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15775,7 +15775,7 @@
         "vona12_WR": 7.18,
         "vona24_WR": 27.22,
         "best_TE": "Travis Kelce",
-        "v_TE": 3.36,
+        "v_TE": 0.0,
         "vona12_TE": 3.36,
         "vona24_TE": 3.36
       },
@@ -15794,7 +15794,7 @@
         "vona12_WR": 10.26,
         "vona24_WR": 27.22,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15813,7 +15813,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15832,7 +15832,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15851,7 +15851,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15870,7 +15870,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15889,7 +15889,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15908,7 +15908,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15927,7 +15927,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15946,7 +15946,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15965,7 +15965,7 @@
         "vona12_WR": 3.09,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -15984,7 +15984,7 @@
         "vona12_WR": 20.04,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16003,7 +16003,7 @@
         "vona12_WR": 20.04,
         "vona24_WR": 20.04,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16022,7 +16022,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 16.95,
         "best_TE": "George Kittle",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16041,7 +16041,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Jake Ferguson",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16060,7 +16060,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Jake Ferguson",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16079,7 +16079,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Jake Ferguson",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16098,7 +16098,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Jake Ferguson",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16117,7 +16117,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Jake Ferguson",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16136,7 +16136,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16155,7 +16155,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16174,7 +16174,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16193,7 +16193,7 @@
         "vona12_WR": 16.95,
         "vona24_WR": 19.62,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16212,7 +16212,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16231,7 +16231,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16250,7 +16250,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16269,7 +16269,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16288,7 +16288,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 0.0,
         "vona24_TE": 10.3
       },
@@ -16307,7 +16307,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16326,7 +16326,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16345,7 +16345,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16364,7 +16364,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16383,7 +16383,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16402,7 +16402,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16421,7 +16421,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16440,7 +16440,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16459,7 +16459,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16478,7 +16478,7 @@
         "vona12_WR": 2.67,
         "vona24_WR": 2.67,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16497,7 +16497,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Isaiah Likely",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16516,7 +16516,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Dalton Kincaid",
-        "v_TE": 0.0,
+        "v_TE": -3.36,
         "vona12_TE": 10.3,
         "vona24_TE": 10.3
       },
@@ -16535,7 +16535,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16554,7 +16554,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16573,7 +16573,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16592,7 +16592,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16611,7 +16611,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16630,7 +16630,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16649,7 +16649,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16668,7 +16668,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16687,7 +16687,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16706,7 +16706,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16725,7 +16725,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16744,7 +16744,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       },
@@ -16763,7 +16763,7 @@
         "vona12_WR": 0.0,
         "vona24_WR": 0.0,
         "best_TE": "Juwan Johnson",
-        "v_TE": -10.3,
+        "v_TE": -13.66,
         "vona12_TE": 0.0,
         "vona24_TE": 0.0
       }
@@ -16789,7 +16789,7 @@
     },
     {
       "step": "VORP conversion",
-      "text": "Scores map through the historical points-by-rank curve to value over replacement (QB8/RB30/WR36/TE12)."
+      "text": "Scores map through the historical points-by-rank curve to value over replacement (QB8/RB30/WR36/TE8)."
     },
     {
       "step": "Walk-forward",

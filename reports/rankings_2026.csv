@@ -18,8 +18,8 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 17,Drake London,WR,ATL,12.9,13,-4,79.3071
 18,George Pickens,WR,DAL,18.4,19,1,79.3071
 19,Chris Olave,WR,NO,20.6,21,2,76.2179
-20,Trey McBride,TE,ARI,28.9,32,12,70.047
-21,DeVonta Smith,WR,PHI,28.2,30,9,69.4504
+20,DeVonta Smith,WR,PHI,28.2,30,10,69.4504
+21,Trey McBride,TE,ARI,28.9,32,11,66.6852
 22,Josh Allen,QB,BUF,28.1,29,7,63.5819
 23,Derrick Henry,RB,BAL,16.4,17,-6,62.9125
 24,Omarion Hampton,RB,LAC,17.1,18,-6,62.9125
@@ -27,8 +27,8 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 26,Kenneth Walker III,RB,KC,22.5,22,-4,62.9125
 27,Breece Hall,RB,NYJ,30.1,33,6,62.9125
 28,Rashee Rice,WR,KC,27.4,27,-1,61.8771
-29,Brock Bowers,TE,LV,35.9,37,8,60.6339
-30,Jeremiyah Love,RB,ARI,22.6,23,-7,59.1721
+29,Jeremiyah Love,RB,ARI,22.6,23,-6,59.1721
+30,Brock Bowers,TE,LV,35.9,37,7,57.2721
 31,Drake Maye,QB,NE,63.3,65,34,57.0175
 32,Zay Flowers,WR,BAL,25.3,25,-7,54.8721
 33,Tee Higgins,WR,CIN,27.1,26,-7,54.8721
@@ -43,18 +43,18 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 42,Luther Burden III,WR,CHI,46.1,46,4,45.0942
 43,Jameson Williams,WR,DET,48.7,51,8,45.0942
 44,Jalen Hurts,QB,PHI,93.7,97,53,44.61
-45,Colston Loveland,TE,CHI,47.3,48,3,39.8722
-46,Josh Jacobs,RB,GB,28.4,31,-15,38.5129
-47,Javonte Williams,RB,DAL,35.8,36,-11,38.5129
-48,Travis Etienne Jr.,RB,NO,39.5,41,-7,38.5129
-49,Malik Nabers,WR,NYG,43.5,44,-5,38.3642
-50,Justin Herbert,QB,LAC,79.8,82,32,37.3754
-51,Tyler Warren,TE,IND,54.2,54,3,32.841
-52,DJ Moore,WR,BUF,64.9,67,15,32.8396
-53,Caleb Williams,QB,CHI,108.0,112,59,30.3625
-54,TreVeyon Henderson,RB,NE,57.8,59,5,29.7692
+45,Josh Jacobs,RB,GB,28.4,31,-14,38.5129
+46,Javonte Williams,RB,DAL,35.8,36,-10,38.5129
+47,Travis Etienne Jr.,RB,NO,39.5,41,-6,38.5129
+48,Malik Nabers,WR,NYG,43.5,44,-4,38.3642
+49,Justin Herbert,QB,LAC,79.8,82,33,37.3754
+50,Colston Loveland,TE,CHI,47.3,48,-2,36.5104
+51,DJ Moore,WR,BUF,64.9,67,16,32.8396
+52,Caleb Williams,QB,CHI,108.0,112,60,30.3625
+53,TreVeyon Henderson,RB,NE,57.8,59,6,29.7692
+54,Tyler Warren,TE,IND,54.2,54,0,29.4792
 55,Cam Skattebo,RB,NYG,37.4,40,-15,19.3725
-56,Harold Fannin Jr.,TE,CLE,69.1,69,13,18.3118
+56,Harold Fannin Jr.,TE,CLE,69.1,69,13,14.95
 57,Davante Adams,WR,LAR,40.6,42,-15,14.3638
 58,Mike Evans,WR,SF,49.3,53,-5,14.3638
 59,Rome Odunze,WR,CHI,54.2,55,-4,14.3638
@@ -64,59 +64,59 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 63,Marvin Harrison Jr.,WR,ARI,64.7,66,3,14.3638
 64,Courtland Sutton,WR,DEN,72.1,72,8,14.3638
 65,Alec Pierce,WR,IND,59.7,61,-4,14.2575
-66,Tucker Kraft,TE,GB,73.0,76,10,13.8951
+66,Tucker Kraft,TE,GB,73.0,76,10,10.5333
 67,Bucky Irving,RB,TB,46.2,47,-20,8.955
 68,Quinshon Judkins,RB,CLE,49.2,52,-16,8.955
 69,Joe Burrow,QB,CIN,47.6,49,-20,8.8321
 70,Brian Thomas Jr.,WR,JAX,84.2,86,16,7.5235
-71,Kyle Pitts Sr.,TE,ATL,84.4,87,16,6.8889
-72,D'Andre Swift,RB,CHI,47.7,50,-22,3.8825
-73,David Montgomery,RB,HOU,56.1,57,-16,3.8825
-74,Bhayshul Tuten,RB,JAX,60.4,62,-12,3.8825
-75,Jaylen Warren,RB,PIT,65.1,68,-7,3.8825
-76,Tony Pollard,RB,TEN,72.3,73,-3,3.8825
-77,Jadarian Price,RB,SEA,73.0,75,-2,3.8825
-78,Chuba Hubbard,RB,CAR,79.1,81,3,3.8825
-79,Sam LaPorta,TE,DET,72.9,74,-5,3.3618
-80,Travis Kelce,TE,KC,95.7,98,18,3.3618
-81,Michael Pittman Jr.,WR,PIT,70.7,70,-11,0.0
-82,Rhamondre Stevenson,RB,NE,70.9,71,-11,0.0
-83,Parker Washington,WR,JAX,73.5,77,-6,0.0
-84,Chris Godwin Jr.,WR,TB,78.9,80,-4,0.0
-85,Michael Wilson,WR,ARI,81.8,83,-2,0.0
-86,Jordyn Tyson,WR,NO,83.7,84,-2,0.0
-87,Josh Downs,WR,IND,85.0,88,1,0.0
-88,Jayden Daniels,QB,WAS,85.5,90,2,0.0
-89,RJ Harvey,RB,DEN,89.8,92,3,0.0
-90,George Kittle,TE,SF,107.0,111,21,0.0
-91,Jake Ferguson,TE,DAL,117.7,116,25,0.0
-92,Isaiah Likely,TE,NYG,137.5,136,44,0.0
-93,Dalton Kincaid,TE,BUF,137.5,137,44,0.0
-94,Rico Dowdle,RB,PIT,78.6,79,-15,-1.2333
-95,Kyle Monangai,RB,CHI,105.5,109,14,-1.2333
-96,Mark Andrews,TE,BAL,131.2,130,34,-2.3228
-97,Dallas Goedert,TE,PHI,128.5,124,27,-2.7972
-98,Jakobi Meyers,WR,JAX,96.6,99,1,-2.8629
-99,Aaron Jones Sr.,RB,MIN,90.9,93,-6,-2.9843
-100,J.K. Dobbins,RB,DEN,93.4,96,-4,-2.9843
-101,Kenny Gainwell,RB,TB,99.6,102,1,-2.9843
-102,Rachaad White,RB,WAS,100.7,104,2,-2.9843
-103,Blake Corum,RB,LAR,119.8,118,15,-2.9843
-104,Tyrone Tracy Jr.,RB,NYG,150.2,148,44,-2.9843
-105,Jacory Croskey-Merritt,RB,WAS,121.8,121,16,-3.6223
-106,Jordan Mason,RB,MIN,125.6,122,16,-3.6223
-107,Woody Marks,RB,HOU,146.3,143,36,-3.6223
-108,Dylan Sampson,RB,CLE,150.0,147,39,-3.6223
+71,D'Andre Swift,RB,CHI,47.7,50,-21,3.8825
+72,David Montgomery,RB,HOU,56.1,57,-15,3.8825
+73,Bhayshul Tuten,RB,JAX,60.4,62,-11,3.8825
+74,Jaylen Warren,RB,PIT,65.1,68,-6,3.8825
+75,Tony Pollard,RB,TEN,72.3,73,-2,3.8825
+76,Jadarian Price,RB,SEA,73.0,75,-1,3.8825
+77,Chuba Hubbard,RB,CAR,79.1,81,4,3.8825
+78,Kyle Pitts Sr.,TE,ATL,84.4,87,9,3.5271
+79,Michael Pittman Jr.,WR,PIT,70.7,70,-9,0.0
+80,Rhamondre Stevenson,RB,NE,70.9,71,-9,0.0
+81,Sam LaPorta,TE,DET,72.9,74,-7,0.0
+82,Parker Washington,WR,JAX,73.5,77,-5,0.0
+83,Chris Godwin Jr.,WR,TB,78.9,80,-3,0.0
+84,Michael Wilson,WR,ARI,81.8,83,-1,0.0
+85,Jordyn Tyson,WR,NO,83.7,84,-1,0.0
+86,Josh Downs,WR,IND,85.0,88,2,0.0
+87,Jayden Daniels,QB,WAS,85.5,90,3,0.0
+88,RJ Harvey,RB,DEN,89.8,92,4,0.0
+89,Travis Kelce,TE,KC,95.7,98,9,0.0
+90,Rico Dowdle,RB,PIT,78.6,79,-11,-1.2333
+91,Kyle Monangai,RB,CHI,105.5,109,18,-1.2333
+92,Jakobi Meyers,WR,JAX,96.6,99,7,-2.8629
+93,Aaron Jones Sr.,RB,MIN,90.9,93,0,-2.9843
+94,J.K. Dobbins,RB,DEN,93.4,96,2,-2.9843
+95,Kenny Gainwell,RB,TB,99.6,102,7,-2.9843
+96,Rachaad White,RB,WAS,100.7,104,8,-2.9843
+97,Blake Corum,RB,LAR,119.8,118,21,-2.9843
+98,Tyrone Tracy Jr.,RB,NYG,150.2,148,50,-2.9843
+99,George Kittle,TE,SF,107.0,111,12,-3.3618
+100,Jake Ferguson,TE,DAL,117.7,116,16,-3.3618
+101,Isaiah Likely,TE,NYG,137.5,136,35,-3.3618
+102,Dalton Kincaid,TE,BUF,137.5,137,35,-3.3618
+103,Jacory Croskey-Merritt,RB,WAS,121.8,121,18,-3.6223
+104,Jordan Mason,RB,MIN,125.6,122,18,-3.6223
+105,Woody Marks,RB,HOU,146.3,143,38,-3.6223
+106,Dylan Sampson,RB,CLE,150.0,147,41,-3.6223
+107,Mark Andrews,TE,BAL,131.2,130,23,-5.6846
+108,Dallas Goedert,TE,PHI,128.5,124,16,-6.159
 109,Wan'Dale Robinson,WR,TEN,89.1,91,-18,-10.0389
 110,Quentin Johnston,WR,LAC,96.8,100,-10,-10.0389
 111,Makai Lemon,WR,PHI,106.6,110,-1,-10.0389
-112,Juwan Johnson,TE,NO,154.8,156,44,-10.2994
-113,Zach Charbonnet,RB,SEA,156.1,159,46,-10.4969
-114,Jayden Reed,WR,GB,84.0,85,-29,-13.1278
-115,Jordan Addison,WR,MIN,93.0,94,-21,-13.1278
-116,Ricky Pearsall,WR,SF,100.7,103,-13,-13.1278
-117,Khalil Shakir,WR,BUF,101.8,106,-11,-13.1278
-118,Jayden Higgins,WR,HOU,121.4,120,2,-13.1278
+112,Zach Charbonnet,RB,SEA,156.1,159,47,-10.4969
+113,Jayden Reed,WR,GB,84.0,85,-28,-13.1278
+114,Jordan Addison,WR,MIN,93.0,94,-20,-13.1278
+115,Ricky Pearsall,WR,SF,100.7,103,-12,-13.1278
+116,Khalil Shakir,WR,BUF,101.8,106,-10,-13.1278
+117,Jayden Higgins,WR,HOU,121.4,120,3,-13.1278
+118,Juwan Johnson,TE,NO,154.8,156,38,-13.6613
 119,Dak Prescott,QB,DAL,59.3,60,-59,-16.9933
 120,Patrick Mahomes,QB,KC,75.3,78,-42,-16.9933
 121,Trevor Lawrence,QB,JAX,85.3,89,-32,-16.9933
@@ -155,8 +155,8 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 154,Isaac TeSlaa,WR,DET,169.4,179,25,-32.7492
 155,Darius Slayton,WR,NYG,170.8,180,25,-32.7492
 156,Isiah Pacheco,RB,DET,157.8,162,6,-33.3209
-157,Chig Okonkwo,TE,WAS,169.4,178,21,-34.1706
-158,Jordan Love,QB,GB,131.0,129,-29,-37.286
+157,Jordan Love,QB,GB,131.0,129,-28,-37.286
+158,Chig Okonkwo,TE,WAS,169.4,178,20,-37.5324
 159,Jonathon Brooks,RB,CAR,126.5,123,-36,-37.9555
 160,Chris Rodriguez Jr.,RB,JAX,151.5,153,-7,-37.9555
 161,Alvin Kamara,RB,NO,153.4,154,-7,-37.9555
@@ -166,13 +166,13 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 165,Brian Robinson Jr.,RB,ATL,164.9,175,10,-42.6826
 166,Matthew Stafford,QB,LAR,103.3,107,-59,-45.0771
 167,Tyler Shough,QB,NO,151.2,150,-17,-45.0771
-168,Hunter Henry,TE,NE,145.6,141,-27,-50.1528
-169,Kenyon Sadiq,TE,NYJ,151.2,152,-17,-50.1528
-170,T.J. Hockenson,TE,MIN,154.9,157,-13,-50.1528
-171,Brenton Strange,TE,JAX,155.6,158,-13,-50.1528
-172,Oronde Gadsden,TE,LAC,158.8,164,-8,-50.1528
-173,Dalton Schultz,TE,HOU,173.0,182,9,-50.1528
-174,Kyler Murray,QB,MIN,150.5,149,-25,-50.48
+168,Kyler Murray,QB,MIN,150.5,149,-19,-50.48
+169,Hunter Henry,TE,NE,145.6,141,-28,-53.5146
+170,Kenyon Sadiq,TE,NYJ,151.2,152,-18,-53.5146
+171,T.J. Hockenson,TE,MIN,154.9,157,-14,-53.5146
+172,Brenton Strange,TE,JAX,155.6,158,-14,-53.5146
+173,Oronde Gadsden,TE,LAC,158.8,164,-9,-53.5146
+174,Dalton Schultz,TE,HOU,173.0,182,8,-53.5146
 175,Jordan James,RB,SF,144.6,139,-36,-63.6933
 176,Jaydon Blue,RB,DAL,146.4,144,-32,-63.6933
 177,Jonah Coleman,RB,DEN,173.1,183,6,-63.6933

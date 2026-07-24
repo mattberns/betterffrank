@@ -5,18 +5,18 @@ market ADP and tie/beat FantasyPros ECR, evaluated on draft value (VORP),
 walk-forward with zero leakage. Protocol (2026-07-23, authoritative: `reports/REPORT.md`): tune 2012-2017 (6 folds,
 spearman_vorp, frozen grid), test 2018-2025 (S=8, sign-flip floor 0.0039 —
 significance at 0.05 is reachable). Current standing (51-feature model,
-offset-log vs_adp, drafted-slot VORP curve, QB8 streaming replacement):
-model 0.5193 / ECR 0.5139 / ADP 0.4984 mean spearman_vorp; **beats ADP
-+0.0209 (7/8, p_one = 0.023 — CERTIFIED at 0.05, two-sided 0.047); edges ECR
-+0.0054 (6/8, p_one = 0.164, positive but not yet significant)** — the primary
+offset-log vs_adp, drafted-slot VORP curve, QB8+TE8 streaming replacement):
+model 0.5233 / ECR 0.5179 / ADP 0.5028 mean spearman_vorp; **beats ADP
++0.0206 (7/8, p_one = 0.016 — CERTIFIED at 0.05, two-sided 0.031); edges ECR
++0.0054 (7/8, p_one = 0.152, positive but not yet significant)** — the primary
 benchmark is ECR. Integrity ledger: 2018-2020 briefly served as tune folds
 during the 2026-07-23 protocol work before moving to test (all selections
 re-derived from scratch on 2012-2017; they reproduced exactly). Test-set
-looks: FOUR on 2026-07-23, TWO on 2026-07-24 (SIX total) — count future
-looks, keep them rare. The two 2026-07-24 looks were a-priori data-corrections
+looks: FOUR on 2026-07-23, THREE on 2026-07-24 (SEVEN total) — count future
+looks, keep them rare. The three 2026-07-24 looks were a-priori data-corrections
 to the VORP conversion, each tune-window-validated before one test look:
-(1) finish-rank → drafted-slot curve, (2) QB12 → QB8 streaming replacement
-(derived by `bff/streaming.py`; see "The metric"). Same-day history (07-23):
+(1) finish-rank → drafted-slot curve, (2) QB12 → QB8 and (3) TE12 → TE8
+streaming replacements (derived by `bff/streaming.py`; see "The metric"). Same-day history (07-23):
 ECR window widened to 2015-2025 via Wayback backfill (`bff/ecr_wayback.py`);
 feature expansion 40 → 51. All current numbers and methodology live in
 `reports/REPORT.md` (the ONLY report file — no versioned reports).
@@ -52,17 +52,22 @@ scikit-learn. Never `git commit` or `git push` unless the user asks.
   board. Cross-position position MIX on any board is a pure function of this
   curve (the model sets only within-position order), so this is the lever for
   positional over/under-valuation, not a per-position hand fudge.
-- **QB replacement is QB8, not QB12** (`REPL_RANKS` in `bff/backtest.py`, set
-  2026-07-24). In a 1-QB league you stream QBs, so the real fallback beats the
-  12th-best QB's season. `bff/streaming.py` simulates form-streaming the free
-  pool on the tune window → effective replacement ~QB6-9 (noisy, owned-pool
-  dependent); QB8 is the shipped central estimate, gated on the tune window
-  (held the ECR edge, kept a positive ADP edge) before one test look. It fixed
-  the QB block (Herbert QB5 fell from board #39 to #50; first QB #17 → #22) and
-  certified the ADP claim. RB/WR/TE stay 30/36/12. The QB curve plateaus
-  QB10-12, so only a replacement ≤ QB8 moves the board — don't set QB9/10
-  expecting an effect. (Its sibling, a BEER man-games replacement, was REJECTED
-  — see Rules.)
+- **Replacement is STREAMING-AWARE for QB and TE; roster-demand for RB/WR**
+  (`REPL_RANKS` in `bff/backtest.py`, set 2026-07-24). Philosophy: QB and TE
+  are streamable in a 1-QB/1-TE league (you fill a punted slot off waivers each
+  week), so replacement beats the last starter's season → QB8, TE8 (not
+  QB12/TE12). RB and WR are NOT streamable (scarcity is real) → stay at
+  roster-demand depth RB30/WR36. `bff/streaming.py` derives QB/TE by
+  form-streaming the free pool on the tune window (QB sim ~QB6-9; TE sim central
+  ~TE5-6 but optimistic for the thin TE pool). Each was gated on the tune window
+  (held the ECR edge, kept a positive ADP edge) before one test look. QB8 fixed
+  the over-valued QB block (Herbert QB5 #39 → #50; first QB #17 → #22) and
+  certified the ADP claim; **TE8 is deliberately conservative** — the TE curve
+  plateaus TE10-12 so TE8 barely moves the board (McBride #21, Bowers #30
+  stay), nudging the metric without deflating scarce elite TEs (TE5-6 would).
+  Only a replacement ≤ QB8 / ≤ TE8 moves the board past the plateau — don't set
+  QB9/TE9 expecting an effect. (The sibling BEER man-games replacement for
+  RB/WR was REJECTED — see Rules.)
 
 ## Anchor and vs_adp
 
@@ -116,7 +121,7 @@ scikit-learn. Never `git commit` or `git push` unless the user asks.
   anchor with `vs_adp` = 0, and the CLI prints a warning.
 - All models AND baselines go through the same VORP conversion
   (`bff.model.to_vorp` over `bff/vorp.py`'s leakage-safe drafted-slot curve;
-  replacement ranks QB8/RB30/WR36/TE12). Never score a baseline on raw
+  replacement ranks QB8/RB30/WR36/TE8). Never score a baseline on raw
   -adp/-ecr.
 
 ## Commands and stable artifact names
@@ -134,7 +139,7 @@ uv run python -m bff.redzone_features      # <- data/raw/pbp/ (nflverse, 2010-20
 uv run python -m bff.situation_features    # <- data/raw/{snaps,injuries,contracts,vegas}/
 uv run python -m bff.vegas_wayback         # one-time Wayback scrape (needs network; cached after)
 
-# QB streaming baseline derivation (tune window ONLY; justifies REPL_RANKS QB8)
+# QB/TE streaming baseline derivation (tune window ONLY; justifies REPL_RANKS QB8/TE8)
 uv run python -m bff.streaming
 
 # candidate-feature selection (tune window 2012-2017 ONLY; never the test set)
@@ -170,7 +175,7 @@ uv run python -m bff.site --refresh    # rerun model + backtests, then render
 | `bff.model --baselines` | `data/processed/preds_adp.parquet`, `preds_ecr.parquet` |
 | `bff.model --season 2026` | `data/processed/preds_model_2026.parquet` (185 rows), `reports/rankings_2026.csv`, `reports/steals_2026.csv` |
 | `bff.vona` | `reports/vona_2026.csv` (150 rows) + prints the 12-seat snake-turn matrix |
-| `bff.streaming` | stdout only (tune-window QB streaming equiv-rank table; derivation behind QB8) |
+| `bff.streaming` | stdout only (tune-window QB streaming equiv-rank table; derivation behind QB8/TE8) |
 | `bff.backtest <preds> --name <n>` | `reports/scores_<n>.csv` |
 | `bff.compare A B` | stdout only (per-season deltas + exact sign-flip p-values) |
 
