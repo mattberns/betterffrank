@@ -1,9 +1,10 @@
-"""Context data for v2 features: draft picks, rosters, week-1 coaches, team volume, team QBs.
+"""Context data for the context features: draft picks, rosters, week-1 coaches, team volume, team QBs.
 
 Raw inputs (fetched from nflverse releases; see fetch commands in docstring of `main`):
-    data/raw/context/draft_picks.parquet   (nflverse draft_picks release; drafts 1980-2026)
-    data/raw/context/roster_YYYY.parquet   (nflverse rosters release; 2010-2026)
-    data/raw/context/games.csv             (nflverse schedules release; 1999-2026, incl. coaches)
+    data/raw/context/draft_picks.parquet          (nflverse draft_picks release; drafts 1980-2026)
+    data/raw/context/roster_YYYY.parquet          (nflverse rosters release; 2010-2026)
+    data/raw/context/roster_weekly_YYYY.parquet   (nflverse weekly_rosters release; 2011-2025)
+    data/raw/context/games.csv                    (nflverse schedules release; 1999-2026, incl. coaches)
 
 Normalized outputs (all team codes canonicalized via `norm_team`):
     data/processed/ctx_draft_picks.parquet
@@ -14,7 +15,16 @@ Normalized outputs (all team codes canonicalized via `norm_team`):
     data/processed/ctx_rosters.parquet
         season, team, gsis_id, position, name, status
         Seasons 2010-2026, one row per (season, team, gsis_id) (dedup keeps
-        first). 2026 is the offseason roster snapshot (preseason-known).
+        first). FULL-SEASON membership for 2010-2025 (a midseason pickup is a
+        member) — in-season information for season t; safe only for t-1
+        lookups. 2026 is the offseason roster snapshot (preseason-known).
+    data/processed/ctx_rosters_week1.parquet
+        season, team, gsis_id, position, name, status
+        Preseason-safe season-t membership. Seasons 2011-2025 from the weekly
+        rosters release: each team's min-REG-week (= week 1 except
+        postponements) roster, statuses CUT/RET excluded (not with the club;
+        IR/PUP/opt-outs kept — usually preseason-known and priced into ADP).
+        2026 copied verbatim from ctx_rosters (already a July snapshot).
     data/processed/ctx_week1_coaches.parquet
         season, team, week1_coach
         Seasons 2010-2026, 32 teams/season (30/31 before 2026 expansion?  no:
@@ -35,9 +45,13 @@ Normalized outputs (all team codes canonicalized via `norm_team`):
         season's ADP pool (preseason-known; safe for season t). Seasons
         2010-2025 for primary, 2010-2026 for expected.
 
-Leakage notes: ctx_draft_picks, ctx_rosters, ctx_week1_coaches, and the
-expected_qb columns are preseason facts for season t. ctx_team_volume and
-primary_qb are season-t outcomes; only join them as t-1 (or earlier) features.
+Leakage notes: ctx_draft_picks, ctx_rosters_week1, ctx_week1_coaches, and the
+expected_qb columns are preseason facts for season t. ctx_rosters (full-season
+for 2010-2025), ctx_team_volume, and primary_qb are season-t information; only
+join them as t-1 (or earlier) features. Timing caveat on ctx_rosters_week1:
+week-1 rosters embed late-August cutdown news that summer ADP predates —
+preseason facts, but slightly later-informed than the ADP snapshot, and the
+2026 July snapshot is earlier-informed than the backtest week-1 snapshots.
 """
 
 from __future__ import annotations
@@ -132,6 +146,48 @@ def build_rosters() -> pl.DataFrame:
         .sort("season", "team")
     )
     out.write_parquet(PROC / "ctx_rosters.parquet")
+    return out
+
+
+def build_rosters_week1(rosters: pl.DataFrame) -> pl.DataFrame:
+    """Preseason-safe season-t roster membership (see module docstring).
+
+    2011-2025 from roster_weekly_YYYY.parquet: per team, the min REG week's
+    rows (= week 1 except postponements), excluding CUT/RET statuses. 2026 is
+    copied from the full-season build (already a July offseason snapshot).
+    Same schema as ctx_rosters; one row per (season, team, gsis_id).
+    """
+    frames = []
+    for y in range(2011, 2026):
+        r = pl.read_parquet(CTX / f"roster_weekly_{y}.parquet")
+        frames.append(
+            r.filter(pl.col("game_type") == "REG")
+            .select(
+                pl.lit(y, dtype=pl.Int32).alias("season"),
+                norm_team("team").alias("team"),
+                "gsis_id",
+                "position",
+                pl.col("full_name").alias("name"),
+                "status",
+                pl.col("week").cast(pl.Int32),
+            )
+            .filter(pl.col("week") == pl.col("week").min().over("team"))
+            .drop("week")
+        )
+    out = pl.concat(frames).filter(
+        pl.col("gsis_id").is_not_null()
+        & ~pl.col("status").is_in(["CUT", "RET"])
+    )
+    out = pl.concat([
+        out,
+        rosters.filter(pl.col("season") == 2026).select(out.columns),
+    ])
+    out = (
+        out.unique(subset=["season", "team", "gsis_id"], keep="first")
+        # full sort key -> byte-stable output across rebuilds
+        .sort("season", "team", "gsis_id")
+    )
+    out.write_parquet(PROC / "ctx_rosters_week1.parquet")
     return out
 
 
@@ -250,7 +306,9 @@ def build_team_qb() -> pl.DataFrame:
     qb = (
         pl.concat(frames, how="vertical_relaxed")
         .with_columns(norm_team("recent_team").alias("team"))
-        .sort("attempts", descending=True)
+        # gsis_id tiebreak: exact attempt ties exist (2012 SF: Smith and
+        # Kaepernick, 218 each) and would otherwise flip run-to-run
+        .sort(["attempts", "player_id"], descending=[True, False])
         .group_by("season", "team", maintain_order=True)
         .agg(
             pl.col("player_id").first().alias("primary_qb_gsis"),
@@ -291,6 +349,8 @@ def main() -> None:
       https://github.com/nflverse/nflverse-data/releases/download/draft_picks/draft_picks.parquet
     for y in $(seq 2010 2026); do curl -sL -o data/raw/context/roster_$y.parquet \\
       https://github.com/nflverse/nflverse-data/releases/download/rosters/roster_$y.parquet; done
+    for y in $(seq 2011 2025); do curl -sL -o data/raw/context/roster_weekly_$y.parquet \\
+      https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_$y.parquet; done
     curl -sL -o data/raw/context/games.csv \\
       https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv
     """
@@ -298,9 +358,12 @@ def main() -> None:
         "ARI ATL BAL BUF CAR CHI CIN CLE DAL DEN DET GB HOU IND JAX KC LAC LAR "
         "LV MIA MIN NE NO NYG NYJ PHI PIT SEA SF TB TEN WAS".split()
     )
+    rosters = build_rosters()
+    rosters_w1 = build_rosters_week1(rosters)
     for label, df, team_col in [
         ("draft_picks", build_draft_picks(), "team"),
-        ("rosters", build_rosters(), "team"),
+        ("rosters", rosters, "team"),
+        ("rosters_week1", rosters_w1, "team"),
         ("week1_coaches", build_week1_coaches(), "team"),
         ("team_volume", build_team_volume(), "team"),
         ("team_qb", build_team_qb(), "team"),
@@ -312,6 +375,18 @@ def main() -> None:
             f"{label}: {df.height} rows, seasons {seasons.min()}-{seasons.max()}, "
             f"teams/season(last)={df.filter(pl.col('season') == seasons.max())[team_col].n_unique()}"
         )
+
+    # week-1 snapshot gates: full league every season, inspectable statuses
+    per = rosters_w1.group_by("season").agg(
+        pl.col("team").n_unique().alias("teams"), pl.len().alias("rows")
+    ).sort("season")
+    short = per.filter(pl.col("teams") != 32)
+    assert short.height == 0, f"rosters_week1: seasons without 32 teams: {short}"
+    print("rosters_week1 rows/season:",
+          {r["season"]: r["rows"] for r in per.to_dicts()})
+    status = rosters_w1.group_by("season", "status").len().sort("season", "status")
+    with pl.Config(tbl_rows=-1):
+        print(status.pivot(on="status", index="season", values="len").sort("season"))
 
 
 if __name__ == "__main__":

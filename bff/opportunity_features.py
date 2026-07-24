@@ -1,4 +1,4 @@
-"""Weekly-opportunity features for v3, keyed (season, gsis_id), seasons 2011-2026.
+"""Weekly-opportunity features, keyed (season, gsis_id), seasons 2011-2026.
 
 One row per season-t ADP-pool player (QB/RB/WR/TE from data/processed/adp.parquet).
 Every feature for target season t is computed from season t-1 REGULAR-SEASON weekly

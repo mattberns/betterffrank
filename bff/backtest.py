@@ -29,7 +29,7 @@ PROC = ROOT / "data" / "processed"
 REPORTS = ROOT / "reports"
 
 POSITIONS = ("QB", "RB", "WR", "TE")
-MEAN_SEASONS = range(2015, 2026)  # 2015-2025 inclusive
+MEAN_SEASONS = range(2018, 2026)  # 2018-2025 inclusive (test set, S=8)
 
 # replacement rank per position (1QB league): pool player at this actual-points
 # rank within position defines replacement level for VORP
@@ -193,17 +193,6 @@ def run(preds_path: str, name: str) -> pl.DataFrame:
     with pl.Config(tbl_rows=-1, tbl_cols=-1, float_precision=4, tbl_width_chars=200):
         print(wide)
     return scores
-
-
-def make_baselines() -> None:
-    adp = pl.read_parquet(PROC / "adp.parquet")
-    ecr = pl.read_parquet(PROC / "ecr.parquet")
-    adp.filter(pl.col("gsis_id").is_not_null()).select(
-        "season", "gsis_id", (-pl.col("adp")).alias("score")
-    ).write_parquet(PROC / "preds_adp.parquet")
-    ecr.filter(pl.col("gsis_id").is_not_null()).select(
-        "season", "gsis_id", (-pl.col("ecr")).alias("score")
-    ).write_parquet(PROC / "preds_ecr.parquet")
 
 
 def main() -> None:

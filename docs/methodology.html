@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%231a1a1a%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2219%22 font-family=%22Georgia,serif%22 fill=%22%23fff%22 text-anchor=%22middle%22%3Eb%3C/text%3E%3C/svg%3E">
+<title>betterffrank — methods</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff; --text:#1a1a1a; --muted:#5f5f5f; --faint:#8a8a8a;
+  --rule:#dcdcdc; --rule-strong:#222; --link:#234a6b;
+  --pos:#2c6e49; --neg:#9b2226; --hi:#f6f6f3;
+  --serif:Georgia,Cambria,"Times New Roman",Times,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --wrap:840px;
+}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--serif);font-size:16px;line-height:1.55;color:var(--text);background:var(--bg)}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+a{color:var(--link);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:var(--mono);font-size:.85em}
+sup{font-size:.68em;line-height:0}
+
+.masthead{border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--bg);z-index:20}
+.masthead-inner{display:flex;align-items:baseline;gap:20px;padding:11px 0;flex-wrap:wrap}
+.rubric{font-family:var(--mono);font-size:13px;font-weight:600}
+.rubric a{color:var(--text)}
+nav.doc{margin-left:auto;display:flex;gap:18px;font-family:var(--sans);font-size:13px}
+nav.doc a{color:var(--muted)}
+nav.doc a.active{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+
+.titleblock{padding:30px 0 10px;border-bottom:1px solid var(--rule-strong);margin-bottom:22px}
+h1.title{font-size:26px;font-weight:700;letter-spacing:-.01em;line-height:1.18}
+.subtitle{font-size:15px;color:var(--muted);margin-top:6px}
+.docmeta{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:9px;line-height:1.5}
+
+main{padding:6px 0 30px}
+section{margin:26px 0}
+body{counter-reset:sec}
+h2{font-size:17px;font-weight:700;margin-bottom:9px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+h2.numbered::before{counter-increment:sec;content:counter(sec) ". ";color:var(--faint)}
+h3{font-size:14px;font-weight:700;margin:16px 0 5px}
+p{margin-bottom:11px}
+p.note{font-size:14px;color:var(--muted)}
+.small{font-size:13px}
+ul,ol{margin:0 0 12px 20px}
+li{margin-bottom:5px}
+ol.method li b{font-weight:700}
+
+.cap{font-size:12.5px;color:var(--muted);margin:2px 0 5px}
+.cap b{color:var(--text);font-weight:700}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:14px;margin:2px 0}
+table.tbl th{font-family:var(--sans);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:5px 10px;border-bottom:1px solid var(--rule-strong)}
+table.tbl th.num{text-align:right}
+table.tbl td{padding:4px 10px;border-bottom:1px solid var(--rule)}
+table.tbl tbody tr:last-child td{border-bottom:1px solid var(--rule-strong)}
+table.tbl .num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.tbl tr.summary td{font-weight:700}
+.dpos{color:var(--pos)}.dneg{color:var(--neg)}.dflat{color:var(--faint)}
+
+/* rankings controls */
+.controls{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;margin:12px 0 6px;font-family:var(--sans);font-size:13px}
+.controls input[type=search],.controls select{font-family:var(--mono);font-size:13px;padding:4px 7px;border:1px solid var(--rule);background:var(--bg);color:var(--text);border-radius:0}
+.controls input[type=search]{min-width:190px}
+.posfilter button{font-family:var(--mono);font-size:13px;background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 5px}
+.posfilter button:hover{color:var(--text)}
+.posfilter button.active{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.toggle{display:inline-flex;align-items:center;gap:6px;color:var(--muted);cursor:pointer}
+.count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--faint)}
+
+.tablewrap{overflow-x:auto}
+table.data{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+table.data th{font-family:var(--sans);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule-strong);white-space:nowrap}
+table.data th.num{text-align:right}
+table.data td{padding:5px 10px;border-bottom:1px solid var(--rule);vertical-align:baseline}
+table.data .num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr.row{cursor:pointer}
+tr.row:hover{background:var(--hi)}
+tr.row.open{background:var(--hi)}
+.rk{font-family:var(--mono);color:var(--faint)}
+.pname{font-weight:700}
+.tpos{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.chev{font-family:var(--mono);color:var(--faint);font-size:11px;margin-right:2px}
+.steal{color:var(--neg);font-family:var(--mono)}
+
+.detail td{background:var(--hi);padding:0}
+.detail-inner{padding:12px 12px 16px}
+.reason{font-size:14px;margin-bottom:9px}
+.decomp{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.decomp b{color:var(--text)}
+.attr-cap{font-family:var(--sans);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px}
+
+/* diverging bar (attribution + coefficients) */
+.dbar-head{display:grid;grid-template-columns:194px 56px 1fr 54px;gap:10px;font-family:var(--sans);font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);padding-bottom:3px}
+.dbar-head span:nth-child(1),.dbar-head span:nth-child(2),.dbar-head span:nth-child(4){text-align:right}
+.dbar-row{display:grid;grid-template-columns:194px 56px 1fr 54px;gap:10px;align-items:center;padding:2px 0}
+.dbar-label{font-size:13px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dbar-raw{font-family:var(--mono);font-size:12px;text-align:right;color:var(--muted)}
+.dbar-track{position:relative;height:9px;background:#ececec}
+.dbar-center{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--rule-strong)}
+.dbar-fill{position:absolute;top:0;bottom:0}
+.dbar-fill.pos{left:50%;background:var(--pos)}
+.dbar-fill.neg{right:50%;background:var(--neg)}
+.dbar-val{font-family:var(--mono);font-size:12px;text-align:right}
+.dbar-val.pos{color:var(--pos)}.dbar-val.neg{color:var(--neg)}
+
+/* features page */
+.fgroup{margin:14px 0}
+.fgroup h3{border-bottom:1px solid var(--rule);padding-bottom:3px;color:var(--muted);font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.frow{padding:4px 0}
+.frow .fhead{display:grid;grid-template-columns:210px 1fr 54px;gap:10px;align-items:center}
+.flabel{font-size:13px;text-align:right}
+.fblurb{font-size:12px;color:var(--faint);grid-column:1/-1;text-align:left;margin:1px 0 0 0}
+
+.foot{border-top:1px solid var(--rule);margin-top:36px;padding:14px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+
+@media(max-width:640px){
+  .dbar-row,.dbar-head{grid-template-columns:108px 44px 1fr 46px}
+  .frow .fhead{grid-template-columns:120px 1fr 46px}
+  .dbar-label,.flabel{font-size:12px}
+  h1.title{font-size:22px}
+}
+</style>
+</head>
+<body>
+<header class="masthead"><div class="wrap masthead-inner"><span class="rubric"><a href="index.html">betterffrank</a></span><nav class="doc"><a href="index.html" class="">Results</a><a href="rankings.html" class="">Rankings</a><a href="features.html" class="">Features</a><a href="methodology.html" class="active">Methods</a></nav></div></header><main><div class="wrap"><div class="titleblock"><h1 class="title">Methods</h1><p class="subtitle">pipeline, leakage controls, tuning, limitations</p></div><section><h2 class="numbered">Result</h2><p class="note">On the 2018-2025 test set the model ties ECR: mean 0.498 vs 0.496 (Delta +0.002); one-sided sign-flip p = 0.3945; n = 8 seasons.</p></section><section><h2 class="numbered">Pipeline</h2><ol class="method" id="method-steps"></ol></section><section><h2 class="numbered">Leakage controls</h2><ul class="small"><li>Walk-forward: season <i>t</i> trains on seasons &lt; <i>t</i> and uses only season-<i>t</i> preseason facts (ADP, ECR, April draft, week-1 rosters and coaches). Never season-<i>t</i> outcomes.</li><li>Roster membership from a week-1 snapshot, not a last-observed-team table (the latter leaks in-season trades; worth about 0.003 mean Spearman).</li><li>The VORP curve is built from prior seasons only, and every baseline goes through the same conversion; no baseline is scored on raw rank.</li></ul></section><section><h2 class="numbered">Tuning</h2><p class="note small">Ridge strength and residual shrink are chosen on an earlier walk-forward window, on a frozen grid, re-derived deterministically each run (no stored parameters). Evaluation seasons are never touched for tuning or feature selection. Current: alpha = 100, shrink = 0.3.</p></section><section><h2 class="numbered">Limitations</h2><ul class="small" id="limitations"></ul></section></div></main><footer class="foot"><div class="wrap">betterffrank &middot; 2026 preseason &middot; 12-team PPR redraft &middot; walk-forward VORP &middot; generated by <code>bff.site</code></div></footer><script>window.BFF_DATA={"meta":{"season":2026,"format":"12-team PPR redraft","alpha":100.0,"shrink":0.3,"n_players":185,"n_features":51},"method":[{"step":"Pool","text":"Season FFC ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."},{"step":"Market anchor","text":"log(ECR rank) when a preseason expert-consensus snapshot exists, else log(ADP rank); ordinally re-ranked per season."},{"step":"Implied expectation","text":"Per-position quadratic fit of season points on market rank, walk-forward, clamped monotone."},{"step":"Residual model","text":"Ridge over 51 standardized features (residual clipped +/-4)."},{"step":"VORP conversion","text":"Scores map through the historical points-by-rank curve to value over replacement (QB12/RB30/WR36/TE12)."},{"step":"Walk-forward","text":"Season t uses only seasons < t outcomes plus season-t preseason facts. No leakage."},{"step":"Tuning","text":"alpha, shrink chosen on an earlier walk-forward window, frozen grid, re-derived each run; eval seasons never touched."}],"limitations":["Test set is 8 seasons (2018-2025); the sign-flip one-sided power floor is 0.0039, so significance at 0.05 is reachable.","Hyperparameters are tuned on an earlier walk-forward window; fit to the current anchor configuration is untested by construction (alpha=100).","Some rookies run on partly or fully null-filled opportunity features.","Replacement levels fixed for 12-team 1-QB PPR; other formats shift the QB/TE placements."]};</script>
+<script>
+const D = window.BFF_DATA;
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function f3(x){return (x==null)?'--':x.toFixed(3);}
+function f4(x){return (x==null)?'--':x.toFixed(4);}
+function sgn(x,d){d=d==null?3:d;return (x>=0?'+':'')+x.toFixed(d);}
+function fmtRaw(x){if(x==null)return '';const a=Math.abs(x);return a>=100?x.toFixed(0):(a>=10?x.toFixed(1):x.toFixed(2));}
+function dcls(x){return x==null?'dflat':(x>0?'dpos':(x<0?'dneg':'dflat'));}
+// diverging green/red horizontal bar: label | raw value | bar | signed impact
+function dbar(label,value,maxAbs,raw){
+  const pct=maxAbs>0?Math.min(50,Math.abs(value)/maxAbs*50):0;
+  const cls=value>=0?'pos':'neg';
+  return '<div class="dbar-row"><div class="dbar-label" title="'+esc(label)+'">'+esc(label)+'</div>'+
+    '<div class="dbar-raw">'+fmtRaw(raw)+'</div>'+
+    '<div class="dbar-track"><div class="dbar-center"></div>'+
+    '<div class="dbar-fill '+cls+'" style="width:'+pct.toFixed(1)+'%"></div></div>'+
+    '<div class="dbar-val '+cls+'">'+sgn(value,3)+'</div></div>';
+}
+
+(function(){
+  document.getElementById('method-steps').innerHTML=D.method.map(m=>'<li><b>'+esc(m.step)+'.</b> '+esc(m.text)+'</li>').join('');
+  document.getElementById('limitations').innerHTML=D.limitations.map(x=>'<li>'+esc(x)+'</li>').join('');
+})();
+</script>
+</body>
+</html>

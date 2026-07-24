@@ -1,4 +1,4 @@
-"""Preseason context features for v2, keyed (season, gsis_id), seasons 2011-2026.
+"""Preseason context features, keyed (season, gsis_id), seasons 2011-2026.
 
 One row per season-t ADP-pool player (QB/RB/WR/TE, from data/processed/adp.parquet).
 Every feature is computable BEFORE season t kicks off. Timing rule per feature:
@@ -27,10 +27,17 @@ Every feature is computable BEFORE season t kicks off. Timing rule per feature:
                                  record from past volume (preseason + past outcomes).
 
 Caveats (weighed by audit):
-  * ctx_rosters is a full-season roster table for 2010-2025 (only 2026 is a true
-    offseason snapshot), so "departed" (vacated_*) is judged against everyone who
-    EVER appeared on the season-t roster; midseason pickups mildly understate
-    vacated shares, and midseason departures are not counted as vacated.
+  * Season-t roster membership (vacated_*, arriving_vet_usage, returning_*)
+    uses ctx_rosters_week1 — each team's week-1 REG roster (statuses CUT/RET
+    excluded; IR/PUP/2020-opt-outs kept as members, since those designations
+    are usually preseason-known and priced into ADP). 2026 is the July
+    offseason snapshot, slightly earlier-informed than backtest week-1
+    snapshots; week-1 rosters also embed late-August cutdown news that summer
+    ADP predates. Both are preseason facts, not outcome leakage.
+  * t-1 membership (arrivals' prevros) and the 2026 draftee gsis backfill stay
+    on ctx_rosters (season t-1 is concluded by preseason t; backfill is 2026-
+    only). ctx_rosters is a last-observed-team table — do NOT use it for
+    season-t membership.
   * 2025 team volume attributes traded players to a single recent_team.
   * position groups map FB/HB -> RB.
 
@@ -80,6 +87,9 @@ def load_inputs() -> dict[str, pl.DataFrame]:
     rosters = pl.read_parquet(PROC / "ctx_rosters.parquet").with_columns(
         pos_group().alias("pos_group")
     )
+    rosters_w1 = pl.read_parquet(PROC / "ctx_rosters_week1.parquet").with_columns(
+        pos_group().alias("pos_group")
+    )
     vol = pl.read_parquet(PROC / "ctx_team_volume.parquet").with_columns(
         pos_group().alias("pos_group")
     )
@@ -91,7 +101,7 @@ def load_inputs() -> dict[str, pl.DataFrame]:
     actuals = pl.read_parquet(PROC / "actuals.parquet")
     pids = pl.read_csv(RAW / "db_playerids.csv", null_values=["NA"], infer_schema_length=10000)
     return dict(
-        adp=adp, rosters=rosters, vol=vol, draft=draft,
+        adp=adp, rosters=rosters, rosters_w1=rosters_w1, vol=vol, draft=draft,
         teamqb=teamqb, coaches=coaches, actuals=actuals, pids=pids,
     )
 
@@ -131,14 +141,14 @@ def player_prior_usage(vol: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def vacated_by_team(vol: pl.DataFrame, rosters: pl.DataFrame) -> pl.DataFrame:
+def vacated_by_team(vol: pl.DataFrame, rosters_w1: pl.DataFrame) -> pl.DataFrame:
     """Per (season t, team): share of t-1 team targets/carries/receiving PPR that
-    belonged to players NOT on the team's season-t roster.
-    Timing: t-1 outcomes x season-t roster membership (preseason, full-season proxy)."""
+    belonged to players NOT on the team's season-t week-1 roster.
+    Timing: t-1 outcomes x season-t week-1 membership (preseason)."""
     prev = vol.with_columns((pl.col("season") + 1).alias("season_t")).filter(
         pl.col("season_t").is_in(list(SEASONS))
     )
-    ros = rosters.select(
+    ros = rosters_w1.select(
         pl.col("season").alias("season_t"), "team", "gsis_id",
         pl.lit(1).alias("on_roster_t"),
     )
@@ -155,12 +165,14 @@ def vacated_by_team(vol: pl.DataFrame, rosters: pl.DataFrame) -> pl.DataFrame:
     ).rename({"season_t": "season"})
 
 
-def arrivals(rosters: pl.DataFrame, usage: pl.DataFrame) -> pl.DataFrame:
-    """Rows: (season t, team, pos_group, gsis_id, vet_usage) for players newly on
-    the season-t roster (not on that team's t-1 roster) with prior t-1 NFL usage.
-    vet_usage = t-1 carry share for RB group, t-1 target share for WR/TE.
-    Timing: season-t roster (preseason) x t-1 usage (past)."""
-    cur = rosters.filter(
+def arrivals(rosters_w1: pl.DataFrame, rosters: pl.DataFrame,
+             usage: pl.DataFrame) -> pl.DataFrame:
+    """Rows: (season t, team, pos_group, gsis_id, vet_usage) for players on the
+    season-t WEEK-1 roster who were not on that team's t-1 roster, with prior
+    t-1 NFL usage. vet_usage = t-1 carry share for RB group, t-1 target share
+    for WR/TE. Timing: season-t week-1 membership (preseason) x t-1 roster
+    (concluded by preseason t) x t-1 usage (past)."""
+    cur = rosters_w1.filter(
         pl.col("season").is_in(list(SEASONS)) & pl.col("pos_group").is_in(FANTASY_POS)
     ).select("season", "team", "gsis_id", "pos_group")
     prevros = rosters.select(
@@ -209,16 +221,17 @@ def draft_rows(draft: pl.DataFrame, rosters: pl.DataFrame) -> pl.DataFrame:
 
 def build(inputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     adp, rosters, vol = inputs["adp"], inputs["rosters"], inputs["vol"]
+    rosters_w1 = inputs["rosters_w1"]
     pool = build_pool(adp)
     usage = player_prior_usage(vol)
 
     feat = pool.with_columns(norm_name().alias("nn"))
 
     # --- 1. vacated shares (season-t team; rookies naturally use the team they join)
-    feat = feat.join(vacated_by_team(vol, rosters), on=["season", "team"], how="left")
+    feat = feat.join(vacated_by_team(vol, rosters_w1), on=["season", "team"], how="left")
 
     # --- 2. arriving veteran competition (same position group, excluding self)
-    arr = arrivals(rosters, usage)
+    arr = arrivals(rosters_w1, rosters, usage)
     arr_team = arr.group_by("season", "team", "pos_group").agg(
         pl.col("vet_usage").sum().alias("arr_sum")
     )
@@ -336,13 +349,14 @@ def build(inputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     )
     feat = feat.join(team_prev, on=["season", "team"], how="left")
 
-    # returning same-position-group teammates' t-1 usage on the season-t team
+    # returning same-position-group teammates' t-1 usage on the season-t
+    # week-1 roster
     ret = (
         vol.filter(pl.col("pos_group").is_in(FANTASY_POS))
         .with_columns((pl.col("season") + 1).alias("season_t"))
         .join(
-            rosters.select(pl.col("season").alias("season_t"), "team", "gsis_id",
-                           pl.lit(1).alias("on_roster_t")),
+            rosters_w1.select(pl.col("season").alias("season_t"), "team", "gsis_id",
+                              pl.lit(1).alias("on_roster_t")),
             on=["season_t", "team", "gsis_id"], how="inner",
         )
         .select(

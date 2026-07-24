@@ -13,8 +13,20 @@ wheels/
 .claude/
 
 # Third-party commercial data — not redistributed (see README "Data").
-# FantasyPros ECR scrape archive + FantasyPros ADP export. The derived
-# data/processed/ecr.parquet IS committed, so the pipeline reproduces from
-# there without these raw sources.
+# FantasyPros ECR scrape archive, ADP export, and 2026 draft-rankings export.
+# The derived data/processed/ecr.parquet IS committed, so the pipeline
+# reproduces from there without these raw sources.
 data/raw/db_fpecr.parquet
+data/raw/db_fpecr_wayback.parquet
+data/raw/wayback_ppr/
 data/raw/adp/fantasypros_2025_adp.csv
+data/raw/FantasyPros_2026_Draft_ALL_Rankings.csv
+
+# Large nflverse raw pulls — reproducible via fetch commands in module
+# docstrings (bff/redzone_features.py, bff/situation_features.py)
+data/raw/pbp/
+data/raw/snaps/
+data/raw/injuries/
+data/raw/contracts/
+# Vegas win-totals scrape cache (sportsoddshistory HTML + parsed parquet)
+data/raw/vegas/
