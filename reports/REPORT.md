@@ -172,12 +172,41 @@ Live-2026 caveats: contracts data lacks the 2026 draft class (14 pool
 players zero-filled); Vegas/snap 2026 inputs are null (both blocks rejected
 anyway, columns inert).
 
-## 7. Reproduce
+## 7. Draft overlay (VONA)
+
+The pipeline is bipartite: **MODEL → VONA**. Stage 1 (everything above)
+produces one season-long value ranking, which is what gets scored, tuned, and
+tested; in full PPR it leans WR at the top. Stage 2 (`bff/vona.py`,
+`reports/vona_2026.csv`, the site's Draft page) is a pure post-processor that
+takes the finished board plus ADP and answers a different, draft-day question:
+at each pick, how much predicted VORP do you lose at each position by waiting
+until your next turn (Value Over Next Available)? **VONA never feeds back into
+stage 1** — not the metric, the replacement ranks, the curve, or the tuner —
+so it carries no leakage or test-look implications; it is presentation.
+
+VONA is where running-back scarcity legitimately lives. The value board says
+elite WR ≥ elite RB (true for PPR at every quantile since 2012); VONA says
+that at picks 1-8 you should still open RB, because startable RB falls off
+faster than WR before your next turn (RB1→best-RB-at-24 drops ~50 VORP vs
+~42 for WR, so Bijan + best-WR-at-24 beats Nacua + best-RB-at-24). The
+snake-turn matrix leads RB for seats 1-8, flips to WR at the 9-11 turn, and
+takes the last elite RB (Jeanty) at seat 12. Assumes opponents draft by ADP;
+it is a positional-timing guide, not a full draft simulator.
+
+A BEER man-games replacement baseline was prototyped for stage 1 on
+2026-07-24 and **rejected** on the tune window: with a 1QB/2RB/2WR/1TE/1FLEX
+roster the flex resolves to WR in PPR, which deepened the WR baseline and
+narrowed the model's edge over ADP (+0.0168 → +0.0100) and ECR
+(+0.0457 → +0.0346). "RB up front" is a timing effect, not a season-value
+effect; VONA is the correct home for it.
+
+## 8. Reproduce
 
 ```bash
 uv run python -m bff.model                       # tune + preds_model.parquet (2018-2025)
 uv run python -m bff.model --baselines           # preds_adp.parquet, preds_ecr.parquet
 uv run python -m bff.model --season 2026         # 2026 board + steals
+uv run python -m bff.vona                         # draft overlay -> reports/vona_2026.csv
 uv run python -m bff.backtest data/processed/preds_model.parquet --name model
 uv run python -m bff.backtest data/processed/preds_adp.parquet   --name adp
 uv run python -m bff.backtest data/processed/preds_ecr.parquet   --name ecr

@@ -130,6 +130,9 @@ uv run python -m bff.model                       # -> data/processed/preds_model
 uv run python -m bff.model --baselines           # -> preds_adp.parquet, preds_ecr.parquet
 uv run python -m bff.model --season 2026         # -> preds_model_2026.parquet, reports/rankings_2026.csv, reports/steals_2026.csv
 
+# draft-strategy overlay (VONA) — derived from the 2026 board, NOT scored/tuned
+uv run python -m bff.vona                        # -> reports/vona_2026.csv (+ prints snake-turn matrix)
+
 # evaluation
 uv run python -m bff.backtest data/processed/preds_model.parquet --name model
 uv run python -m bff.backtest data/processed/preds_adp.parquet   --name adp
@@ -151,6 +154,7 @@ uv run python -m bff.site --refresh    # rerun model + backtests, then render
 | `bff.model` | `data/processed/preds_model.parquet` (1190 rows, 2018-2025) + prints tuned (alpha, shrink) and the coefficient report |
 | `bff.model --baselines` | `data/processed/preds_adp.parquet`, `preds_ecr.parquet` |
 | `bff.model --season 2026` | `data/processed/preds_model_2026.parquet` (185 rows), `reports/rankings_2026.csv`, `reports/steals_2026.csv` |
+| `bff.vona` | `reports/vona_2026.csv` (150 rows) + prints the 12-seat snake-turn matrix |
 | `bff.backtest <preds> --name <n>` | `reports/scores_<n>.csv` |
 | `bff.compare A B` | stdout only (per-season deltas + exact sign-flip p-values) |
 
@@ -189,6 +193,15 @@ without this sync is an incomplete change.
 - Report worse numbers plainly; a regression is a result, not a bug to hide
   (precedent: the 11-feature expansion shipped despite costing a hair on an
   earlier test window, because keep/drop is a tune-window decision).
+- **VONA (`bff/vona.py`) is a draft-strategy OVERLAY, never part of the scored
+  model.** It reads the finished 2026 board + ADP and reports value-lost-by-
+  waiting per pick (the site's Draft page). It must NOT feed `REPL_RANKS`, the
+  curve, `to_vorp`, the tuner, or the metric — it is presentation only, so it
+  is never a test look. The value board stays WR-first (correct for PPR);
+  VONA is where RB scarcity legitimately surfaces, as pick-timing. (A BEER
+  man-games replacement was prototyped 2026-07-24 and REJECTED on the tune
+  window: in PPR the flex resolves to WR, so it deepened WR and narrowed the
+  model's edge over ADP/ECR — do not revive it expecting RB-first.)
 - Don't git commit or push unless asked.
 
 ## Fragility list — do not "fix" or reorder these

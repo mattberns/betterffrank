@@ -38,6 +38,7 @@ from bff.model import (
     reason_string,
     tune,
 )
+from bff.vona import MATRIX_ROUNDS, per_pick_table, turn_matrix
 
 ROOT = Path(__file__).resolve().parent.parent
 PROC = ROOT / "data" / "processed"
@@ -243,6 +244,15 @@ def build_payload() -> dict:
 
     players = _build_players(df, ranked, contrib)
 
+    # VONA draft overlay — computed from THIS payload's board (not the artifact)
+    # so the site's Draft page can never drift from its own Rankings page.
+    vona_board = ranked.select(
+        "gsis_id", "name", "position", "adp_rank",
+        pl.col("pred_vorp").alias("vorp"),
+    )
+    vona_matrix = turn_matrix(vona_board).to_dicts()
+    vona_table = per_pick_table(vona_board).to_dicts()
+
     _, _, coef_model, coef_order = fit_predict(df, SEASON, alpha, 1.0, return_contrib=True)
     coefs = dict(zip(coef_order, coef_model.coef_))
     features = []
@@ -316,6 +326,7 @@ def build_payload() -> dict:
         "seasons": seasons,
         "features": features,
         "players": players,
+        "vona": {"matrix": vona_matrix, "table": vona_table, "rounds": MATRIX_ROUNDS},
         "method": [
             {"step": "Pool", "text": "Season FFC ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."},
             {"step": "Market anchor", "text": "log(ECR rank) when a preseason expert-consensus snapshot exists, else log(ADP rank); ordinally re-ranked per season."},
@@ -443,6 +454,29 @@ tr.row.open{background:var(--hi)}
 .frow .fhead{display:grid;grid-template-columns:210px 1fr 54px;gap:10px;align-items:center}
 .flabel{font-size:13px;text-align:right}
 .fblurb{font-size:12px;color:var(--faint);grid-column:1/-1;text-align:left;margin:1px 0 0 0}
+
+/* VONA draft page */
+.vona-mtx{min-width:640px;font-size:13px}
+.vona-mtx th:first-child,.vona-mtx td:first-child{text-align:right;font-family:var(--mono);color:var(--faint)}
+.vona-cell{white-space:nowrap;font-size:12.5px}
+.vona-cell b{font-family:var(--mono);font-size:11px;margin-right:4px}
+.pos-qb{background:#f1edf7}.pos-rb{background:#eaf2ec}.pos-wr{background:#e9f0f6}.pos-te{background:#f7f1e8}
+.vona-cell.pos-qb b{color:#5b3f86}.vona-cell.pos-rb b{color:var(--pos)}
+.vona-cell.pos-wr b{color:var(--link)}.vona-cell.pos-te b{color:#9a6a1c}
+.vona-picks{min-width:640px}
+.vona-picks td{vertical-align:top}
+.vona-picks .vname{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.vbar-t{height:5px;background:#ececec;margin:3px 0 1px}
+.vbar-f{height:5px;background:var(--muted)}
+.vp-rb .vbar-f{background:var(--pos)}
+.vp-wr .vbar-f{background:var(--link)}
+.vp-te .vbar-f{background:#9a6a1c}
+.vp-qb .vbar-f{background:#5b3f86}
+.vcost{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.vona-depth{margin:10px 0 4px}
+.vona-depth button{font-family:var(--mono);font-size:13px;background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 5px}
+.vona-depth button:hover{color:var(--text)}
+.vona-depth button.active{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 
 .foot{border-top:1px solid var(--rule);margin-top:36px;padding:14px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 
@@ -587,11 +621,59 @@ JS_METHOD = """
 })();
 """
 
+JS_VONA = """
+(function(){
+  const V=D.vona, R=V.rounds, POS=['QB','RB','WR','TE'];
+  const pc=p=>({QB:'pos-qb',RB:'pos-rb',WR:'pos-wr',TE:'pos-te'}[p]||'');
+  const bc=p=>({QB:'vp-qb',RB:'vp-rb',WR:'vp-wr',TE:'vp-te'}[p]||'');
+
+  // turn matrix
+  let mh='<tr><th>Slot</th>';
+  for(let r=1;r<=R;r++)mh+='<th>Round '+r+'</th>';
+  mh+='</tr>';
+  const mrows=V.matrix.map(row=>{
+    let tds='<td class="num">'+row.slot+'</td>';
+    for(let r=1;r<=R;r++){
+      const cell=row['round'+r]||'--';
+      const ix=cell.indexOf(': ');
+      if(ix<0){tds+='<td>&mdash;</td>';continue;}
+      const p=cell.slice(0,ix), nm=cell.slice(ix+2);
+      tds+='<td class="vona-cell '+pc(p)+'"><b>'+esc(p)+'</b> '+esc(nm)+'</td>';
+    }
+    return '<tr>'+tds+'</tr>';
+  }).join('');
+  document.getElementById('vona-matrix').innerHTML=
+    '<table class="data vona-mtx"><thead>'+mh+'</thead><tbody>'+mrows+'</tbody></table>';
+
+  // per-pick wait-cost table
+  const maxV=Math.max.apply(null,V.table.flatMap(r=>POS.map(p=>r['vona24_'+p]||0)))||1;
+  function cell(r,p){
+    const v=r['vona24_'+p]||0, nm=r['best_'+p]||'';
+    const w=Math.min(100,v/maxV*100);
+    return '<td class="'+bc(p)+'"><div class="vname">'+(nm?esc(nm):'&mdash;')+'</div>'+
+      '<div class="vbar-t"><div class="vbar-f" style="width:'+w.toFixed(0)+'%"></div></div>'+
+      '<div class="vcost">'+(v>0?v.toFixed(0):'')+'</div></td>';
+  }
+  function render(rng){
+    const rows=V.table.filter(r=>rng?r.pick<=rng:true);
+    let html='';
+    rows.forEach(r=>{html+='<tr><td class="num">'+r.pick+'</td>'+POS.map(p=>cell(r,p)).join('')+'</tr>';});
+    document.getElementById('vona-picks').innerHTML=html;
+  }
+  document.querySelectorAll('.vona-depth button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.vona-depth button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');render(+b.dataset.n||0);
+  }));
+  render(24);
+})();
+"""
+
 # ---------------------------------------------------------------------------
 # 3. PAGE RENDERERS
 # ---------------------------------------------------------------------------
 
 NAV = [("index.html", "Results"), ("rankings.html", "Rankings"),
+       ("vona.html", "Draft"),
        ("features.html", "Features"), ("methodology.html", "Methods")]
 
 
@@ -709,6 +791,48 @@ def render_rankings(p: dict) -> str:
     return _page("betterffrank — rankings", "rankings.html", body, data, JS_RANKINGS)
 
 
+def render_vona(p: dict) -> str:
+    m = p["meta"]
+    body = (
+        '<div class="wrap">'
+        '<div class="titleblock"><h1 class="title">Draft</h1>'
+        f'<p class="subtitle">{m["season"]} &middot; {m["format"]} &middot; VONA &mdash; value lost by waiting</p>'
+        '<p class="docmeta">the board ranks season-long value; this page times '
+        'positions inside <i>your</i> draft &middot; scarcity, not value</p></div>'
+
+        '<section><p class="note">The <a href="rankings.html">rankings</a> answer '
+        '"who is worth the most this season" &mdash; and in full PPR that leans WR at the top. '
+        'VONA (Value Over Next Available) answers a different question: at each pick, how much '
+        'value do you lose at each position by waiting until your next turn? That is where '
+        'running-back scarcity actually lives &mdash; startable RB dries up faster than WR at '
+        'the top of a draft, so the timing guide leads RB early even though the value board does not. '
+        'Assumes opponents draft by ADP; a positional-timing guide, not a full simulator.</p></section>'
+
+        '<section><h2 class="numbered">Your draft, by seat</h2>'
+        '<p class="cap"><b>Table 1.</b> Greedy VONA pick for each of the 12 snake seats, rounds 1&ndash;'
+        f'{p["vona"]["rounds"]}. At every turn: take the position whose best-available player falls the most before your next pick.</p>'
+        '<div class="tablewrap"><div id="vona-matrix"></div></div></section>'
+
+        '<section><h2 class="numbered">Wait-cost by pick</h2>'
+        '<p class="cap"><b>Table 2.</b> Best available at each position and its VONA cost '
+        '(predicted VORP lost if you wait ~2 rounds / 24 picks). A per-position diagnostic &mdash; '
+        'Table 1 is the actual call, since it also weighs which position you can best backfill '
+        'at your next pick.</p>'
+        '<div class="vona-depth controls">through pick: '
+        '<button data-n="24" class="active">24</button><button data-n="48">48</button>'
+        '<button data-n="0">all</button></div>'
+        '<div class="tablewrap"><table class="data vona-picks"><thead><tr>'
+        '<th class="num">#</th><th>QB</th><th>RB</th><th>WR</th><th>TE</th></tr></thead>'
+        '<tbody id="vona-picks"></tbody></table></div>'
+        '<p class="note small" style="margin-top:8px">VONA is non-negative by construction '
+        '(waiting never gains value). Names are the best <i>remaining</i> player at that position '
+        'by our VORP, which can differ from ADP order.</p></section>'
+        '</div>'
+    )
+    data = {"meta": p["meta"], "vona": p["vona"]}
+    return _page("betterffrank — draft", "vona.html", body, data, JS_VONA)
+
+
 def render_features(p: dict) -> str:
     m = p["meta"]
     body = (
@@ -774,6 +898,7 @@ def _refresh() -> None:
         [sys.executable, "-m", "bff.model"],
         [sys.executable, "-m", "bff.model", "--baselines"],
         [sys.executable, "-m", "bff.model", "--season", "2026"],
+        [sys.executable, "-m", "bff.vona"],
         [sys.executable, "-m", "bff.backtest", str(PROC / "preds_model.parquet"), "--name", "model"],
         [sys.executable, "-m", "bff.backtest", str(PROC / "preds_adp.parquet"), "--name", "adp"],
         [sys.executable, "-m", "bff.backtest", str(PROC / "preds_ecr.parquet"), "--name", "ecr"],
@@ -797,6 +922,7 @@ def main() -> None:
     pages = {
         "index.html": render_index(payload),
         "rankings.html": render_rankings(payload),
+        "vona.html": render_vona(payload),
         "features.html": render_features(payload),
         "methodology.html": render_methodology(payload),
     }

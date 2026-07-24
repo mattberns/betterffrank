@@ -81,6 +81,9 @@ uv run python -m bff.model                       # -> data/processed/preds_model
 uv run python -m bff.model --baselines           # -> preds_adp.parquet, preds_ecr.parquet
 uv run python -m bff.model --season 2026         # -> preds_model_2026.parquet, reports/rankings_2026.csv, reports/steals_2026.csv
 
+# draft overlay (VONA) — post-processes the 2026 board; not part of scoring
+uv run python -m bff.vona                        # -> reports/vona_2026.csv
+
 # evaluation
 uv run python -m bff.backtest data/processed/preds_model.parquet --name model
 uv run python -m bff.backtest data/processed/preds_adp.parquet   --name adp
@@ -104,6 +107,7 @@ uv run python -m bff.site --refresh              # rerun model + backtests first
 | `data/processed/preds_adp.parquet`, `preds_ecr.parquet` | `uv run python -m bff.model --baselines` |
 | `reports/scores_model.csv`, `scores_adp.csv`, `scores_ecr.csv` | `uv run python -m bff.backtest <preds> --name <n>` |
 | `reports/rankings_2026.csv`, `reports/steals_2026.csv` | `uv run python -m bff.model --season 2026` |
+| `reports/vona_2026.csv` | `uv run python -m bff.vona` (draft-timing overlay; 150 picks) |
 | `reports/REPORT.md` | written by hand; every number maps to a command above |
 
 ## Repo layout
@@ -125,6 +129,7 @@ bff/                      the pipeline (run as python -m bff.<module>)
   backtest.py             evaluation harness (the metrics table)
   compare.py              paired sign-flip permutation test between two preds files
   model.py                THE model: dataset, tune, fit, VORP conversion, baselines, 2026 deliverables
+  vona.py                 draft-strategy overlay (VONA): post-processes the 2026 board, not scored
   site.py                 static-site generator -> /docs (GitHub Pages)
 data/
   raw/                    source data (see Data and attribution)

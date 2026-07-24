@@ -11,6 +11,7 @@ wheels/
 
 # Local editor / assistant config (machine-specific paths)
 .claude/
+.playwright-mcp/
 
 # Third-party commercial data — not redistributed (see README "Data").
 # FantasyPros ECR scrape archive, ADP export, and 2026 draft-rankings export.
