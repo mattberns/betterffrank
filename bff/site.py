@@ -327,6 +327,21 @@ def build_payload() -> dict:
         "features": features,
         "players": players,
         "vona": {"matrix": vona_matrix, "table": vona_table, "rounds": MATRIX_ROUNDS},
+        # DraftSIM (unlisted beta page) — same board as vona/rankings, so the
+        # simulator can never drift from the Rankings page. Presentation only.
+        "draftsim": {
+            "players": ranked.sort("our_rank").select(
+                pl.col("gsis_id").alias("id"), "name",
+                pl.col("position").alias("pos"), "team",
+                pl.col("our_rank").alias("rank"),
+                pl.col("adp_rank").alias("adp"),
+                pl.col("ecr_ord").alias("ecr"),
+                pl.col("pred_vorp").round(2).alias("vorp"),
+            ).to_dicts(),
+            "league": {"teams": 12, "rounds": 16,
+                       "starters": {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "FLEX": 1},
+                       "flex": ["RB", "WR", "TE"], "caps": {"QB": 2, "TE": 2}},
+        },
         "method": [
             {"step": "Pool", "text": "Each season's ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."},
             {"step": "Start from the experts", "text": "Every player's anchor is the expert-consensus rank: log(ECR) when a preseason snapshot exists, else log(ADP); ordinally re-ranked per season."},
@@ -485,6 +500,113 @@ tr.row.open{background:var(--hi)}
   .frow .fhead{grid-template-columns:120px 1fr 46px}
   .dbar-label,.flabel{font-size:12px}
   h1.title{font-size:22px}
+}
+"""
+
+# Appended only on draftsim.html so the five shipped pages stay byte-identical.
+# One-screen dashboard: fixed-viewport grid on desktop (each panel scrolls
+# internally, no page scroll), sticky recs + flowing stack on mobile.
+CSS_DRAFTSIM = """
+:root{--mh:47px}
+main:has(.sim-app){padding:0}
+.sim-app{
+  max-width:1280px;margin:0 auto;padding:10px 14px;
+  display:grid;gap:12px;
+  grid-template-columns:180px 1fr 300px;
+  grid-template-rows:auto auto minmax(0,1fr) auto;
+  height:calc(100dvh - var(--mh));
+}
+.sim-app .status{grid-column:1/-1;grid-row:1}
+.p-roster{grid-column:1;grid-row:2/4}
+.p-board{grid-column:2;grid-row:2/4}
+.p-recs{grid-column:3;grid-row:2}
+.p-drafted{grid-column:3;grid-row:3}
+.sim-details{grid-column:1/-1;grid-row:4}
+
+/* panel chrome */
+.panel{border:1px solid var(--rule);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.panel-hd{font-family:var(--sans);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+  padding:6px 10px;border-bottom:1px solid var(--rule-strong);display:flex;align-items:center;gap:8px;
+  position:sticky;top:0;background:var(--bg);z-index:2;flex:0 0 auto}
+.panel-hd .hd-n{margin-left:auto;font-family:var(--mono);color:var(--faint);text-transform:none;letter-spacing:0}
+.panel-bd{overflow-y:auto;min-height:0;flex:1 1 auto}
+
+/* status bar */
+.status{border:1px solid var(--rule);padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.status select{font-family:var(--mono);font-size:13px;padding:3px 6px;border:1px solid var(--rule);background:var(--bg);color:var(--text);border-radius:0}
+.status button{font-family:var(--mono);font-size:12px;padding:3px 9px;border:1px solid var(--rule);background:var(--bg);color:var(--text);cursor:pointer}
+.status button:hover{border-color:var(--rule-strong)}
+.status button:disabled{color:var(--faint);cursor:default;border-color:var(--rule)}
+.sim-status{font-family:var(--mono);font-size:12.5px;color:var(--muted);flex:1 1 220px;min-width:180px}
+.sim-status b{color:var(--text)}
+.sim-status .you{color:var(--neg);font-weight:700}
+.sim-details{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+.sim-details summary{cursor:pointer;font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint)}
+.sim-details p{margin:8px 0 0}
+
+/* recommendations — compact div list */
+.sim-mode{font-family:var(--sans);font-size:10px;text-transform:none;letter-spacing:0;color:var(--faint)}
+.rec{padding:6px 10px;border-bottom:1px solid var(--rule)}
+.rec:last-child{border-bottom:none}
+.rec-top{display:flex;align-items:baseline;gap:6px}
+.rec-rk{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.rec-nm{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-pt{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.rec-urg{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700}
+.rec-urg.hi{color:var(--neg)}
+.rec-sub{font-size:11px;color:var(--faint);margin-top:1px;display:flex;gap:8px;flex-wrap:wrap}
+.rec-why{color:var(--muted)}
+.pos-qb .rec-pt{color:#5b3f86}.pos-rb .rec-pt{color:var(--pos)}
+.pos-wr .rec-pt{color:var(--link)}.pos-te .rec-pt{color:#9a6a1c}
+
+/* roster rail — single column */
+.sim-roster{font-size:13px}
+.sim-slot{display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--rule);padding:4px 10px}
+.sim-slot .sl{font-family:var(--mono);font-size:10px;color:var(--faint);min-width:34px}
+.sim-slot .sp{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.sim-slot .sv{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+.sim-slot.empty .sp{color:var(--faint)}
+.sim-slot.bnch .sl{color:var(--faint)}
+
+/* drafted — compact names */
+.sim-drafted{font-size:12px;line-height:1.5;padding:8px 10px;color:var(--muted)}
+.sim-drafted .dr{white-space:nowrap}
+.sim-drafted .dr.mine{color:var(--neg);font-weight:700}
+.sim-drafted .dr .drk{font-family:var(--mono);font-size:10px;color:var(--faint)}
+
+/* board */
+.sim-controls{padding:6px 10px;border-bottom:1px solid var(--rule);display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-family:var(--sans);font-size:12px;flex:0 0 auto}
+.sim-controls input[type=search]{font-family:var(--mono);font-size:12px;padding:3px 6px;border:1px solid var(--rule);background:var(--bg);color:var(--text);border-radius:0;min-width:120px;flex:1 1 120px}
+.sim-controls .posfilter button{font-family:var(--mono);font-size:12px;background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 4px}
+.sim-controls .posfilter button.active{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.sim-controls .toggle{display:inline-flex;align-items:center;gap:4px;color:var(--muted);cursor:pointer}
+table.sim-board{width:100%;border-collapse:collapse;font-size:13px}
+table.sim-board th{font-family:var(--sans);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:4px 8px;border-bottom:1px solid var(--rule-strong);position:sticky;top:0;background:var(--bg);z-index:1;white-space:nowrap}
+table.sim-board th.num{text-align:right}
+table.sim-board th.sortable{cursor:pointer;user-select:none}
+table.sim-board th.sortable:hover{color:var(--text)}
+table.sim-board th.sorted{color:var(--text)}
+table.sim-board th .arr{font-size:8px;margin-left:2px}
+table.sim-board td{padding:3px 8px;border-bottom:1px solid var(--rule)}
+table.sim-board .num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.sim-board td.chk{width:26px;text-align:center;padding-left:10px}
+table.sim-board input[type=checkbox]{cursor:pointer}
+.sim-board .pname{font-weight:700}
+.sim-board .tpos{font-family:var(--mono);font-size:11px;color:var(--muted)}
+tr.drafted td{color:var(--faint)}
+tr.drafted .pname{text-decoration:line-through;font-weight:400}
+tr.mine td{background:var(--hi)}
+
+@media(max-width:760px){
+  .sim-app{display:flex;flex-direction:column;height:auto;max-width:none;padding:8px 10px;gap:10px}
+  .status{order:0;position:sticky;top:var(--mh);z-index:6}
+  .p-recs{order:1;position:sticky;top:var(--st,124px);z-index:5}
+  .p-roster{order:2}
+  .p-drafted{order:3}
+  .p-board{order:4}
+  .sim-details{order:5}
+  .panel-bd{max-height:56vh}
+  .p-recs .panel-bd,.p-roster .panel-bd{max-height:none}
 }
 """
 
@@ -668,13 +790,312 @@ JS_VONA = """
 })();
 """
 
+JS_DRAFTSIM = """
+(function(){
+  const S=D.draftsim, L=S.league, P=S.players;      // P sorted by ADP asc; L is mutated by league controls
+  const POS=['QB','RB','WR','TE'];
+  const byId={}; P.forEach(p=>byId[p.id]=p);
+  const TEAM_OPTS=[8,10,12], FLEX_OPTS=[1,2];
+  let N_PICKS=L.teams*L.rounds;
+  const KEY='bff-draftsim-'+D.meta.season;
+
+  // ---- state: league (teams/flex) + seat + ordered pick list (id or null=off-board) ----
+  let state={teams:L.teams,flex:L.starters.FLEX,seat:1,picks:[]};
+  try{
+    const s=JSON.parse(localStorage.getItem(KEY)||'');
+    if(s&&Array.isArray(s.picks)){
+      if(TEAM_OPTS.includes(s.teams))state.teams=s.teams;
+      if(FLEX_OPTS.includes(s.flex))state.flex=s.flex;
+      if(s.seat>=1&&s.seat<=state.teams)state.seat=s.seat;
+      state.picks=s.picks.filter(id=>id===null||byId[id]);
+    }
+  }catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+  // Apply the league selection into L (which every function reads live).
+  function applyLeague(){
+    L.teams=state.teams; L.starters.FLEX=state.flex;
+    N_PICKS=L.teams*L.rounds;
+    if(state.seat>state.teams)state.seat=state.teams;
+  }
+  applyLeague();
+
+  // ---- snake arithmetic (mirrors bff/vona.py snake_picks) ----
+  function owner(p){const r=Math.ceil(p/L.teams);const i=(p-1)%L.teams;return r%2===1?i+1:L.teams-i;}
+  function nextMyPick(from){for(let p=from;p<=N_PICKS;p++)if(owner(p)===state.seat)return p;return null;}
+
+  // ---- lineup engine ----
+  // Fill dedicated slots with the top players per position; FLEX = best
+  // leftovers among flex positions. Greedy is exact for this slot structure.
+  function assign(roster){
+    const by={QB:[],RB:[],WR:[],TE:[]};
+    roster.forEach(p=>{if(by[p.pos])by[p.pos].push(p);});
+    POS.forEach(ps=>by[ps].sort((a,b)=>b.vorp-a.vorp));
+    const starters={},left=[];let val=0;
+    POS.forEach(ps=>{
+      const n=L.starters[ps]||0;
+      starters[ps]=by[ps].slice(0,n);
+      starters[ps].forEach(p=>{val+=p.vorp;});
+      if(L.flex.includes(ps))by[ps].slice(n).forEach(p=>left.push(p));
+    });
+    left.sort((a,b)=>b.vorp-a.vorp);
+    const flex=left.slice(0,L.starters.FLEX||0);
+    flex.forEach(p=>{val+=p.vorp;});
+    const used=new Set();
+    POS.forEach(ps=>starters[ps].forEach(p=>used.add(p.id)));
+    flex.forEach(p=>used.add(p.id));
+    return {starters:starters,flex:flex,bench:roster.filter(p=>!used.has(p.id)),value:val};
+  }
+  const lineupValue=r=>assign(r).value;
+  const marginal=(r,p)=>lineupValue(r.concat([p]))-lineupValue(r);
+
+  function myRoster(){
+    const out=[];
+    state.picks.forEach((id,i)=>{if(id!==null&&owner(i+1)===state.seat)out.push(byId[id]);});
+    return out;
+  }
+
+  // ---- recommendations for YOUR next pick ----
+  // Availability now = unchecked players; at a future pick n (from current
+  // pick c), remove the top (n - c) unchecked players by ADP — the live-board
+  // generalization of vona.py's adp_rank >= nxt rule.
+  function recommend(){
+    const c=state.picks.length+1;
+    const drafted=new Set(state.picks.filter(x=>x!==null));
+    const avail=P.filter(p=>!drafted.has(p.id));          // ADP order
+    const mine=nextMyPick(c);
+    if(mine===null||c>N_PICKS)return {done:true};
+    const following=nextMyPick(mine+1)||mine+L.teams;     // last round: +12, as vona.py
+    const availAtMine=avail.slice(Math.min(avail.length,mine-c));
+    const availAtFollowing=avail.slice(Math.min(avail.length,following-c));
+    const roster=myRoster(), asn=assign(roster);
+
+    const waitBest={QB:0,RB:0,WR:0,TE:0};
+    availAtFollowing.forEach(p=>{const m=marginal(roster,p);if(m>waitBest[p.pos])waitBest[p.pos]=m;});
+
+    let cands=availAtMine.map(p=>{
+      const m=marginal(roster,p);
+      return {p:p,m:m,wait:waitBest[p.pos],urg:m-waitBest[p.pos]};
+    });
+    // Bench mode = every starter slot (incl. FLEX) is filled. Gating on a small
+    // max-marginal instead would flip early when the best remaining TE/QB has
+    // near-zero VORP, and then rank a do-nothing 2nd QB above an unfilled slot.
+    const filled=POS.reduce((n,ps)=>n+asn.starters[ps].length,0)+asn.flex.length;
+    const total=POS.reduce((n,ps)=>n+(L.starters[ps]||0),0)+(L.starters.FLEX||0);
+    const bench=filled>=total;
+    if(bench){
+      const cnt={};roster.forEach(p=>cnt[p.pos]=(cnt[p.pos]||0)+1);
+      cands=cands.filter(x=>{const cap=L.caps[x.p.pos];return cap==null||(cnt[x.p.pos]||0)<cap;});
+      cands.sort((a,b)=>b.p.vorp-a.p.vorp);
+    }else{
+      cands.sort((a,b)=>(b.urg-a.urg)||(b.m-a.m));
+    }
+    return {done:false,pick:mine,current:c,cands:cands.slice(0,5),bench:bench,
+            roster:roster,asn:asn,waitBest:waitBest};
+  }
+
+  function reasonFor(x,asn,roster,bench){
+    if(bench)return 'starters full — best value';
+    const p=x.p,cap=L.starters[p.pos]||0;
+    const cnt=roster.filter(q=>q.pos===p.pos).length;
+    if(cnt<cap)return 'fills '+p.pos+(cap>1?String(cnt+1):'');
+    if(L.flex.includes(p.pos)&&asn.flex.length<(L.starters.FLEX||0))return 'fills FLEX';
+    if(x.m>0.05)return 'raises lineup +'+x.m.toFixed(1);
+    return 'bench depth';
+  }
+
+  // ---- board view state ---- (default: our own rank, ascending)
+  const view={q:'',pos:'ALL',hide:false,sortKey:'rank',sortDir:1};
+
+  // ---- rendering ----
+  function render(){
+    const c=state.picks.length+1, done=c>N_PICKS;
+    const r=Math.min(L.rounds,Math.ceil(Math.min(c,N_PICKS)/L.teams));
+    const onClock=done?null:owner(c);
+    const mine=nextMyPick(c);
+
+    document.getElementById('sim-teams').value=String(state.teams);
+    document.getElementById('sim-flex').value=String(state.flex);
+    document.getElementById('sim-seat').value=String(state.seat);
+    document.getElementById('sim-undo').disabled=state.picks.length===0;
+
+    let st;
+    if(done){st='<b>Draft complete</b> — '+state.picks.length+' picks recorded.';}
+    else{
+      st='Pick <b>'+c+'</b> (round '+r+') — on the clock: '+
+        (onClock===state.seat?'<span class="you">YOU (seat '+state.seat+')</span>':'team '+onClock)+'.';
+      st+=mine===null?' You have no picks left.':(mine===c?'':' Your next pick: <b>#'+mine+'</b> (in '+(mine-c)+' picks).');
+    }
+    document.getElementById('sim-status').innerHTML=st;
+
+    // recommendations — compact div list
+    const R=recommend();
+    const recEl=document.getElementById('sim-recs'), modeEl=document.getElementById('sim-mode');
+    const pcls=p=>({QB:'pos-qb',RB:'pos-rb',WR:'pos-wr',TE:'pos-te'}[p]||'');
+    if(R.done||!R.cands||R.cands.length===0){
+      modeEl.textContent='';
+      recEl.innerHTML='<div class="rec" style="color:var(--faint)">'+(R.done?'draft complete':'no candidates')+'</div>';
+    }else{
+      modeEl.textContent=R.bench
+        ?'bench mode — best value, caps 2 QB / 2 TE'
+        :'for your pick #'+R.pick+(R.pick===R.current?' (now)':' (projected)');
+      recEl.innerHTML=R.cands.map((x,i)=>{
+        // headline number: urgency in fill-mode, raw VORP in bench-mode
+        const head=R.bench?x.p.vorp.toFixed(1):x.urg.toFixed(1);
+        const sub=R.bench
+          ? 'VORP '+x.p.vorp.toFixed(1)
+          : 'adds '+x.m.toFixed(1)+' &middot; if wait '+x.wait.toFixed(1);
+        return '<div class="rec '+pcls(x.p.pos)+'">'+
+          '<div class="rec-top"><span class="rec-rk">'+(i+1)+'</span>'+
+          '<span class="rec-nm">'+esc(x.p.name)+'</span>'+
+          '<span class="rec-pt">'+x.p.pos+'&middot;'+esc(x.p.team)+'</span>'+
+          '<span class="rec-urg'+(!R.bench&&x.urg>0.05?' hi':'')+'">'+head+'</span></div>'+
+          '<div class="rec-sub"><span>'+sub+'</span>'+
+          '<span class="rec-why">'+esc(reasonFor(x,R.asn,R.roster,R.bench))+'</span></div></div>';
+      }).join('');
+    }
+
+    // roster
+    const roster=myRoster(), asn=assign(roster);
+    const slots=[];
+    POS.forEach(ps=>{const n=L.starters[ps]||0;for(let i=0;i<n;i++)
+      slots.push([ps+(n>1?String(i+1):''),asn.starters[ps][i]||null,false]);});
+    for(let i=0;i<(L.starters.FLEX||0);i++)slots.push(['FLEX',asn.flex[i]||null,false]);
+    asn.bench.forEach(p=>slots.push(['BN',p,true]));
+    document.getElementById('sim-roster').innerHTML=slots.map(s=>{
+      const p=s[1];
+      return '<div class="sim-slot'+(p?'':' empty')+(s[2]?' bnch':'')+'"><span class="sl">'+s[0]+'</span>'+
+        '<span class="sp">'+(p?esc(p.name)+' <span class="tpos">'+p.pos+'</span>':'&mdash;')+'</span>'+
+        (p?'<span class="sv">'+p.vorp.toFixed(1)+'</span>':'')+'</div>';
+    }).join('')+(roster.length===0?'<div class="sim-slot empty"><span class="sp">no picks yet</span></div>':'');
+
+    // drafted — compact names, newest first, my picks highlighted
+    const drEl=document.getElementById('sim-drafted');
+    if(drEl){
+      const items=[];
+      for(let i=state.picks.length-1;i>=0;i--){
+        const id=state.picks[i]; if(id===null)continue;
+        const pl=byId[id], pk=i+1, isMine=owner(pk)===state.seat;
+        items.push('<span class="dr'+(isMine?' mine':'')+'"><span class="drk">'+pk+'</span> '+esc(pl.name)+'</span>');
+      }
+      drEl.innerHTML=items.length?items.join(', '):'<span style="color:var(--faint)">none yet</span>';
+      const hd=document.getElementById('sim-drafted-n'); if(hd)hd.textContent=items.length;
+    }
+
+    // board — per-player VONA (urgency at your next pick); blank for drafted/no-context
+    const pickOf={};state.picks.forEach((id,i)=>{if(id!==null)pickOf[id]=i+1;});
+    const vonaOf=p=>{
+      if(R.done||!R.waitBest||pickOf[p.id])return null;
+      return Math.max(0, marginal(R.roster,p)-(R.waitBest[p.pos]||0));
+    };
+    const vona={}; P.forEach(p=>{vona[p.id]=vonaOf(p);});
+
+    let rows=P.filter(p=>{
+      if(view.pos!=='ALL'&&p.pos!==view.pos)return false;
+      if(view.hide&&pickOf[p.id])return false;
+      if(view.q){const q=view.q.toLowerCase();
+        if(!(p.name.toLowerCase().includes(q)||p.team.toLowerCase().includes(q)))return false;}
+      return true;
+    });
+    const sv=(p,k)=> k==='name'?p.name : k==='vona'?vona[p.id] : p[k];
+    rows=rows.slice().sort((a,b)=>{
+      let va=sv(a,view.sortKey), vb=sv(b,view.sortKey);
+      const na=va==null, nb=vb==null;           // nulls (missing ECR, blank VONA) always last
+      if(na&&nb)return 0; if(na)return 1; if(nb)return -1;
+      if(typeof va==='string')return va.localeCompare(vb)*view.sortDir;
+      return (va-vb)*view.sortDir;
+    });
+    // header sort indicator
+    document.querySelectorAll('.sim-board th.sortable').forEach(th=>{
+      const on=th.dataset.sort===view.sortKey;
+      th.classList.toggle('sorted',on);
+      th.querySelector('.arr')?.remove();
+      if(on){const s=document.createElement('span');s.className='arr';s.textContent=view.sortDir>0?'\\u25B2':'\\u25BC';th.appendChild(s);}
+    });
+    document.getElementById('sim-count').textContent=rows.length+' / '+P.length;
+    document.getElementById('sim-board').innerHTML=rows.map(p=>{
+      const pk=pickOf[p.id], isMine=pk&&owner(pk)===state.seat, v=vona[p.id];
+      return '<tr class="'+(pk?'drafted':'')+(isMine?' mine':'')+'">'+
+        '<td class="chk"><input type="checkbox" data-id="'+esc(p.id)+'"'+(pk?' checked disabled':'')+(done?' disabled':'')+'></td>'+
+        '<td class="num rk">'+p.rank+'</td>'+
+        '<td class="pname">'+esc(p.name)+'</td>'+
+        '<td class="tpos">'+p.pos+'</td><td>'+esc(p.team)+'</td>'+
+        '<td class="num">'+p.adp+'</td>'+
+        '<td class="num">'+(p.ecr==null?'&mdash;':p.ecr)+'</td>'+
+        '<td class="num">'+p.vorp.toFixed(1)+'</td>'+
+        '<td class="num">'+(v==null?'':v.toFixed(1))+'</td></tr>';
+    }).join('')||'<tr><td colspan="9" style="padding:14px;color:var(--faint)">no rows</td></tr>';
+  }
+
+  // seat dropdown depends on team count; rebuild it when teams change
+  function fillSeats(){
+    const sel=document.getElementById('sim-seat');
+    sel.innerHTML='';
+    for(let i=1;i<=L.teams;i++){const o=document.createElement('option');o.value=String(i);o.textContent='seat '+i;sel.appendChild(o);}
+    sel.value=String(state.seat);
+  }
+
+  // ---- events ----
+  // Teams changes who owns each pick, so it invalidates a draft in progress -> reset.
+  document.getElementById('sim-teams').addEventListener('change',e=>{
+    const v=+e.target.value;
+    if(state.picks.length && !confirm('Change to '+v+' teams? This resets the draft.')){
+      e.target.value=String(state.teams); return;
+    }
+    state.teams=v; state.picks=[]; applyLeague(); fillSeats(); save(); render();
+  });
+  // FLEX only re-interprets the lineup; existing picks stay valid.
+  document.getElementById('sim-flex').addEventListener('change',e=>{
+    state.flex=+e.target.value; applyLeague(); save(); render();
+  });
+  document.getElementById('sim-seat').addEventListener('change',e=>{state.seat=+e.target.value;save();render();});
+  document.getElementById('sim-undo').addEventListener('click',()=>{state.picks.pop();save();render();});
+  document.getElementById('sim-skip').addEventListener('click',()=>{
+    if(state.picks.length<N_PICKS){state.picks.push(null);save();render();}});
+  document.getElementById('sim-reset').addEventListener('click',()=>{
+    if(confirm('Reset the draft board?')){state.picks=[];save();render();}});
+  document.getElementById('sim-board').addEventListener('change',e=>{
+    const id=e.target&&e.target.dataset&&e.target.dataset.id;
+    if(!id||!byId[id])return;
+    if(state.picks.length<N_PICKS&&!state.picks.includes(id)){state.picks.push(id);save();render();}
+  });
+  document.getElementById('sim-search').addEventListener('input',e=>{view.q=e.target.value;render();});
+  document.getElementById('sim-hide').addEventListener('change',e=>{view.hide=e.target.checked;render();});
+  // sortable columns: same key flips direction; new key gets a sensible default
+  // (rank/adp/ecr/name ascending = best first; vorp/vona descending = highest first)
+  document.querySelectorAll('.sim-board th.sortable').forEach(th=>th.addEventListener('click',()=>{
+    const k=th.dataset.sort;
+    if(view.sortKey===k){view.sortDir*=-1;}
+    else{view.sortKey=k; view.sortDir=(k==='vorp'||k==='vona')?-1:1;}
+    render();
+  }));
+  document.querySelectorAll('#sim-posfilter button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#sim-posfilter button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');view.pos=b.dataset.pos;render();
+  }));
+
+  fillSeats();
+
+  // mobile: pin recs directly under the (wrapping) sticky status bar — measure
+  // its real height so the offset is exact regardless of how the bar wraps.
+  function setStickyOffset(){
+    const mh=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--mh'))||47;
+    const st=document.querySelector('.status');
+    document.documentElement.style.setProperty('--st',(mh+(st?st.offsetHeight:0)+8)+'px');
+  }
+  setStickyOffset();
+  window.addEventListener('resize',setStickyOffset);
+  render();
+})();
+"""
+
 # ---------------------------------------------------------------------------
 # 3. PAGE RENDERERS
 # ---------------------------------------------------------------------------
 
 NAV = [("index.html", "Results"), ("rankings.html", "Rankings"),
-       ("vona.html", "Draft"),
-       ("features.html", "Features"), ("methodology.html", "Methods")]
+       ("features.html", "Features"), ("methodology.html", "Methods"),
+       ("draftsim.html", "Draft (beta)")]
 
 
 def _header(active: str) -> str:
@@ -694,7 +1115,8 @@ def _footer(meta: dict) -> str:
             '</div></footer>')
 
 
-def _page(title: str, active: str, body: str, data_slice: dict, page_js: str) -> str:
+def _page(title: str, active: str, body: str, data_slice: dict, page_js: str,
+          extra_css: str = "", show_footer: bool = True) -> str:
     blob = "window.BFF_DATA=" + json.dumps(data_slice, separators=(",", ":")) + ";"
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n'
@@ -706,10 +1128,10 @@ def _page(title: str, active: str, body: str, data_slice: dict, page_js: str) ->
         '%3Ctext x=%2216%22 y=%2223%22 font-size=%2219%22 font-family=%22Georgia,serif%22 '
         'fill=%22%23fff%22 text-anchor=%22middle%22%3Eb%3C/text%3E%3C/svg%3E">\n'
         f'<title>{title}</title>\n'
-        f'<style>{CSS}</style>\n</head>\n<body>\n'
+        f'<style>{CSS}{extra_css}</style>\n</head>\n<body>\n'
         + _header(active)
         + '<main>' + body + '</main>'
-        + _footer(data_slice["meta"])
+        + (_footer(data_slice["meta"]) if show_footer else "")
         + '<script>' + blob + '</script>\n'
         + '<script>' + JS_COMMON + page_js + '</script>\n'
         + '</body>\n</html>\n'
@@ -856,6 +1278,83 @@ def render_vona(p: dict) -> str:
     return _page("betterffrank — draft", "vona.html", body, data, JS_VONA)
 
 
+def render_draftsim(p: dict) -> str:
+    """Unlisted beta page (not in NAV): live draft simulator over the same
+    board as rankings/vona. Presentation only — never feeds anything scored."""
+    body = (
+        '<div class="sim-app">'
+
+        # --- status bar (spans top) ---
+        '<div class="status">'
+        '<select id="sim-teams" aria-label="teams in league" title="teams in league">'
+        '<option value="8">8 tm</option><option value="10">10 tm</option>'
+        '<option value="12">12 tm</option></select>'
+        '<select id="sim-flex" aria-label="flex spots" title="flex spots">'
+        '<option value="1">1 FLEX</option><option value="2">2 FLEX</option></select>'
+        '<select id="sim-seat" aria-label="your draft seat"></select>'
+        '<button id="sim-undo">undo</button>'
+        '<button id="sim-skip" title="advance the pick counter for a K/DST or a player not on this board">off-board</button>'
+        '<button id="sim-reset">reset</button>'
+        '<span class="sim-status" id="sim-status"></span>'
+        '</div>'
+
+        # --- roster rail (left) ---
+        '<div class="panel p-roster">'
+        '<div class="panel-hd">Your roster</div>'
+        '<div class="panel-bd sim-roster" id="sim-roster"></div>'
+        '</div>'
+
+        # --- board (center) ---
+        '<div class="panel p-board">'
+        '<div class="panel-hd">Board <span class="hd-n" id="sim-count"></span></div>'
+        '<div class="sim-controls">'
+        '<input type="search" id="sim-search" placeholder="name or team" aria-label="filter">'
+        '<span class="posfilter" id="sim-posfilter">'
+        '<button data-pos="ALL" class="active">all</button>'
+        '<button data-pos="QB">QB</button><button data-pos="RB">RB</button>'
+        '<button data-pos="WR">WR</button><button data-pos="TE">TE</button></span>'
+        '<label class="toggle"><input type="checkbox" id="sim-hide"> hide drafted</label>'
+        '</div>'
+        '<div class="panel-bd">'
+        '<table class="sim-board"><thead><tr>'
+        '<th></th>'
+        '<th class="num sortable" data-sort="rank" title="our model rank">#</th>'
+        '<th class="sortable" data-sort="name">Player</th><th>Pos</th><th>Team</th>'
+        '<th class="num sortable" data-sort="adp" title="average draft position">ADP</th>'
+        '<th class="num sortable" data-sort="ecr" title="expert consensus rank">ECR</th>'
+        '<th class="num sortable" data-sort="vorp" title="value over replacement">VORP</th>'
+        '<th class="num sortable" data-sort="vona" title="value lost by waiting to your next pick">VONA</th>'
+        '</tr></thead>'
+        '<tbody id="sim-board"></tbody></table></div>'
+        '</div>'
+
+        # --- right column: recs (top) + drafted (fills), placed by grid ---
+        '<div class="panel p-recs">'
+        '<div class="panel-hd">Next best <span class="sim-mode" id="sim-mode"></span></div>'
+        '<div class="panel-bd" id="sim-recs"></div>'
+        '</div>'
+        '<div class="panel p-drafted">'
+        '<div class="panel-hd">Drafted <span class="hd-n" id="sim-drafted-n">0</span></div>'
+        '<div class="panel-bd sim-drafted" id="sim-drafted"></div>'
+        '</div>'
+
+        # --- collapsible how-it-works (kept out of the viewport) ---
+        '<details class="sim-details"><summary>how recommendations work</summary>'
+        '<p>Each available player is scored by the VORP he adds to <i>your starting lineup</i> '
+        '(1 QB / 2 RB / 2 WR / 1 TE / 1 FLEX) given who you already have. <b>Urgency</b> is what '
+        'you lose by waiting &mdash; his lineup gain now minus the best same-position gain still '
+        'available at your next turn (opponents drafting by ADP). Once every starter slot is '
+        'filled it switches to best raw VORP, capped at 2 QB / 2 TE. Check a player off as he is '
+        'drafted (in order); use <b>undo</b> to correct, <b>off-board</b> for a K/DST or a player '
+        'not on this board. State is saved locally.</p></details>'
+
+        '</div>'
+    )
+    data = {"meta": p["meta"], "draftsim": p["draftsim"]}
+    return _page("betterffrank — draft simulator", "draftsim.html", body, data,
+                 JS_DRAFTSIM, CSS_DRAFTSIM, show_footer=False)
+
+
 def render_features(p: dict) -> str:
     m = p["meta"]
     body = (
@@ -946,6 +1445,7 @@ def main() -> None:
         "index.html": render_index(payload),
         "rankings.html": render_rankings(payload),
         "vona.html": render_vona(payload),
+        "draftsim.html": render_draftsim(payload),
         "features.html": render_features(payload),
         "methodology.html": render_methodology(payload),
     }
