@@ -12,12 +12,13 @@ per season. No blend weight. ADP enters separately as a signal:
 vs_adp = log((ecr_rank+10)/(adp_rank+10)), 0.0 exactly when ECR is missing;
 positive means the market drafts him earlier than the experts rank him.
 
-Features (51): base bias set (age curve, ppg mismatch, games missed, rookie
+Features (53): base bias set (age curve, ppg mismatch, games missed, rookie
 pedigree, TD share, team change, draft pedigree) + vs_adp + 17 preseason
 context features + 3 position interactions + the curated 8-feature
 opportunity block + the 11-column EXP_FEATURES expansion (season-level ppg
 trend, career durability, injury-report history, draft round buckets,
-contract commitment) selected block-wise on the 2012-2017 tune window
+contract commitment) selected block-wise on the 2012-2017 tune window,
+plus the 2-column coach_scheme block (2026-07-24 zero-fetch round)
 (kept: trend/injury/draft_capital/contracts; rejected: redzone, snaps,
 vegas, landing_spot). Drops vs the legacy feature set are justified only by
 feature-feature correlation or near-constancy (no outcome data). See

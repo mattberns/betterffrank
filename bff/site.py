@@ -299,7 +299,7 @@ def build_payload() -> dict:
                 "good": bool(delta is not None and delta >= -0.005),
                 "verdict": _verdict(delta, p_one, base_name.upper())}
 
-    headline = {"vs_ecr": compare_to("ecr")}
+    headline = {"vs_ecr": compare_to("ecr"), "vs_adp": compare_to("adp")}
     ve = headline["vs_ecr"]
 
     floor_note = ("so p-values are descriptive only"
@@ -328,13 +328,13 @@ def build_payload() -> dict:
         "players": players,
         "vona": {"matrix": vona_matrix, "table": vona_table, "rounds": MATRIX_ROUNDS},
         "method": [
-            {"step": "Pool", "text": "Season FFC ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."},
-            {"step": "Market anchor", "text": "log(ECR rank) when a preseason expert-consensus snapshot exists, else log(ADP rank); ordinally re-ranked per season."},
-            {"step": "Implied expectation", "text": "Per-position quadratic fit of season points on market rank, walk-forward, clamped monotone."},
-            {"step": "Residual model", "text": f"Ridge over {len(features)} standardized features (residual clipped +/-4)."},
-            {"step": "VORP conversion", "text": "Scores map through the historical points-by-rank curve to value over replacement (QB8/RB30/WR36/TE8)."},
-            {"step": "Walk-forward", "text": "Season t uses only seasons < t outcomes plus season-t preseason facts. No leakage."},
-            {"step": "Tuning", "text": "alpha, shrink chosen on an earlier walk-forward window, frozen grid, re-derived each run; eval seasons never touched."},
+            {"step": "Pool", "text": "Each season's ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."},
+            {"step": "Start from the experts", "text": "Every player's anchor is the expert-consensus rank: log(ECR) when a preseason snapshot exists, else log(ADP); ordinally re-ranked per season."},
+            {"step": "Rank to points", "text": "A per-position quadratic, fit walk-forward on prior seasons and clamped monotone, converts the anchor rank into expected log season points: what a player at that rank historically scores."},
+            {"step": "Correct the experts", "text": f"A ridge regression over {len(features)} standardized preseason features predicts the gap between actual and anchor-implied points (residual clipped +/-4); a shrunken fraction of that correction is added back. Position is never a feature; it enters only via the per-position anchor and the VORP curve."},
+            {"step": "Points to draft value", "text": "Projections map through a drafted-slot points curve (prior seasons only) to value over replacement: QB8/RB30/WR36/TE8, streaming-aware at QB/TE. The ECR and ADP baselines go through the identical conversion."},
+            {"step": "No peeking", "text": "Season t uses only seasons < t outcomes plus season-t preseason facts. No leakage."},
+            {"step": "Tuning", "text": "Ridge strength and shrink are chosen on the 2012-2017 window (frozen grid, re-derived each run); the test seasons are never touched for decisions."},
         ],
         "limitations": limitations,
     }
@@ -718,6 +718,7 @@ def _page(title: str, active: str, body: str, data_slice: dict, page_js: str) ->
 
 def render_index(p: dict) -> str:
     m = p["meta"]
+    ve, va = p["headline"]["vs_ecr"], p["headline"]["vs_adp"]
     body = (
         '<div class="wrap">'
         '<div class="titleblock">'
@@ -727,6 +728,28 @@ def render_index(p: dict) -> str:
         f'&middot; {m["n_features"]} features &middot; {m["n_players"]} players '
         '&middot; metric: Spearman(list, realized VORP)</p>'
         '</div>'
+
+        '<section><h2 class="numbered">The idea</h2>'
+        '<p>These rankings start from the FantasyPros expert consensus and correct it. '
+        'The experts are good, so the model never builds a board from scratch; instead, a regression '
+        f'fit on past seasons learns the patterns in when the experts miss &mdash; age, last season&rsquo;s '
+        'production against draft price, injury history, vacated opportunity, rookie pedigree &mdash; and '
+        'nudges each player&rsquo;s projection up or down from the expert baseline. Projected points then '
+        'convert to <b>value over replacement</b> (VORP): points above the best player you could get off '
+        'waivers at that position. That conversion, not raw points, is what merges QB, RB, WR, and TE '
+        'into one draft board; raw points would just stack quarterbacks at the top.</p>'
+        '<p>Scoring is champion versus challenger. For each test season '
+        f'({ve["span"].replace("-", "&ndash;")}), three boards are fixed before Week 1 &mdash; this model, '
+        'the expert consensus (ECR), and the market (ADP) &mdash; and graded after the season by how well '
+        'their preseason order matched players&rsquo; realized value over replacement. Same grade, same '
+        'VORP conversion, and no board sees the season it predicts; the model&rsquo;s settings were frozen '
+        'on 2012&ndash;2017 before any test season was scored. The record: '
+        f'<b>beat ADP in {va["wins"]} of {va["n_seasons"]} seasons</b> '
+        f'(mean {va["model"]:.4f} vs {va["baseline"]:.4f}, one-sided p = {va["p_one"]:g}) and '
+        f'<b>edged ECR in {ve["wins"]} of {ve["n_seasons"]}</b> '
+        f'(mean {ve["model"]:.4f} vs {ve["baseline"]:.4f}, p = {ve["p_one"]:g}). '
+        'The ECR margin is thin; read it as matching the experts, likely a touch better. '
+        'The experts themselves beat the market, which is why they are the harder benchmark.</p></section>'
 
         '<section><h2 class="numbered">Results</h2>'
         '<p class="cap"><b>Table 1.</b> Model vs FantasyPros ECR, per season. '

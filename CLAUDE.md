@@ -4,7 +4,7 @@ Goal: preseason fantasy football rankings (12-team PPR redraft) that beat
 market ADP and tie/beat FantasyPros ECR, evaluated on draft value (VORP),
 walk-forward with zero leakage. Protocol (2026-07-23, authoritative: `reports/REPORT.md`): tune 2012-2017 (6 folds,
 spearman_vorp, frozen grid), test 2018-2025 (S=8, sign-flip floor 0.0039 —
-significance at 0.05 is reachable). Current standing (51-feature model,
+significance at 0.05 is reachable). Current standing (53-feature model,
 offset-log vs_adp, drafted-slot VORP curve, QB8+TE8 streaming replacement):
 model 0.5233 / ECR 0.5179 / ADP 0.5028 mean spearman_vorp; **beats ADP
 +0.0206 (7/8, p_one = 0.016 — CERTIFIED at 0.05, two-sided 0.031); edges ECR
@@ -18,7 +18,7 @@ to the VORP conversion, each tune-window-validated before one test look:
 (1) finish-rank → drafted-slot curve, (2) QB12 → QB8 and (3) TE12 → TE8
 streaming replacements (derived by `bff/streaming.py`; see "The metric"). Same-day history (07-23):
 ECR window widened to 2015-2025 via Wayback backfill (`bff/ecr_wayback.py`);
-feature expansion 40 → 51. All current numbers and methodology live in
+feature expansion 40 → 51 (07-23) → 53 (coach_scheme, 07-24). All current numbers and methodology live in
 `reports/REPORT.md` (the ONLY report file — no versioned reports).
 
 Run everything from the repo root with `uv run python ...`. Stack: polars +

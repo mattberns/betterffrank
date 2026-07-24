@@ -19,6 +19,18 @@
       "power_floor": 0.0039,
       "good": true,
       "verdict": "edges ECR"
+    },
+    "vs_adp": {
+      "model": 0.5233,
+      "baseline": 0.5028,
+      "delta": 0.0205,
+      "n_seasons": 8,
+      "span": "2018-2025",
+      "wins": 7,
+      "p_one": 0.0156,
+      "power_floor": 0.0039,
+      "good": true,
+      "verdict": "beats ADP"
     }
   },
   "secondary": {
@@ -16773,31 +16785,31 @@
   "method": [
     {
       "step": "Pool",
-      "text": "Season FFC ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."
+      "text": "Each season's ADP top-150 at QB/RB/WR/TE, GSIS-matched (~145-150 players)."
     },
     {
-      "step": "Market anchor",
-      "text": "log(ECR rank) when a preseason expert-consensus snapshot exists, else log(ADP rank); ordinally re-ranked per season."
+      "step": "Start from the experts",
+      "text": "Every player's anchor is the expert-consensus rank: log(ECR) when a preseason snapshot exists, else log(ADP); ordinally re-ranked per season."
     },
     {
-      "step": "Implied expectation",
-      "text": "Per-position quadratic fit of season points on market rank, walk-forward, clamped monotone."
+      "step": "Rank to points",
+      "text": "A per-position quadratic, fit walk-forward on prior seasons and clamped monotone, converts the anchor rank into expected log season points: what a player at that rank historically scores."
     },
     {
-      "step": "Residual model",
-      "text": "Ridge over 53 standardized features (residual clipped +/-4)."
+      "step": "Correct the experts",
+      "text": "A ridge regression over 53 standardized preseason features predicts the gap between actual and anchor-implied points (residual clipped +/-4); a shrunken fraction of that correction is added back. Position is never a feature; it enters only via the per-position anchor and the VORP curve."
     },
     {
-      "step": "VORP conversion",
-      "text": "Scores map through the historical points-by-rank curve to value over replacement (QB8/RB30/WR36/TE8)."
+      "step": "Points to draft value",
+      "text": "Projections map through a drafted-slot points curve (prior seasons only) to value over replacement: QB8/RB30/WR36/TE8, streaming-aware at QB/TE. The ECR and ADP baselines go through the identical conversion."
     },
     {
-      "step": "Walk-forward",
+      "step": "No peeking",
       "text": "Season t uses only seasons < t outcomes plus season-t preseason facts. No leakage."
     },
     {
       "step": "Tuning",
-      "text": "alpha, shrink chosen on an earlier walk-forward window, frozen grid, re-derived each run; eval seasons never touched."
+      "text": "Ridge strength and shrink are chosen on the 2012-2017 window (frozen grid, re-derived each run); the test seasons are never touched for decisions."
     }
   ],
   "limitations": [

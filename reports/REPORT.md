@@ -109,7 +109,7 @@ TE8 then strengthened the ADP certification further (p 0.023 → 0.016, now 7/8
 seasons) and held the ECR edge (7/8 seasons). Beating ADP is certified at 0.05
 both-sided; the ECR edge is positive but not yet significant.
 
-## 4. Features (51)
+## 4. Features (53)
 
 Score(t, player) = market-implied expectation of log1p(season points) from
 the ECR anchor (per-position quadratic in log rank, vertex-clamped) +
@@ -144,6 +144,11 @@ edge). Feature groups:
   - *contracts*: apy_cap_pct (largest new coefficient, +0.04),
     contract_year, rookie_deal_yr — from nflverse/OTC contracts
   - *draft capital*: draft_r1, draft_r23 round buckets, rb_early_rookie
+- **Scheme (2, added 2026-07-24)**: coach_pass_oe, coach_pass_shift — the
+  week-1 coach's historical pass rate over expected and its recent shift
+  (`bff/candidate_features.py`, zero-fetch round). Kept on the tune gate:
+  +0.0023 ≥ the +0.0020 threshold, correlations clean, coefficient sanity
+  checked on a 2011-2017 fit.
 
 **Rejected candidate blocks** (kept building as inert zero-filled columns;
 re-test only via `bff.select_features`):
@@ -155,6 +160,9 @@ re-test only via `bff.select_features`):
 | snap share | −0.0020 | r = 0.53 with has_prior; adds little over volume shares |
 | rookie×vacated landing spot | hurt the joint | redundant with rookie_pedigree + vacated interactions |
 | rookie_log_pick | (dropped pre-score) | r = 0.917 with rookie_pedigree |
+| qb_rush (2026-07-24 zero-fetch round) | −0.0028 | hurt the tune window |
+| adp_gap (same round) | −0.0025 | hurt; one column collinear |
+| ol_proxy (same round) | −0.0000 | no signal |
 
 The broad finding: most "expert" stats are already priced into the
 ECR/ADP/prior-volume feature set. What survived is orthogonal information —

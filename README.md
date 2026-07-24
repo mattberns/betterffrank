@@ -1,54 +1,97 @@
 # betterffrank
 
-Backtested preseason fantasy football rankings (12-team PPR redraft) that aim to
-beat the two public baselines — market ADP and FantasyPros expert consensus
-(ECR) — evaluated honestly on **value over replacement**, not raw points.
+Preseason fantasy football draft rankings (12-team PPR redraft) that start
+from the experts' list and correct it. Every claim below is backtested over
+eight NFL seasons the model never saw during development, and graded on
+**draft value**, not raw points.
 
-The headline, reproduced from committed data (test seasons 2018–2025, never
-used for tuning or feature selection):
+The headline (test seasons 2018–2025, never used for tuning or feature
+selection):
 
 | Metric (mean VORP Spearman, walk-forward) | Model | Baseline | Verdict |
 | --- | --- | --- | --- |
 | vs **ECR** (2018–2025) | **0.5233** | 0.5179 | **edges ECR**, 7 of 8 seasons, p = 0.152 one-sided (positive, not yet significant) |
 | vs **ADP** (2018–2025) | **0.5233** | 0.5028 | **beats ADP**, 7 of 8 seasons, p = 0.016 one-sided (certified; 0.031 two-sided) |
 
-The defensible claim is deliberately narrow: **the model matches the expert
-consensus and beats the drafting market.** ECR is the primary benchmark — the
-model is architecturally ECR+ (the expert consensus is the anchor; features
-predict where it historically missed). The full methodology, per-season
-tables, and every caveat are in [`reports/REPORT.md`](reports/REPORT.md).
+The defensible claim is deliberately narrow: **the model beats the drafting
+market and edges the expert consensus.** ECR is the primary benchmark; the
+model is built *on top of* the experts' list, so it wins only where it
+corrects them well. Full methodology, per-season tables, and every caveat:
+[`reports/REPORT.md`](reports/REPORT.md).
 
-## Method in one paragraph
+## How it works, in plain English
+
+The model does not build rankings from scratch. It makes small, evidence-based
+corrections to the FantasyPros expert consensus (ECR), then converts everything
+into draft value. Five steps:
+
+1. **Start from the experts.** Each player's starting point is his preseason
+   expert-consensus rank (ADP where no ECR snapshot exists, before 2015).
+2. **Turn a rank into expected points.** A rank alone says nothing about
+   points, so history fills the gap: for each position, a curve fit on prior
+   seasons answers "how many points does the WR ranked 5th usually score?
+   The WR ranked 30th?" Every player now carries an expected point total.
+3. **Predict where the experts are wrong.** This is the model proper: a
+   regression on 53 facts knowable before the season (age, how much a player
+   outplayed his draft price last year, injury history, vacated targets on
+   his new team, rookie draft capital, the gap between his expert rank and
+   his market ADP, and so on) predicts the *gap* between what players
+   actually scored and what step 2 said they should score. Its only job is
+   learning the patterns in when the experts miss high or miss low.
+4. **Nudge, don't overrule.** The final projection is the expert-implied
+   expectation plus a *fraction* of the predicted correction. The experts
+   are good; the model adjusts at the margin.
+5. **Convert points into draft value.** Raw points mislead across positions:
+   the 10th QB outscores the 10th TE but is worth less in a 1-QB league,
+   because a decent QB is always available. So each projection becomes
+   **VORP** — points above the replacement you could actually get at that
+   position (QB8/RB30/WR36/TE8; QB and TE are streaming-aware, since a
+   punted QB/TE is refilled off waivers weekly). That conversion is what
+   merges four positions into one draft board.
+
+## How it's scored: champion vs challenger
+
+Each test season (2018–2025) is a round of the same contest. Three boards
+enter — the model, the expert consensus (ECR), and the market (ADP) — and
+each is graded the same way: rank-correlate the preseason ordering against
+players' *actual* end-of-season value over replacement. Best correlation wins
+the year. No board sees the season before predicting it, and the model's
+knobs were frozen on 2012–2017 before any test season was scored.
+
+Over eight rounds the challenger beats ADP 7 of 8 (average 0.5233 vs 0.5028;
+p = 0.016 one-sided, so the record is very unlikely to be luck) and edges
+ECR 7 of 8 (0.5233 vs 0.5179; the average gap is small enough that the ECR
+result is best read as "matches the experts, probably a touch better").
+Note ECR itself beats ADP; the experts are the stronger champion, which is
+why the margin over them is thinner.
+
+## Why draft value, not raw points
+
+An earlier version of this project claimed a huge edge (+0.17 Spearman vs
+ADP) by grading against raw total PPR points. That grade rewards stacking
+quarterbacks at the top: elite QBs outscore every RB and WR in total points,
+but in a one-QB league you start one, and the drop-off to the next decent QB
+is small. A points grade measures "who predicts point totals"; a draft needs
+"who finds value." So everything here — the model *and* both baselines — is
+graded on VORP, through the identical conversion. Nobody gets a private
+exchange rate; the comparison is apples to apples by construction.
+
+## Method in one paragraph (technical)
 
 For each season *t*, players are anchored to the market — `log(ecr_rank)` when
 a preseason ECR snapshot exists (2015–2025 + 2026), `log(adp_rank)` otherwise —
 ordinally re-ranked per season. A per-position quadratic fit on seasons < *t*
 converts the anchor into an implied expectation of log points; a ridge
-regression on 51 preseason features (age curve, production-vs-price mismatch,
-durability and injury history, rookie pedigree and draft-round capital, TD
-regression, the ECR-vs-ADP gap, roster/draft context, prior-year
-opportunity/usage, contract commitment) predicts the residual, and the shrunken
-sum is re-ranked into predicted **VORP** through a leakage-safe drafted-slot
-curve (`bff/vorp.py`, seasons < *t* only, replacement QB8/RB30/WR36/TE8):
-the expected actual points of the player the market drafted at each
-within-position slot — not a hindsight finish-rank curve, which over-values
-the noisy mid-TE/QB tails. The ADP and ECR baselines go through the same curve, so
-every comparison is apples to apples. Hyperparameters and all
-feature selection are tuned only on walk-forward seasons 2012–2017 (frozen
-grid, VORP Spearman); the test set is 2018–2025 and is never touched for
-decisions.
-
-## Why VORP Spearman, not points
-
-An earlier version of this project claimed a huge edge (+0.17 Spearman vs ADP)
-by scoring against raw total PPR points. That metric rewards stacking
-quarterbacks at the top: elite QBs outscore all RBs/WRs in total points, but in
-a one-QB league you start one and the drop from QB1 to QB12 is small. Raw-points
-Spearman measures "who predicts total points," not draft value — so the whole
-project is evaluated on **VORP** (points above the actual QB8 / RB30 / WR36 /
-TE8 in that season's pool), and every list, including the ADP and ECR
-baselines, is re-ranked through the same leakage-safe historical
-points-by-positional-rank curve.
+regression on 53 preseason features predicts the residual (position enters
+only through the per-position anchor fit and the VORP curve, never as a
+regression feature), and the shrunken sum is re-ranked into predicted **VORP**
+through a leakage-safe drafted-slot curve (`bff/vorp.py`, seasons < *t* only,
+replacement QB8/RB30/WR36/TE8): the expected actual points of the player the
+market drafted at each within-position slot — not a hindsight finish-rank
+curve, which over-values the noisy mid-TE/QB tails. The ADP and ECR baselines
+go through the same curve. Hyperparameters and all feature selection are
+tuned only on walk-forward seasons 2012–2017 (frozen grid, VORP Spearman);
+the test set is 2018–2025 and is never touched for decisions.
 
 ## Quick start
 
