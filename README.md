@@ -9,8 +9,8 @@ used for tuning or feature selection):
 
 | Metric (mean VORP Spearman, walk-forward) | Model | Baseline | Verdict |
 | --- | --- | --- | --- |
-| vs **ECR** (2018–2025) | **0.4978** | 0.4963 | **ties/edges ECR**, 6 of 8 seasons, p = 0.395 one-sided |
-| vs **ADP** (2018–2025) | **0.4978** | 0.4765 | **beats ADP**, 6 of 8 seasons, p = 0.051 one-sided (at the edge of 0.05) |
+| vs **ECR** (2018–2025) | **0.5193** | 0.5139 | **edges ECR**, 6 of 8 seasons, p = 0.164 one-sided (positive, not yet significant) |
+| vs **ADP** (2018–2025) | **0.5193** | 0.4984 | **beats ADP**, 7 of 8 seasons, p = 0.023 one-sided (certified; 0.047 two-sided) |
 
 The defensible claim is deliberately narrow: **the model matches the expert
 consensus and beats the drafting market.** ECR is the primary benchmark — the
@@ -29,7 +29,7 @@ durability and injury history, rookie pedigree and draft-round capital, TD
 regression, the ECR-vs-ADP gap, roster/draft context, prior-year
 opportunity/usage, contract commitment) predicts the residual, and the shrunken
 sum is re-ranked into predicted **VORP** through a leakage-safe drafted-slot
-curve (`bff/vorp.py`, seasons < *t* only, replacement QB12/RB30/WR36/TE12):
+curve (`bff/vorp.py`, seasons < *t* only, replacement QB8/RB30/WR36/TE12):
 the expected actual points of the player the market drafted at each
 within-position slot — not a hindsight finish-rank curve, which over-values
 the noisy mid-TE/QB tails. The ADP and ECR baselines go through the same curve, so
@@ -45,7 +45,7 @@ by scoring against raw total PPR points. That metric rewards stacking
 quarterbacks at the top: elite QBs outscore all RBs/WRs in total points, but in
 a one-QB league you start one and the drop from QB1 to QB12 is small. Raw-points
 Spearman measures "who predicts total points," not draft value — so the whole
-project is evaluated on **VORP** (points above the actual QB12 / RB30 / WR36 /
+project is evaluated on **VORP** (points above the actual QB8 / RB30 / WR36 /
 TE12 in that season's pool), and every list, including the ADP and ECR
 baselines, is re-ranked through the same leakage-safe historical
 points-by-positional-rank curve.
@@ -83,6 +83,9 @@ uv run python -m bff.model --season 2026         # -> preds_model_2026.parquet, 
 
 # draft overlay (VONA) — post-processes the 2026 board; not part of scoring
 uv run python -m bff.vona                        # -> reports/vona_2026.csv
+
+# QB streaming baseline derivation (tune window only; justifies REPL_RANKS QB8)
+uv run python -m bff.streaming                   # stdout only
 
 # evaluation
 uv run python -m bff.backtest data/processed/preds_model.parquet --name model
@@ -126,6 +129,7 @@ bff/                      the pipeline (run as python -m bff.<module>)
   vegas_wayback.py        one-time: preseason win totals from Wayback sportsoddshistory
   select_features.py      candidate-block selection harness (tune window only)
   vorp.py                 leakage-safe VORP curve library
+  streaming.py            QB streaming-baseline derivation (tune window; justifies QB8 replacement)
   backtest.py             evaluation harness (the metrics table)
   compare.py              paired sign-flip permutation test between two preds files
   model.py                THE model: dataset, tune, fit, VORP conversion, baselines, 2026 deliverables
@@ -185,8 +189,9 @@ any raw file.
 ## Caveats
 
 See the integrity ledger and caveats in [`reports/REPORT.md`](reports/REPORT.md).
-In short: the ADP win (+0.0213 over 2018–2025) sits at the edge of
-certification at p = 0.051; the ECR comparison is statistically a tie; seasons 2018–2020
+In short: the ADP win (+0.0209 over 2018–2025) is certified at p = 0.023
+one-sided (0.047 two-sided); the ECR edge (+0.0054) is positive but not yet
+significant (p = 0.164); seasons 2018–2020
 briefly served as tuning folds during the 2026-07-23 protocol work before
 moving to the test set (all selections were re-derived from scratch on
 2012–2017 and reproduced exactly); the 2015–2020 ECR comes from a different

@@ -13,11 +13,20 @@ Every number below reproduces from the commands in the last section.
 ## 1. Metric
 
 Mean Spearman correlation of the list against actual season VORP (points
-above the actual QB12/RB30/WR36/TE12 in that season's ADP top-150 pool),
+above the actual QB8/RB30/WR36/TE12 in that season's ADP top-150 pool),
 `spearman_vorp` from `bff/backtest.py`. Raw-points Spearman is never used
 anywhere (it rewards QB stacking; no raw-points path remains in the
 codebase). All lists, including both baselines, go through the same
 leakage-safe VORP conversion — baselines are never scored on raw ranks.
+
+QB replacement is **QB8, not QB12** (streaming-aware, set 2026-07-24). In a
+1-QB/12-team league you stream QBs, so your real fallback is far better than
+the 12th-best QB's season; an empirical streaming simulation (start the
+best-form free QB each week, `bff/streaming.py`) puts effective QB replacement
+around QB6-9, well above QB12. The sim is noisy and owned-pool-dependent, so a
+fixed QB8 (its central estimate) ships rather than a jumpy per-season value.
+QB12 had floated five QBs into the 2026 top 40 (Herbert QB5 at overall 39 on
+an ADP of 82); QB8 corrects the QB block. RB/WR/TE replacement is unchanged.
 
 The conversion curve (`bff/vorp.py`) is a **drafted-slot** curve: expected
 actual points of the player the market DRAFTED at each within-position slot,
@@ -51,48 +60,48 @@ served as tuning folds during that day's intermediate work before landing in
 the test set; to purge contamination, every selection (feature blocks,
 vs_adp transformation) was re-derived from scratch on 2012-2017, and
 reproduced identically. The test set was consulted 4 times on 2026-07-23 and
-once on 2026-07-24 (5 total); future looks should stay rare. The 2026-07-24
-look was the drafted-slot curve swap (§1): an a-priori data-correction to the
-VORP conversion, derived and validated on the 2012-2017 tune window first
-(where it preserved the model's edge over ADP), then scored once on test — not
-a selection over test outcomes. Residual caveat: an operator who has seen
+twice on 2026-07-24 (6 total); future looks should stay rare. The two
+2026-07-24 looks were both a-priori data-corrections to the VORP conversion,
+each derived/validated on the 2012-2017 tune window first, then scored once on
+test (not selections over test outcomes): (1) the drafted-slot curve swap
+(§1), and (2) the QB8 streaming replacement (§1), whose level was fixed from a
+tune-window streaming simulation. Residual caveat: an operator who has seen
 2018-2020 results cannot fully unsee them.
 
 ## 3. Headline (test seasons 2018-2025)
 
 | | mean spearman_vorp |
 |---|---|
-| **model** | **0.4978** |
-| ECR baseline | 0.4963 |
-| ADP baseline | 0.4765 |
+| **model** | **0.5193** |
+| ECR baseline | 0.5139 |
+| ADP baseline | 0.4984 |
 
 | Comparison | mean delta | seasons won | p (one-sided / two-sided) |
 |---|---|---|---|
-| vs **ECR** (primary benchmark) | **+0.0015** | 6 of 8 | 0.395 / 0.789 |
-| vs **ADP** | **+0.0213** | 6 of 8 | 0.051 / 0.102 |
+| vs **ECR** (primary benchmark) | **+0.0054** | 6 of 8 | 0.164 / 0.328 |
+| vs **ADP** | **+0.0209** | 7 of 8 | **0.023 / 0.047** |
 
-**The claim: beats ADP (at the edge of certification, p = 0.051); ties/edges
-ECR.** Per-season deltas:
+**The claim: beats ADP (now certified, p = 0.023 one-sided, 0.047 two-sided);
+edges ECR (+0.0054, not yet significant).** Per-season deltas:
 
 | season | model | vs ADP | vs ECR |
 |---|---|---|---|
-| 2018 | 0.4341 | −0.0249 | +0.0067 |
-| 2019 | 0.4734 | +0.0247 | +0.0021 |
-| 2020 | 0.4947 | −0.0071 | −0.0168 |
-| 2021 | 0.5093 | +0.0227 | +0.0006 |
-| 2022 | 0.5811 | +0.0496 | +0.0252 |
-| 2023 | 0.5476 | +0.0244 | +0.0083 |
-| 2024 | 0.4607 | +0.0083 | −0.0179 |
-| 2025 | 0.4813 | +0.0727 | +0.0039 |
+| 2018 | 0.4480 | −0.0158 | +0.0158 |
+| 2019 | 0.4892 | +0.0325 | +0.0131 |
+| 2020 | 0.5418 | +0.0142 | −0.0004 |
+| 2021 | 0.5174 | +0.0110 | +0.0019 |
+| 2022 | 0.5956 | +0.0295 | +0.0161 |
+| 2023 | 0.5780 | +0.0352 | +0.0166 |
+| 2024 | 0.4758 | +0.0044 | −0.0271 |
+| 2025 | 0.5085 | +0.0565 | +0.0073 |
 
-Note the ECR baseline itself beats ADP (0.4963 vs 0.4765): expert consensus
+Note the ECR baseline itself beats ADP (0.5139 vs 0.4984): expert consensus
 is a better draft signal than market ADP, which is why the model's margin
-over ECR is much smaller than over ADP. The drafted-slot curve (§1) widened
-the ADP margin (from +0.0183 to +0.0213, 5→6 seasons won, p 0.078→0.051) and
-left the ECR tie intact (+0.0025→+0.0015); all absolute levels fell ~0.018 in
-the shared level shift. At the current effect size the ADP claim plausibly
-certifies within 1-2 future seasons (each concluded season adds one paired
-observation).
+over ECR is much smaller than over ADP. The QB8 streaming replacement (§1)
+pushed the ADP claim over the line — from +0.0213 (6/8, p = 0.051) to +0.0209
+(7/8, p = 0.023) — and grew the ECR edge (+0.0015 → +0.0054); it also lifted
+all absolute levels ~0.02. Beating ADP is now certified at 0.05 both-sided;
+the ECR edge is positive but not yet significant.
 
 ## 4. Features (51)
 
@@ -158,15 +167,15 @@ parquets committed. Fetch commands live in the module docstrings.
 ## 6. The 2026 board
 
 185 players, `reports/rankings_2026.csv`; steals (ADP-rank minus our-rank ≥
-24, ADP ≤ 120) with plain-language reasons in `reports/steals_2026.csv` (6
-under the drafted-slot curve; the finish-rank curve manufactured 15, most of
-them mid-TE/QB artifacts of the old curve's inflated tails). Sanity gates
-(asserted every run): ≤ 2 QBs in top 15, top-3 all RB/WR, only QB/RB/WR/TE.
-Top 5, all WR: Nacua, Smith-Njigba, Jefferson, Chase, Lamb; RBs (Bijan,
-Gibbs, McCaffrey, Taylor) fill 6-9. The WR-heavy top is the drafted-slot
-curve expressing itself — the finish-rank curve had overpriced early-RB
-scarcity the way it overpriced mid-TE/QB. Ja'Marr Chase sits #4 (ECR 1 /
-ADP 4), consistent with his expert rank; no QB before #17.
+24, ADP ≤ 120) with plain-language reasons in `reports/steals_2026.csv` (5
+under the QB8 streaming replacement; was 6 under QB12, and the finish-rank
+curve before that manufactured 15). Sanity gates (asserted every run): ≤ 2
+QBs in top 15, top-3 all RB/WR, only QB/RB/WR/TE. Top 5, all WR: Nacua,
+Smith-Njigba, Jefferson, Chase, Lamb; RBs (Bijan, Gibbs, McCaffrey, Taylor)
+fill 6-9. The WR-heavy top is the drafted-slot curve expressing itself. QB8
+streaming replacement (§1) pushed the first QB from #17 to **#22** (Josh
+Allen) and moved Justin Herbert from #39 to #50 (ADP 82); no QB before #22.
+Ja'Marr Chase sits #4 (ECR 1 / ADP 4), consistent with his expert rank.
 
 Live-2026 caveats: contracts data lacks the 2026 draft class (14 pool
 players zero-filled); Vegas/snap 2026 inputs are null (both blocks rejected
@@ -193,12 +202,14 @@ snake-turn matrix leads RB for seats 1-8, flips to WR at the 9-11 turn, and
 takes the last elite RB (Jeanty) at seat 12. Assumes opponents draft by ADP;
 it is a positional-timing guide, not a full draft simulator.
 
-A BEER man-games replacement baseline was prototyped for stage 1 on
-2026-07-24 and **rejected** on the tune window: with a 1QB/2RB/2WR/1TE/1FLEX
-roster the flex resolves to WR in PPR, which deepened the WR baseline and
-narrowed the model's edge over ADP (+0.0168 → +0.0100) and ECR
-(+0.0457 → +0.0346). "RB up front" is a timing effect, not a season-value
-effect; VONA is the correct home for it.
+Two replacement-level ideas from the Subvertadown VBD guide were tried for
+stage 1 on 2026-07-24, with opposite outcomes. A **BEER man-games** baseline
+was **rejected** on the tune window: with a 1QB/2RB/2WR/1TE/1FLEX roster the
+flex resolves to WR in PPR, which deepened the WR baseline and narrowed the
+model's edge over ADP (+0.0168 → +0.0100) and ECR (+0.0457 → +0.0346). "RB up
+front" is a timing effect, not a season-value effect; VONA is the correct home
+for it. The **QB-streaming baseline** was **adopted** (QB12 → QB8, §1): it
+deflated the over-valued QB block and improved both verdicts.
 
 ## 8. Reproduce
 

@@ -5,20 +5,21 @@ market ADP and tie/beat FantasyPros ECR, evaluated on draft value (VORP),
 walk-forward with zero leakage. Protocol (2026-07-23, authoritative: `reports/REPORT.md`): tune 2012-2017 (6 folds,
 spearman_vorp, frozen grid), test 2018-2025 (S=8, sign-flip floor 0.0039 —
 significance at 0.05 is reachable). Current standing (51-feature model,
-offset-log vs_adp, drafted-slot VORP curve): model 0.4978 / ECR 0.4963 /
-ADP 0.4765 mean spearman_vorp; **beats ADP +0.0213 (6/8, p_one = 0.051, at
-the edge); ties/edges ECR +0.0015 (5/8, p_one = 0.395)** — the primary
+offset-log vs_adp, drafted-slot VORP curve, QB8 streaming replacement):
+model 0.5193 / ECR 0.5139 / ADP 0.4984 mean spearman_vorp; **beats ADP
++0.0209 (7/8, p_one = 0.023 — CERTIFIED at 0.05, two-sided 0.047); edges ECR
++0.0054 (6/8, p_one = 0.164, positive but not yet significant)** — the primary
 benchmark is ECR. Integrity ledger: 2018-2020 briefly served as tune folds
 during the 2026-07-23 protocol work before moving to test (all selections
 re-derived from scratch on 2012-2017; they reproduced exactly). Test-set
-looks: FOUR on 2026-07-23, ONE on 2026-07-24 (FIVE total) — count future
-looks, keep them rare. The 2026-07-24 look swapped the finish-rank VORP
-curve for a drafted-slot curve (a-priori data-correction; see "The metric"),
-validated on the tune window before the single test look. Same-day history
-(07-23): ECR window widened to 2015-2025 via Wayback backfill
-(`bff/ecr_wayback.py`); feature expansion 40 → 51. All current numbers and
-methodology live in `reports/REPORT.md` (the ONLY report file — no versioned
-reports).
+looks: FOUR on 2026-07-23, TWO on 2026-07-24 (SIX total) — count future
+looks, keep them rare. The two 2026-07-24 looks were a-priori data-corrections
+to the VORP conversion, each tune-window-validated before one test look:
+(1) finish-rank → drafted-slot curve, (2) QB12 → QB8 streaming replacement
+(derived by `bff/streaming.py`; see "The metric"). Same-day history (07-23):
+ECR window widened to 2015-2025 via Wayback backfill (`bff/ecr_wayback.py`);
+feature expansion 40 → 51. All current numbers and methodology live in
+`reports/REPORT.md` (the ONLY report file — no versioned reports).
 
 Run everything from the repo root with `uv run python ...`. Stack: polars +
 scikit-learn. Never `git commit` or `git push` unless the user asks.
@@ -51,6 +52,17 @@ scikit-learn. Never `git commit` or `git push` unless the user asks.
   board. Cross-position position MIX on any board is a pure function of this
   curve (the model sets only within-position order), so this is the lever for
   positional over/under-valuation, not a per-position hand fudge.
+- **QB replacement is QB8, not QB12** (`REPL_RANKS` in `bff/backtest.py`, set
+  2026-07-24). In a 1-QB league you stream QBs, so the real fallback beats the
+  12th-best QB's season. `bff/streaming.py` simulates form-streaming the free
+  pool on the tune window → effective replacement ~QB6-9 (noisy, owned-pool
+  dependent); QB8 is the shipped central estimate, gated on the tune window
+  (held the ECR edge, kept a positive ADP edge) before one test look. It fixed
+  the QB block (Herbert QB5 fell from board #39 to #50; first QB #17 → #22) and
+  certified the ADP claim. RB/WR/TE stay 30/36/12. The QB curve plateaus
+  QB10-12, so only a replacement ≤ QB8 moves the board — don't set QB9/10
+  expecting an effect. (Its sibling, a BEER man-games replacement, was REJECTED
+  — see Rules.)
 
 ## Anchor and vs_adp
 
@@ -104,7 +116,7 @@ scikit-learn. Never `git commit` or `git push` unless the user asks.
   anchor with `vs_adp` = 0, and the CLI prints a warning.
 - All models AND baselines go through the same VORP conversion
   (`bff.model.to_vorp` over `bff/vorp.py`'s leakage-safe drafted-slot curve;
-  replacement ranks QB12/RB30/WR36/TE12). Never score a baseline on raw
+  replacement ranks QB8/RB30/WR36/TE12). Never score a baseline on raw
   -adp/-ecr.
 
 ## Commands and stable artifact names
@@ -121,6 +133,9 @@ uv run python -m bff.opportunity_features
 uv run python -m bff.redzone_features      # <- data/raw/pbp/ (nflverse, 2010-2025)
 uv run python -m bff.situation_features    # <- data/raw/{snaps,injuries,contracts,vegas}/
 uv run python -m bff.vegas_wayback         # one-time Wayback scrape (needs network; cached after)
+
+# QB streaming baseline derivation (tune window ONLY; justifies REPL_RANKS QB8)
+uv run python -m bff.streaming
 
 # candidate-feature selection (tune window 2012-2017 ONLY; never the test set)
 uv run python -m bff.select_features [--blocks k ...] [--joint k ...]
@@ -155,6 +170,7 @@ uv run python -m bff.site --refresh    # rerun model + backtests, then render
 | `bff.model --baselines` | `data/processed/preds_adp.parquet`, `preds_ecr.parquet` |
 | `bff.model --season 2026` | `data/processed/preds_model_2026.parquet` (185 rows), `reports/rankings_2026.csv`, `reports/steals_2026.csv` |
 | `bff.vona` | `reports/vona_2026.csv` (150 rows) + prints the 12-seat snake-turn matrix |
+| `bff.streaming` | stdout only (tune-window QB streaming equiv-rank table; derivation behind QB8) |
 | `bff.backtest <preds> --name <n>` | `reports/scores_<n>.csv` |
 | `bff.compare A B` | stdout only (per-season deltas + exact sign-flip p-values) |
 
@@ -202,7 +218,11 @@ without this sync is an incomplete change.
   man-games replacement was prototyped 2026-07-24 and REJECTED on the tune
   window: in PPR the flex resolves to WR, so it deepened WR and narrowed the
   model's edge over ADP/ECR — do not revive it expecting RB-first.)
-- Don't git commit or push unless asked.
+- **The user owns ALL git.** Never stage, commit, push, branch, or otherwise
+  change git state — he does every git interaction himself. Read-only git
+  (status/diff/log) is fine when it serves a task. Do NOT end summaries with
+  "nothing committed" / "uncommitted" notes; leave the tree as-is and say
+  nothing about commit state unless asked.
 
 ## Fragility list — do not "fix" or reorder these
 

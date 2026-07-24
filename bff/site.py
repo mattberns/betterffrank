@@ -332,7 +332,7 @@ def build_payload() -> dict:
             {"step": "Market anchor", "text": "log(ECR rank) when a preseason expert-consensus snapshot exists, else log(ADP rank); ordinally re-ranked per season."},
             {"step": "Implied expectation", "text": "Per-position quadratic fit of season points on market rank, walk-forward, clamped monotone."},
             {"step": "Residual model", "text": f"Ridge over {len(features)} standardized features (residual clipped +/-4)."},
-            {"step": "VORP conversion", "text": "Scores map through the historical points-by-rank curve to value over replacement (QB12/RB30/WR36/TE12)."},
+            {"step": "VORP conversion", "text": "Scores map through the historical points-by-rank curve to value over replacement (QB8/RB30/WR36/TE12)."},
             {"step": "Walk-forward", "text": "Season t uses only seasons < t outcomes plus season-t preseason facts. No leakage."},
             {"step": "Tuning", "text": "alpha, shrink chosen on an earlier walk-forward window, frozen grid, re-derived each run; eval seasons never touched."},
         ],
@@ -741,7 +741,7 @@ def render_index(p: dict) -> str:
         'it is not a decision metric (it rewards QB-stacking).</p></section>'
 
         '<section><h2 class="numbered">Metric and method</h2>'
-        '<p class="note">VORP = value over replacement (QB12 / RB30 / WR36 / TE12). '
+        '<p class="note">VORP = value over replacement (QB8 / RB30 / WR36 / TE12). '
         'Predictions for season <i>t</i> use only seasons &lt; <i>t</i> outcomes plus season-<i>t</i> '
         'preseason facts (ECR, ADP, rosters, draft): walk-forward, no leakage.</p>'
         '<ol class="method" id="method"></ol>'

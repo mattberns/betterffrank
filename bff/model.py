@@ -111,8 +111,13 @@ EXP_FEATURES = [
     "apy_cap_pct", "contract_year", "rookie_deal_yr",                 # contracts
     "draft_r1", "draft_r23", "rb_early_rookie",                       # draft capital
 ]
+# 2026-07-24 zero-fetch round: coach_scheme kept (tune +0.0023, gate
+# ≥ +0.0020; correlations clean; coef sanity on 2011-2017 fit). qb_rush
+# (−0.0028), adp_gap (−0.0025, one collinear col), ol_proxy (−0.0000)
+# rejected. See reports/REPORT.md §4.
+SCHEME_FEATURES = ["coach_pass_oe", "coach_pass_shift"]
 FEATURES = (BASE_FEATURES + MARKET_FEATURES + CTX_FEATURES + INTERACTIONS
-            + OPP_FEATURES + EXP_FEATURES)
+            + OPP_FEATURES + EXP_FEATURES + SCHEME_FEATURES)
 
 # Candidate feature blocks for tune-window selection (2012-2017 ONLY; see
 # reports/REPORT.md). Columns exist in build_dataset()
@@ -129,6 +134,11 @@ CANDIDATE_BLOCKS: dict[str, list[str]] = {
     "draft_capital": ["draft_r1", "draft_r23", "rb_early_rookie"],
     "trend": ["ppg_delta", "career_missed_rate"],
     "landing_spot": ["rookie_x_vacated"],
+    # 2026-07-24 zero-fetch candidates (bff/candidate_features.py)
+    "coach_scheme": ["coach_pass_oe", "coach_pass_shift"],
+    "qb_rush": ["qb_rush_ypg", "expqb_rush_wrte"],
+    "ol_proxy": ["ol_sack_rate_prior", "ol_stuff_rate_prior"],
+    "adp_gap": ["adp_gap_ahead", "adp_gap_behind"],
 }
 
 
@@ -402,6 +412,18 @@ def build_dataset() -> pl.DataFrame:
                    by="gsis_id", strategy="backward")
         .drop("_prev_season", "asof_season")
         .with_columns(pl.col("career_missed_rate").fill_null(0.0))
+    )
+
+    # zero-fetch candidate blocks (2026-07-24: coach_scheme / qb_rush /
+    # ol_proxy / adp_gap; built by bff/candidate_features.py from data
+    # already in the repo). Zero-fill = neutral, same convention as above.
+    cand_cols = (CANDIDATE_BLOCKS["coach_scheme"] + CANDIDATE_BLOCKS["qb_rush"]
+                 + CANDIDATE_BLOCKS["ol_proxy"] + CANDIDATE_BLOCKS["adp_gap"])
+    cand = pl.read_parquet(PROC / "candidate_features.parquet").select(
+        ["season", "gsis_id"] + cand_cols
+    ).with_columns([pl.col(c).cast(pl.Float64) for c in cand_cols])
+    df = df.join(cand, on=["season", "gsis_id"], how="left").with_columns(
+        [pl.col(c).fill_null(0.0) for c in cand_cols]
     )
 
     # landing spot: rookie draft capital INTO vacated volume

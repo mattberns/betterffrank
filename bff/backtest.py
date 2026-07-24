@@ -33,7 +33,7 @@ MEAN_SEASONS = range(2018, 2026)  # 2018-2025 inclusive (test set, S=8)
 
 # replacement rank per position (1QB league): pool player at this actual-points
 # rank within position defines replacement level for VORP
-REPL_RANKS = {"QB": 12, "RB": 30, "WR": 36, "TE": 12}
+REPL_RANKS = {"QB": 8, "RB": 30, "WR": 36, "TE": 12}  # QB8 = streaming-aware (2026-07-24; see REPORT §1)
 
 METRICS = [
     "spearman", "ndcg100", "top24_hit", "top50_hit",
