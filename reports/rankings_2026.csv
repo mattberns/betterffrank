@@ -18,7 +18,7 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 17,Drake London,WR,ATL,12.9,13,-4,79.3071
 18,George Pickens,WR,DAL,18.4,19,1,79.3071
 19,Chris Olave,WR,NO,20.6,21,2,76.2179
-20,Rashee Rice,WR,KC,27.4,27,7,69.4504
+20,Zay Flowers,WR,BAL,25.3,25,5,69.4504
 21,Trey McBride,TE,ARI,28.9,32,11,66.6852
 22,Josh Allen,QB,BUF,28.1,29,7,63.5819
 23,Derrick Henry,RB,BAL,16.4,17,-6,62.9125
@@ -26,16 +26,16 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 25,Saquon Barkley,RB,PHI,19.9,20,-5,62.9125
 26,Kenneth Walker III,RB,KC,22.5,22,-4,62.9125
 27,Breece Hall,RB,NYJ,30.1,33,6,62.9125
-28,DeVonta Smith,WR,PHI,28.2,30,2,61.8771
+28,Rashee Rice,WR,KC,27.4,27,-1,61.8771
 29,Jeremiyah Love,RB,ARI,22.6,23,-6,59.1721
 30,Brock Bowers,TE,LV,35.9,37,7,57.2721
-31,Drake Maye,QB,NE,63.3,65,34,57.0175
-32,Zay Flowers,WR,BAL,25.3,25,-7,54.8721
-33,Tee Higgins,WR,CIN,27.1,26,-7,54.8721
+31,Lamar Jackson,QB,BAL,55.6,56,25,57.0175
+32,Tee Higgins,WR,CIN,27.1,26,-6,54.8721
+33,DeVonta Smith,WR,PHI,28.2,30,-3,54.8721
 34,Tetairoa McMillan,WR,CAR,33.0,35,1,54.8721
 35,Ladd McConkey,WR,LAC,36.5,39,4,54.8721
 36,Jaylen Waddle,WR,DEN,41.1,43,7,54.8721
-37,Lamar Jackson,QB,BAL,55.6,56,19,54.2808
+37,Drake Maye,QB,NE,63.3,65,28,54.2808
 38,Kyren Williams,RB,LAR,32.8,34,-4,54.2558
 39,Emeka Egbuka,WR,TB,45.2,45,6,51.14
 40,Garrett Wilson,WR,NYJ,27.4,28,-12,45.0942
@@ -46,11 +46,11 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 45,Josh Jacobs,RB,GB,28.4,31,-14,38.5129
 46,Javonte Williams,RB,DAL,35.8,36,-10,38.5129
 47,Travis Etienne Jr.,RB,NO,39.5,41,-6,38.5129
-48,Malik Nabers,WR,NYG,43.5,44,-4,38.3642
+48,Davante Adams,WR,LAR,40.6,42,-6,38.3642
 49,Justin Herbert,QB,LAC,79.8,82,33,37.3754
 50,Colston Loveland,TE,CHI,47.3,48,-2,36.5104
-51,Davante Adams,WR,LAR,40.6,42,-9,32.8396
-52,Joe Burrow,QB,CIN,47.6,49,-3,30.3625
+51,Malik Nabers,WR,NYG,43.5,44,-7,32.8396
+52,Caleb Williams,QB,CHI,108.0,112,60,30.3625
 53,TreVeyon Henderson,RB,NE,57.8,59,6,29.7692
 54,Tyler Warren,TE,IND,54.2,54,0,29.4792
 55,Cam Skattebo,RB,NYG,37.4,40,-15,19.3725
@@ -67,7 +67,7 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 66,Tucker Kraft,TE,GB,73.0,76,10,10.5333
 67,Bucky Irving,RB,TB,46.2,47,-20,8.955
 68,Quinshon Judkins,RB,CLE,49.2,52,-16,8.955
-69,Caleb Williams,QB,CHI,108.0,112,43,8.8321
+69,Joe Burrow,QB,CIN,47.6,49,-20,8.8321
 70,Brian Thomas Jr.,WR,JAX,84.2,86,16,7.5235
 71,D'Andre Swift,RB,CHI,47.7,50,-21,3.8825
 72,David Montgomery,RB,HOU,56.1,57,-15,3.8825
@@ -99,13 +99,13 @@ our_rank,player,position,team,adp,adp_rank,delta,score
 98,Tyrone Tracy Jr.,RB,NYG,150.2,148,50,-2.9843
 99,George Kittle,TE,SF,107.0,111,12,-3.3618
 100,Jake Ferguson,TE,DAL,117.7,116,16,-3.3618
-101,Isaiah Likely,TE,NYG,137.5,136,35,-3.3618
+101,Mark Andrews,TE,BAL,131.2,130,29,-3.3618
 102,Dalton Kincaid,TE,BUF,137.5,137,35,-3.3618
 103,Jacory Croskey-Merritt,RB,WAS,121.8,121,18,-3.6223
 104,Jordan Mason,RB,MIN,125.6,122,18,-3.6223
 105,Woody Marks,RB,HOU,146.3,143,38,-3.6223
 106,Dylan Sampson,RB,CLE,150.0,147,41,-3.6223
-107,Mark Andrews,TE,BAL,131.2,130,23,-5.6846
+107,Isaiah Likely,TE,NYG,137.5,136,29,-5.6846
 108,Dallas Goedert,TE,PHI,128.5,124,16,-6.159
 109,Wan'Dale Robinson,WR,TEN,89.1,91,-18,-10.0389
 110,Quentin Johnston,WR,LAC,96.8,100,-10,-10.0389

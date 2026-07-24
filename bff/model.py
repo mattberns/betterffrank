@@ -119,8 +119,16 @@ EXP_FEATURES = [
 # decision, so the promotion was rolled back and all four blocks re-derived
 # on the tune window under the new metric. See reports/REPORT.md §4.
 SCHEME_FEATURES = ["coach_pass_oe", "coach_pass_shift"]
+# 2026-07-24 zero-fetch round 2: trajectory SHIPPED as a lean 2-column block
+# (tune +0.0059, the strongest new block since the original expansion). The
+# other two trajectory candidates (yrs_exp r=0.80 vs age_c, career_best_ppg
+# r=0.79 vs has_prior) were dead weight — dropping both RAISED the tune mean
+# (0.4605 -> 0.4617), so only the two low-collinearity, genuinely-new columns
+# ship. `sos` rejected (tune -0.0068: schedule is real info but noise at the
+# season level, defenses regress). See reports/REPORT.md §4.
+TRAJ_FEATURES = ["yrs_since_peak", "last_was_career_best"]
 FEATURES = (BASE_FEATURES + MARKET_FEATURES + CTX_FEATURES + INTERACTIONS
-            + OPP_FEATURES + EXP_FEATURES)
+            + OPP_FEATURES + EXP_FEATURES + TRAJ_FEATURES)
 
 # Candidate feature blocks for tune-window selection (2012-2017 ONLY; see
 # reports/REPORT.md). Columns exist in build_dataset()
@@ -142,6 +150,10 @@ CANDIDATE_BLOCKS: dict[str, list[str]] = {
     "qb_rush": ["qb_rush_ypg", "expqb_rush_wrte"],
     "ol_proxy": ["ol_sack_rate_prior", "ol_stuff_rate_prior"],
     "adp_gap": ["adp_gap_ahead", "adp_gap_behind"],
+    # 2026-07-24 zero-fetch round 2 (bff/schedule_trajectory_features.py)
+    "sos": ["sos_dvp", "sos_dvp_first4"],
+    "trajectory": ["yrs_exp", "yrs_since_peak", "career_best_ppg",
+                   "last_was_career_best"],
 }
 
 
@@ -427,6 +439,16 @@ def build_dataset() -> pl.DataFrame:
     ).with_columns([pl.col(c).cast(pl.Float64) for c in cand_cols])
     df = df.join(cand, on=["season", "gsis_id"], how="left").with_columns(
         [pl.col(c).fill_null(0.0) for c in cand_cols]
+    )
+
+    # zero-fetch round 2 (2026-07-24): sos + trajectory blocks, built by
+    # bff/schedule_trajectory_features.py. Zero-fill neutral.
+    st_cols = CANDIDATE_BLOCKS["sos"] + CANDIDATE_BLOCKS["trajectory"]
+    st = pl.read_parquet(PROC / "sched_traj_features.parquet").select(
+        ["season", "gsis_id"] + st_cols
+    ).with_columns([pl.col(c).cast(pl.Float64) for c in st_cols])
+    df = df.join(st, on=["season", "gsis_id"], how="left").with_columns(
+        [pl.col(c).fill_null(0.0) for c in st_cols]
     )
 
     # landing spot: rookie draft capital INTO vacated volume

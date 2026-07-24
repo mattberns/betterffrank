@@ -1,5 +1,6 @@
 our_rank,player,position,team,adp,adp_rank,delta,score,reason
-31,Drake Maye,QB,NE,63.3,65,34,57.0175,"played a near-full season last year (durability); QB2 slot priced above ADP (+16 ranks from positional scarcity, +18 from features)"
+31,Lamar Jackson,QB,BAL,55.6,56,25,57.0175,"QB2 slot priced above ADP (+19 ranks from positional scarcity, +6 from features)"
+37,Drake Maye,QB,NE,63.3,65,28,54.2808,"played a near-full season last year (durability); QB3 slot priced above ADP (+16 ranks from positional scarcity, +12 from features)"
 44,Jalen Hurts,QB,PHI,93.7,97,53,44.61,"TD-efficient on real opportunity last season [opp]; QB4 slot priced above ADP (+-24 ranks from positional scarcity, +77 from features)"
 49,Justin Herbert,QB,LAC,79.8,82,33,37.3754,"QB5 slot priced above ADP (+13 ranks from positional scarcity, +20 from features)"
-69,Caleb Williams,QB,CHI,108.0,112,43,8.8321,"played a near-full season last year (durability); QB7 slot priced above ADP (+-12 ranks from positional scarcity, +55 from features)"
+52,Caleb Williams,QB,CHI,108.0,112,60,30.3625,"played a near-full season last year (durability); QB6 slot priced above ADP (+-12 ranks from positional scarcity, +72 from features)"

@@ -64,7 +64,7 @@ served as tuning folds during that day's intermediate work before landing in
 the test set; to purge contamination, every selection (feature blocks,
 vs_adp transformation) was re-derived from scratch on 2012-2017, and
 reproduced identically. The test set was consulted 4 times on 2026-07-23 and
-five times on 2026-07-24 (9 total); future looks should stay rare. Three of
+six times on 2026-07-24 (10 total); future looks should stay rare. Three of
 the 2026-07-24 looks were a-priori data-corrections to the VORP conversion,
 each derived/validated on the 2012-2017 tune window first, then scored once
 on test (not selections over test outcomes): (1) the drafted-slot curve swap
@@ -78,48 +78,56 @@ later, and the block was rolled back after failing the re-derived gate under
 QB8/TE8 (+0.0008); (5) a reconciliation look re-scoring the final 51-feature
 model under the final metric, needed because the QB8/TE8 look sequence had
 accidentally run on a tree still carrying the provisional coach_scheme block
-(53 features) — it produced the §3 headline. Waiving the failed gate to keep
-coach_scheme (whose presence coincided with a stronger p = 0.016) was
-considered and REJECTED as test-set selection. Residual caveat: an operator
-who has seen 2018-2020 results cannot fully unsee them.
+(53 features) — it produced the 51-feature reconciliation numbers. Waiving
+the failed gate to keep coach_scheme (whose presence coincided with a
+stronger p = 0.016) was considered and REJECTED as test-set selection.
+Look 10 (2026-07-24) scored the trajectory block: it passed the tune gate
+at +0.0059 (lean 2-column form), and the confirming test look held positive
+(+0.0003, ADP p 0.020 → 0.0195) — it produced the current §3 headline. Its
+sibling block `sos` failed the tune gate and never earned a look; a
+GBT/RF model-class experiment the same day also failed on the tune window
+with no look spent. Total: 4 looks on 2026-07-23, six on 2026-07-24 (10);
+future looks should stay rare. Residual caveat: an operator who has seen
+2018-2020 results cannot fully unsee them.
 
 ## 3. Headline (test seasons 2018-2025)
 
 | | mean spearman_vorp |
 |---|---|
-| **model** | **0.5229** |
+| **model** | **0.5232** |
 | ECR baseline | 0.5179 |
 | ADP baseline | 0.5028 |
 
 | Comparison | mean delta | seasons won | p (one-sided / two-sided) |
 |---|---|---|---|
-| vs **ECR** (primary benchmark) | **+0.0050** | 5 of 8 | 0.180 / 0.359 |
-| vs **ADP** | **+0.0201** | 7 of 8 | **0.020 / 0.039** |
+| vs **ECR** (primary benchmark) | **+0.0053** | 5 of 8 | 0.164 / 0.328 |
+| vs **ADP** | **+0.0205** | 7 of 8 | **0.0195 / 0.039** |
 
-**The claim: beats ADP (certified at 0.05, p = 0.020 one-sided / 0.039
-two-sided); edges ECR (+0.0050, positive, not significant).** Per-season
+**The claim: beats ADP (certified at 0.05, p = 0.0195 one-sided / 0.039
+two-sided); edges ECR (+0.0053, positive, not significant).** Per-season
 deltas:
 
 | season | model | vs ADP | vs ECR |
 |---|---|---|---|
 | 2018 | 0.4497 | −0.0172 | +0.0146 |
-| 2019 | 0.5057 | +0.0329 | +0.0121 |
-| 2020 | 0.5349 | +0.0131 | −0.0027 |
-| 2021 | 0.5373 | +0.0153 | +0.0107 |
-| 2022 | 0.5897 | +0.0275 | +0.0164 |
-| 2023 | 0.5833 | +0.0356 | +0.0162 |
-| 2024 | 0.4778 | +0.0118 | −0.0249 |
-| 2025 | 0.5044 | +0.0419 | −0.0025 |
+| 2019 | 0.5039 | +0.0312 | +0.0103 |
+| 2020 | 0.5372 | +0.0153 | −0.0005 |
+| 2021 | 0.5310 | +0.0089 | +0.0043 |
+| 2022 | 0.5929 | +0.0307 | +0.0195 |
+| 2023 | 0.5866 | +0.0388 | +0.0194 |
+| 2024 | 0.4801 | +0.0141 | −0.0227 |
+| 2025 | 0.5045 | +0.0420 | −0.0025 |
 
 Note the ECR baseline itself beats ADP (0.5179 vs 0.5028): expert consensus
 is a better draft signal than market ADP, which is why the model's margin
 over ECR is much smaller than over ADP. The streaming replacements (§1)
 built the ADP certification: under the old QB12/TE12 metric the claim sat at
-p = 0.051; under QB8/TE8 it certifies at 0.020/0.039. (Intermediate looks in
-the QB8→TE8 sequence were accidentally scored on a 53-feature tree that
-carried a provisional coach_scheme block — see the ledger; the numbers here
-are the reconciled 51-feature model.) The ECR edge is positive but modest
-and not significant; 2024 remains the model's worst ECR season (−0.0249).
+p = 0.051; under QB8/TE8 it certifies at 0.0195/0.039. The current headline
+is the 53-feature model (51 + the trajectory block added 2026-07-24, look
+10); trajectory moved the test set +0.0003 (0.5229 → 0.5232), preserving the
+ADP certification and nudging the ECR edge up. The ECR edge is positive but
+modest and not significant; 2024 remains the model's worst ECR season
+(−0.0227).
 
 ## 4. Features (53)
 
@@ -156,11 +164,17 @@ edge). Feature groups:
   - *contracts*: apy_cap_pct (largest new coefficient, +0.04),
     contract_year, rookie_deal_yr — from nflverse/OTC contracts
   - *draft capital*: draft_r1, draft_r23 round buckets, rb_early_rookie
-- **Scheme (2, added 2026-07-24)**: coach_pass_oe, coach_pass_shift — the
-  week-1 coach's historical pass rate over expected and its recent shift
-  (`bff/candidate_features.py`, zero-fetch round). Kept on the tune gate:
-  +0.0023 ≥ the +0.0020 threshold, correlations clean, coefficient sanity
-  checked on a 2011-2017 fit.
+- **Trajectory (2, added 2026-07-24)**: `yrs_since_peak` (seasons since the
+  player's career-best ppg — a decline clock) and `last_was_career_best`
+  (broke out / peaked last season — regression-vs-continuation flag), from
+  `bff/schedule_trajectory_features.py` (zero-fetch round 2). Kept on the
+  tune gate at +0.0059 (the strongest new block since the original
+  expansion). Shipped as a LEAN 2 of 4: the other two candidates (`yrs_exp`
+  r=0.80 vs age_c, `career_best_ppg` r=0.79 vs has_prior) were dead weight —
+  dropping both raised the tune mean 0.4605 → 0.4617. Coefficients on a
+  2011-2017 fit are small and positive (+0.0036, +0.0020); `yrs_since_peak`'s
+  positive sign is a conditional-on-age effect (the market over-discounts
+  veterans past their peak), not a naive decline term.
 
 **Rejected candidate blocks** (kept building as inert zero-filled columns;
 re-test only via `bff.select_features`):
@@ -173,6 +187,9 @@ re-test only via `bff.select_features`):
 | rookie×vacated landing spot | hurt the joint | redundant with rookie_pedigree + vacated interactions |
 | rookie_log_pick | (dropped pre-score) | r = 0.917 with rookie_pedigree |
 | coach_scheme (2026-07-24 zero-fetch round) | +0.0008 | passed the +0.0020 gate under QB12/TE12 (+0.0023) but failed it under the final QB8/TE8 streaming metric; its edge was partly replacement-pricing artifact (see ledger, look 4) |
+| strength of schedule (`sos`, zero-fetch round 2) | −0.0068 | genuinely new (r<0.12 with everything) but noise — defenses regress year-to-year, so prior-year DvP does not predict at the season level |
+| trajectory `yrs_exp` + `career_best_ppg` (dropped from the shipped block) | dilutive | r=0.80 vs age_c and r=0.79 vs has_prior; dropping both RAISED the tune mean, so only the 2 novel trajectory cols shipped |
+| GBT / random-forest residual heads (model-class experiment) | −0.006 / seed-noise | tune-window only, no test look spent: best GBT 0.4498; best RF cell 0.4593 was `random_state=0` luck (5-seed mean 0.4553 < ridge). Ridge wins on accuracy and interpretability |
 | qb_rush (same round) | −0.0026 | hurt the tune window (deltas under the final streaming metric) |
 | adp_gap (same round) | −0.0037 | hurt; adp_gap_behind collinear (r = 0.927 with team_pass_fp_share_prior) |
 | ol_proxy (same round) | −0.0003 | no signal |
