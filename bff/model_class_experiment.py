@@ -19,7 +19,7 @@ results):
       RF  (RandomForestRegressor, n_estimators=300, random_state=0):
         min_samples_leaf in {5, 20} x max_depth in {4, 8, None} -> 6 cells
       each crossed with shrink in {0.3, 0.5, 0.7, 1.0}
-  - Selection: mean spearman_vorp over TUNE_SEASONS (2012-2017), same
+  - Selection: mean spearman_vorp over TUNE_SEASONS (2013-2017), same
     frozen procedure as bff.model.tune.
   - Gate: the best challenger must beat the ridge baseline tune mean by
     >= +0.0020 to earn ONE test look (2018-2025). Below the gate -> the

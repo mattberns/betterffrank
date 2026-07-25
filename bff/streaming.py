@@ -50,7 +50,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PROC = ROOT / "data" / "processed"
 RAW_STATS = ROOT / "data" / "raw" / "stats"
 
-TUNE_SEASONS = range(2012, 2018)   # derivation is tune-window only, never test
+TUNE_SEASONS = range(2013, 2018)   # derivation is tune-window only, never test
 REG_WEEKS = 17
 # streamable positions -> the N_OWNED grid to sweep (rostered players at the
 # position; QB leagues carry more backups than TE, hence a deeper QB grid)

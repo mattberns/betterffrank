@@ -62,9 +62,43 @@ RAW_STATS = ROOT / "data" / "raw" / "stats"
 CROSSWALK = ROOT / "data" / "raw" / "db_playerids.csv"
 assert PROC.exists(), f"processed data dir not found: {PROC}"
 
-FIRST_TARGET = 2011  # first season with a prior-year of stats
+# FIRST_TARGET = the first season the model may TRAIN on. It is a training-set
+# boundary only; the first SCORED season is TUNE_SEASONS[0].
+#
+# It is 2012 because 2012 is the first season with a real preseason ECR board.
+# FantasyPros' PPR cheatsheet has no Wayback capture before 2012-06-10 (checked
+# via the CDX index 2026-07-25), so 2011 ECR does not exist and never will.
+#
+# 2011 was a training season until 2026-07-25 and was REMOVED as contaminated
+# input. Do not restore it to buy back score. The argument for keeping it was
+# that a training row only supplies (market rank, outcome), so an ADP anchor is
+# merely a noisier instrument. That argument is WRONG FOR THIS ARCHITECTURE.
+# The model is an anchor plus a learned RESIDUAL, and a residual is defined
+# relative to its anchor: on 2011 rows the ridge learns "how wrong was ADP",
+# and at serve time that correction is applied to an ECR anchor. ADP and ECR
+# have different systematic biases -- that is the entire premise of `vs_adp`
+# being a feature that carries signal -- so this is a train/serve mismatch, not
+# added noise. Worse, `vs_adp` is 0.0 on those rows, which does not mean
+# "unknown": it asserts that the experts and the market agreed EXACTLY, on 160
+# players for whom no expert board exists. That is fabricated feature content,
+# and it was 14% of the 2018 fold's training rows and ~50% of the earliest
+# folds'.
+#
+# Removing it costs a lot and the cost is reported, not hidden: it deletes fold
+# 2012 (empty train window, so the tune window is 2013-2017 / 5 folds) and the
+# tune-window edge over both baselines collapses to roughly zero. See
+# reports/REPORT.md for the numbers. A metric that improves when fabricated
+# rows are added is not evidence those rows belong; it is evidence the edge
+# was partly resting on them.
+#
+# Shifting the whole protocol forward (tune 2013-2018, test 2019-2025) to buy a
+# sixth ECR-clean fold is likewise REJECTED, and not on a close call: it would
+# move 2018 -- the model's only ADP loss, already scored eleven times -- out of
+# the test set, turning the ADP record into 7-of-7 by deletion. Test seasons
+# are finite; tune folds cost only compute.
+FIRST_TARGET = 2012
 EVAL_SEASONS = range(2018, 2026)         # test set: 2018-2025 (S=8)
-TUNE_SEASONS = tuple(range(2012, 2018))  # validation: 2012-2017 (6 walk-forward folds)
+TUNE_SEASONS = tuple(range(2013, 2018))  # validation: 2013-2017 (5 walk-forward folds)
 
 OUT_EVAL = PROC / "preds_model.parquet"
 OUT_2026 = PROC / "preds_model_2026.parquet"
@@ -549,8 +583,11 @@ def fit_predict(df: pl.DataFrame, eval_season: int, ridge_alpha: float,
     feat_order = feats + ["ppg_mismatch"]
 
     # StandardScaler's zero-variance fallback (scale_=1) is load-bearing:
-    # vs_adp has zero train variance for eval seasons <= 2021 (no ECR before
-    # 2021), so its coefficient is fit as 0 and it self-activates from 2022.
+    # vs_adp has zero train variance for eval season 2012 (it trains on 2011
+    # alone and ECR starts 2012), so its coefficient is fit as 0 there and it
+    # self-activates from 2013. Before the 2026-07-25 Wayback backfill ECR
+    # started in 2015 and this held through eval season 2015, leaving vs_adp
+    # dead in 4 of the 6 tune folds.
     scaler = StandardScaler().fit(Xtr)
     model = Ridge(alpha=ridge_alpha)
     model.fit(scaler.transform(Xtr), np.clip(resid, -4.0, 4.0))

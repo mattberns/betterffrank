@@ -30,12 +30,14 @@ from bff.backtest import POSITIONS, build_pool, eval_season
 from bff.compare import sign_flip_test
 from bff.model import (
     FEATURES,
+    TUNE_SEASONS,
     build_curve,
     build_dataset,
     fit_predict,
     pool_market_ranks,
     rank_by_vorp,
     reason_string,
+    to_vorp,
     tune,
 )
 from bff.vona import MATRIX_ROUNDS, per_pick_table, turn_matrix
@@ -302,6 +304,67 @@ def build_payload() -> dict:
     headline = {"vs_ecr": compare_to("ecr"), "vs_adp": compare_to("adp")}
     ve = headline["vs_ecr"]
 
+    # --- Anchor quality: is the expert list actually better than the market? --
+    # Scored the same way as everything else (baseline ranks -> to_vorp ->
+    # eval_season). Test seasons come from the shipped scores_*.csv; tune
+    # seasons are recomputed here because no artifact carries them.
+    def _baseline_preds(season, which):
+        if which == "adp":
+            return adp_all.filter(
+                (pl.col("season") == season) & pl.col("gsis_id").is_not_null()
+                & pl.col("position").is_in(POSITIONS)
+            ).select(pl.col("season").cast(pl.Int64), "gsis_id",
+                     (-pl.col("adp_rank").cast(pl.Float64)).alias("score"))
+        return (
+            ecr_all.filter(
+                (pl.col("season") == season) & pl.col("gsis_id").is_not_null()
+                & pl.col("position").is_in(POSITIONS)
+            )
+            .sort("ecr_rank").unique(subset=["gsis_id"], keep="first")
+            .select(pl.col("season").cast(pl.Int64), "gsis_id",
+                    (-pl.col("ecr_rank").cast(pl.Float64)).alias("score"))
+        )
+
+    def _tune_baseline(season, which):
+        pool, _ = build_pool(season, adp_all, ecr_all)
+        preds_b = to_vorp(_baseline_preds(season, which), season,
+                          adp_all, ecr_all, hist)
+        return eval_season(pool, preds_b, actuals, season)["spearman_vorp"]
+
+    def _anchor_rows(years, from_artifacts):
+        rows = []
+        for s in years:
+            if from_artifacts:
+                a, e = _val(sa, s, "spearman_vorp"), _val(se, s, "spearman_vorp")
+            else:
+                a = round(_tune_baseline(s, "adp"), 4)
+                e = round(_tune_baseline(s, "ecr"), 4)
+            rows.append({"season": s, "adp": a, "ecr": e,
+                         "delta": round(e - a, 4)})
+        return rows
+
+    def _anchor_block(rows, label):
+        d = [r["delta"] for r in rows]
+        return {
+            "label": label, "rows": rows,
+            "adp_mean": round(sum(r["adp"] for r in rows) / len(rows), 4),
+            "ecr_mean": round(sum(r["ecr"] for r in rows) / len(rows), 4),
+            "mean": round(sum(d) / len(d), 4),
+            "wins": sum(1 for x in d if x > 0), "n": len(d),
+        }
+
+    anchor_tune = _anchor_block(
+        _anchor_rows(list(TUNE_SEASONS), False),
+        f"Tune window {TUNE_SEASONS[0]}–{TUNE_SEASONS[-1]}")
+    anchor_test = _anchor_block(_anchor_rows(yrs, True),
+                                f"Test window {yrs[0]}–{yrs[-1]}")
+    # How the test-set ADP win splits: anchor contribution vs model contribution
+    anchor_split = {
+        "total": headline["vs_adp"]["delta"],
+        "from_anchor": anchor_test["mean"],
+        "from_model": headline["vs_ecr"]["delta"],
+    }
+
     floor_note = ("so p-values are descriptive only"
                   if (ve["power_floor"] or 1.0) > 0.05
                   else "so significance at 0.05 is reachable")
@@ -319,6 +382,8 @@ def build_payload() -> dict:
                  "alpha": alpha, "shrink": shrink, "n_players": len(players),
                  "n_features": len(features)},
         "headline": headline,
+        "anchor": {"tune": anchor_tune, "test": anchor_test,
+                   "split": anchor_split},
         "secondary": {"raw_spearman": _val(sm, "MEAN", "spearman"),
                       "ndcg100_vorp": _val(sm, "MEAN", "ndcg100_vorp"),
                       "top24_hit_vorp": _val(sm, "MEAN", "top24_hit_vorp"),
@@ -349,7 +414,7 @@ def build_payload() -> dict:
             {"step": "Correct the experts", "text": f"A ridge regression over {len(features)} standardized preseason features predicts the gap between actual and anchor-implied points (residual clipped +/-4); a shrunken fraction of that correction is added back. Position is never a feature; it enters only via the per-position anchor and the VORP curve."},
             {"step": "Points to draft value", "text": "Projections map through a drafted-slot points curve (prior seasons only) to value over replacement: QB8/RB30/WR36/TE8, streaming-aware at QB/TE. The ECR and ADP baselines go through the identical conversion."},
             {"step": "No peeking", "text": "Season t uses only seasons < t outcomes plus season-t preseason facts. No leakage."},
-            {"step": "Tuning", "text": "Ridge strength and shrink are chosen on the 2012-2017 window (frozen grid, re-derived each run); the test seasons are never touched for decisions."},
+            {"step": "Tuning", "text": f"Ridge strength and shrink are chosen on the {TUNE_SEASONS[0]}-{TUNE_SEASONS[-1]} window (frozen grid, re-derived each run); the test seasons are never touched for decisions."},
         ],
         "limitations": limitations,
     }
@@ -1138,9 +1203,40 @@ def _page(title: str, active: str, body: str, data_slice: dict, page_js: str,
     )
 
 
+def _anchor_table(b: dict) -> str:
+    """Booktabs table of ADP vs ECR baseline quality for one window."""
+    rows = "".join(
+        f'<tr><td class="num">{r["season"]}</td>'
+        f'<td class="num">{r["adp"]:.4f}</td>'
+        f'<td class="num">{r["ecr"]:.4f}</td>'
+        f'<td class="num {"pos" if r["delta"] > 0 else "neg"}">{r["delta"]:+.4f}</td>'
+        f'<td>{"ECR" if r["delta"] > 0 else "ADP"}</td></tr>'
+        for r in b["rows"]
+    )
+    return (
+        '<div class="tablewrap"><table class="booktabs">'
+        '<thead><tr><th>Season</th><th class="num">ADP</th><th class="num">ECR</th>'
+        '<th class="num">ECR &minus; ADP</th><th>Better</th></tr></thead>'
+        f'<tbody>{rows}</tbody>'
+        f'<tfoot><tr><td><b>mean</b></td>'
+        f'<td class="num">{b["adp_mean"]:.4f}</td>'
+        f'<td class="num">{b["ecr_mean"]:.4f}</td>'
+        f'<td class="num {"pos" if b["mean"] > 0 else "neg"}">{b["mean"]:+.4f}</td>'
+        f'<td>ECR {b["wins"]}/{b["n"]}</td></tr></tfoot>'
+        '</table></div>'
+    )
+
+
 def render_index(p: dict) -> str:
     m = p["meta"]
     ve, va = p["headline"]["vs_ecr"], p["headline"]["vs_adp"]
+    at, ax, sp = p["anchor"]["tune"], p["anchor"]["test"], p["anchor"]["split"]
+    tw = at["label"].split()[-1].replace("-", "&ndash;")
+    ecr_read = (
+        "That is a coin flip, and it should be read as matching the experts, not beating them."
+        if ve["wins"] * 2 <= ve["n_seasons"] else
+        "The ECR margin is thin; read it as matching the experts, likely a touch better."
+    )
     body = (
         '<div class="wrap">'
         '<div class="titleblock">'
@@ -1165,13 +1261,14 @@ def render_index(p: dict) -> str:
         'the expert consensus (ECR), and the market (ADP) &mdash; and graded after the season by how well '
         'their preseason order matched players&rsquo; realized value over replacement. Same grade, same '
         'VORP conversion, and no board sees the season it predicts; the model&rsquo;s settings were frozen '
-        'on 2012&ndash;2017 before any test season was scored. The record: '
+        f'on {tw} before any test season was scored. The record: '
         f'<b>beat ADP in {va["wins"]} of {va["n_seasons"]} seasons</b> '
         f'(mean {va["model"]:.4f} vs {va["baseline"]:.4f}, one-sided p = {va["p_one"]:g}) and '
-        f'<b>edged ECR in {ve["wins"]} of {ve["n_seasons"]}</b> '
+        f'<b>won {ve["wins"]} of {ve["n_seasons"]} against ECR</b> '
         f'(mean {ve["model"]:.4f} vs {ve["baseline"]:.4f}, p = {ve["p_one"]:g}). '
-        'The ECR margin is thin; read it as matching the experts, likely a touch better. '
-        'The experts themselves beat the market, which is why they are the harder benchmark.</p></section>'
+        f'{ecr_read} '
+        'The experts themselves beat the market, which is why they are the harder benchmark &mdash; '
+        'see <a href="#anchor">how much of the ADP win is really the experts</a>.</p></section>'
 
         '<section><h2 class="numbered">Results</h2>'
         '<p class="cap"><b>Table 1.</b> Model vs FantasyPros ECR, per season. '
@@ -1179,8 +1276,40 @@ def render_index(p: dict) -> str:
         '<div id="results"></div>'
         '<p class="note small" id="results-note" style="margin-top:8px"></p></section>'
 
+        '<section id="anchor"><h2 class="numbered">Are the experts actually better than the market?</h2>'
+        '<p>The model is built on top of ECR, so it inherits whatever edge ECR has. '
+        'That makes one question worth asking directly, independent of the model: '
+        'graded on realized VORP, is the expert consensus a better preseason board than ADP? '
+        'The answer turns out to depend sharply on the era.</p>'
+
+        f'<p class="cap"><b>Table 2.</b> {at["label"]}. Baseline boards only &mdash; no model. '
+        'Both are scored through the identical VORP conversion.</p>'
+        + _anchor_table(at) +
+        f'<p class="note small" style="margin-top:8px">Over the tuning years the two are '
+        f'indistinguishable: ECR wins {at["wins"]} of {at["n"]} seasons and the mean gap is '
+        f'{at["mean"]:+.4f}, which is noise. One caveat on the earliest season, which is the '
+        'largest single ADP win in the table: its ECR snapshot is the last one the Wayback '
+        'Machine archived that preseason, roughly two weeks staler than the early-September '
+        'boards every other season uses. A staler board is a plausible reason for it to '
+        'underperform, so that row is weaker evidence than the others.</p>'
+
+        f'<p class="cap" style="margin-top:22px"><b>Table 3.</b> {ax["label"]}. Same computation.</p>'
+        + _anchor_table(ax) +
+        f'<p class="note small" style="margin-top:8px">Over the test years the experts pull clearly '
+        f'ahead: ECR wins {ax["wins"]} of {ax["n"]} seasons by a mean of {ax["mean"]:+.4f}, and the '
+        'gap widens as the years go on. Whether that reflects FantasyPros improving, the ADP sample '
+        'thinning, or both, is not something this data can settle.</p>'
+
+        '<p style="margin-top:18px"><b>What that implies about the model.</b> On the test set the '
+        f'model beats ADP by {sp["total"]:+.4f}. But ECR &mdash; on its own, with no model attached '
+        f'&mdash; already beats ADP by {sp["from_anchor"]:+.4f} over the same seasons. The ridge '
+        f'contributes the remaining {sp["from_model"]:+.4f}. So most of the margin over the market '
+        'is the expert list the model starts from, not the corrections it applies. It also explains '
+        'why the model shows no edge on its own tuning window: there the anchor is worth nothing '
+        'over ADP, so a model built on it has nothing inherited to win with.</p></section>'
+
         '<section><h2 class="numbered">Secondary metrics</h2>'
-        '<p class="cap"><b>Table 2.</b> Model, mean over the test seasons.</p>'
+        '<p class="cap"><b>Table 4.</b> Model, mean over the test seasons.</p>'
         '<div id="secondary"></div>'
         '<p class="note small" style="margin-top:8px">Raw-points Spearman is reported for completeness only; '
         'it is not a decision metric (it rewards QB-stacking).</p></section>'
@@ -1195,7 +1324,7 @@ def render_index(p: dict) -> str:
         'Coefficients: <a href="features.html">features</a>.</p></section>'
         '</div>'
     )
-    data = {"meta": p["meta"], "headline": p["headline"],
+    data = {"meta": p["meta"], "headline": p["headline"], "anchor": p["anchor"],
             "secondary": p["secondary"], "seasons": p["seasons"], "method": p["method"]}
     return _page("betterffrank — results", "index.html", body, data, JS_INDEX)
 
