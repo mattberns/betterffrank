@@ -154,6 +154,15 @@ CANDIDATE_BLOCKS: dict[str, list[str]] = {
     "sos": ["sos_dvp", "sos_dvp_first4"],
     "trajectory": ["yrs_exp", "yrs_since_peak", "career_best_ppg",
                    "last_was_career_best"],
+    # 2026-07-24 preseason player props (bff/props.py -> props_features.parquet).
+    # Only markets with all six tune seasons are candidates; the three TD-leader
+    # markets start in 2017 (one tune season) and comeback in 2014, so they are
+    # deliberately NOT offered here. Three nested variants: the model can only
+    # use what the tune window can judge.
+    "props": ["prop_mvp", "prop_oroy", "prop_pass_yds", "prop_rush_yds",
+              "prop_rec_yds"],
+    "props_dense": ["prop_mvp", "prop_rush_yds", "prop_rec_yds"],
+    "props_lean": ["prop_rush_yds", "prop_rec_yds"],
 }
 
 
@@ -449,6 +458,20 @@ def build_dataset() -> pl.DataFrame:
     ).with_columns([pl.col(c).cast(pl.Float64) for c in st_cols])
     df = df.join(st, on=["season", "gsis_id"], how="left").with_columns(
         [pl.col(c).fill_null(0.0) for c in st_cols]
+    )
+
+    # preseason player-prop boards (2026-07-24; bff/props.py). Zero-fill is
+    # meaningful here and NOT merely neutral: an unpriced player is one the
+    # market did not treat as a contender, which is information. But a missing
+    # SOURCE zero-fills identically -- and season 2026 has no boards at all, so
+    # every prop column is 0 on the live board. See CLAUDE.md "Player props".
+    prop_cols = sorted({c for k in ("props", "props_dense", "props_lean")
+                        for c in CANDIDATE_BLOCKS[k]})
+    props = pl.read_parquet(PROC / "props_features.parquet").select(
+        ["season", "gsis_id"] + prop_cols
+    ).with_columns([pl.col(c).cast(pl.Float64) for c in prop_cols])
+    df = df.join(props, on=["season", "gsis_id"], how="left").with_columns(
+        [pl.col(c).fill_null(0.0) for c in prop_cols]
     )
 
     # landing spot: rookie draft capital INTO vacated volume

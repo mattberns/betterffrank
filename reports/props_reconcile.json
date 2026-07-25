@@ -1,0 +1,1676 @@
+[
+ {
+  "season": 2012,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 38,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421045749",
+   "20200928025235",
+   "20220930101008",
+   "20250811093715"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2012,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 18,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421023315",
+   "20201204020624",
+   "20221202064344",
+   "20251212163446"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2012,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 24,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421011530",
+   "20210120154520",
+   "20230201053112",
+   "20260418100809"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2012,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 28,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421003031",
+   "20210120160831",
+   "20230921101324",
+   "20260415061124"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2012,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 23,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421045635",
+   "20210121164629",
+   "20221208184113",
+   "20251208191247"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2013,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 40,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421010438",
+   "20191206090247",
+   "20220706050433",
+   "20260310010250"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2013,
+  "market": "oroy",
+  "status": "DISAGREE",
+  "n_shipped": 20,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421010523",
+   "20200919003014",
+   "20220516194327",
+   "20250523032205"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20150421010523",
+    "n_capture": 19,
+    "n_shipped": 20,
+    "only_in_shipped": [
+     [
+      "Zach Ertz",
+      2000
+     ]
+    ],
+    "only_in_capture": [],
+    "asof": "September 5, 2013"
+   },
+   {
+    "ts": "20200919003014",
+    "n_capture": 19,
+    "n_shipped": 20,
+    "only_in_shipped": [
+     [
+      "Zach Ertz",
+      2000
+     ]
+    ],
+    "only_in_capture": [],
+    "asof": "September 5, 2013"
+   },
+   {
+    "ts": "20220516194327",
+    "n_capture": 19,
+    "n_shipped": 20,
+    "only_in_shipped": [
+     [
+      "Zach Ertz",
+      2000
+     ]
+    ],
+    "only_in_capture": [],
+    "asof": "September 5, 2013"
+   }
+  ]
+ },
+ {
+  "season": 2013,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 33,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421003659",
+   "20200927200701",
+   "20230201060128",
+   "20260309212016"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2013,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 27,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421033158",
+   "20200925234908",
+   "20220706224217",
+   "20250712113913"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2013,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 26,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421003009",
+   "20201021154551",
+   "20221204213516",
+   "20251206190842"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2014,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 18,
+  "comparators": 4,
+  "capture_ts": [
+   "20190825111034",
+   "20210804122614",
+   "20230201054126",
+   "20250516205338"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2014,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 20,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421032807",
+   "20200927061207",
+   "20221128042532",
+   "20250905155421"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2014,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 22,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421031916",
+   "20201001150137",
+   "20220707010902",
+   "20250804122538"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2014,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 13,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421012843",
+   "20200927064903",
+   "20220522113155",
+   "20250914041044"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2014,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 27,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421045647",
+   "20191214031058",
+   "20220524041239",
+   "20250620175353"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2014,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 26,
+  "comparators": 4,
+  "capture_ts": [
+   "20150421013545",
+   "20200923032322",
+   "20220516185707",
+   "20250520045302"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2015,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 51,
+  "comparators": 4,
+  "capture_ts": [
+   "20190818070623",
+   "20210302014515",
+   "20221129012405",
+   "20251212162338"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2015,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 62,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511014440",
+   "20210302013240",
+   "20221129011551",
+   "20260310064827"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2015,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 41,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511015412",
+   "20200923025912",
+   "20220706040250",
+   "20250516214743"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2015,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 31,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511015417",
+   "20210116014930",
+   "20230201045843",
+   "20250810090519"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2015,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 52,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511014445",
+   "20201203101322",
+   "20220706033033",
+   "20251210023213"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2015,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 39,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511014450",
+   "20200927012743",
+   "20220525140656",
+   "20250124113322"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2016,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 34,
+  "comparators": 4,
+  "capture_ts": [
+   "20190825120450",
+   "20210413202650",
+   "20220518040940",
+   "20240425120019"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2016,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 96,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511021942",
+   "20210117130036",
+   "20220930101802",
+   "20260314025908"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2016,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 19,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511014455",
+   "20210116181954",
+   "20220927114101",
+   "20251210150608"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2016,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 37,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511021947",
+   "20200923054739",
+   "20220517170840",
+   "20250622204549"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2016,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 46,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511015427",
+   "20200929072805",
+   "20220927110303",
+   "20250523212831"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2016,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 41,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511015152",
+   "20210307202254",
+   "20221208185622",
+   "20251206115807"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 40,
+  "comparators": 4,
+  "capture_ts": [
+   "20171029014125",
+   "20210302223305",
+   "20220706214153",
+   "20250522220429"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 78,
+  "comparators": 3,
+  "capture_ts": [
+   "20201127074333",
+   "20220706212835",
+   "20250417234153"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "oroy",
+  "status": "DISAGREE",
+  "n_shipped": 33,
+  "comparators": 4,
+  "capture_ts": [
+   "20170511015443",
+   "20200920152859",
+   "20210924161738",
+   "20240423123419"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20170511015443",
+    "n_capture": 16,
+    "n_shipped": 33,
+    "only_in_shipped": [
+     [
+      "Adam Shaheen",
+      4000
+     ],
+     [
+      "Alvin Kamara",
+      5000
+     ],
+     [
+      "ArDarius Stewart",
+      9000
+     ],
+     [
+      "Cardale Jones",
+      4000
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "Corey Davis",
+      800
+     ],
+     [
+      "Curtis Samuel",
+      2000
+     ],
+     [
+      "Dalvin Cook",
+      800
+     ],
+     [
+      "DeShaun Watson",
+      600
+     ]
+    ],
+    "asof": "May 3, 2017"
+   }
+  ]
+ },
+ {
+  "season": 2017,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 18,
+  "comparators": 4,
+  "capture_ts": [
+   "20171029015103",
+   "20210120225114",
+   "20220518033431",
+   "20250811090326"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 33,
+  "comparators": 3,
+  "capture_ts": [
+   "20200928022538",
+   "20220524031456",
+   "20250523215919"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "rec_td",
+  "status": "DISAGREE",
+  "n_shipped": 21,
+  "comparators": 4,
+  "capture_ts": [
+   "20171029014135",
+   "20210411144819",
+   "20230605090437",
+   "20260310181157"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20171029014135",
+    "n_capture": 21,
+    "n_shipped": 21,
+    "only_in_shipped": [
+     [
+      "AJ Green",
+      2500
+     ],
+     [
+      "TY Hilton",
+      3300
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "A.J. Green",
+      2500
+     ],
+     [
+      "T.Y. Hilton",
+      3300
+     ]
+    ],
+    "asof": "September 7, 2017"
+   }
+  ]
+ },
+ {
+  "season": 2017,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 69,
+  "comparators": 3,
+  "capture_ts": [
+   "20201125140458",
+   "20211205145625",
+   "20240811201030"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 32,
+  "comparators": 4,
+  "capture_ts": [
+   "20171029014140",
+   "20210123232010",
+   "20230201055212",
+   "20251205091116"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2017,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 32,
+  "comparators": 3,
+  "capture_ts": [
+   "20210116173830",
+   "20220927105519",
+   "20251206131929"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 17,
+  "comparators": 4,
+  "capture_ts": [
+   "20190823064526",
+   "20210412122444",
+   "20230201054813",
+   "20260317121939"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 68,
+  "comparators": 4,
+  "capture_ts": [
+   "20190823063450",
+   "20210302010417",
+   "20230323140020",
+   "20251208203831"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 42,
+  "comparators": 4,
+  "capture_ts": [
+   "20190823063412",
+   "20210411152455",
+   "20221128042826",
+   "20260306052031"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 36,
+  "comparators": 4,
+  "capture_ts": [
+   "20190825120241",
+   "20210302021805",
+   "20211205152049",
+   "20240224165159"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 37,
+  "comparators": 4,
+  "capture_ts": [
+   "20190817233036",
+   "20210624005922",
+   "20221208102501",
+   "20251210154756"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "rec_td",
+  "status": "DISAGREE",
+  "n_shipped": 27,
+  "comparators": 4,
+  "capture_ts": [
+   "20190823021322",
+   "20210623234508",
+   "20221129005102",
+   "20260307210322"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20190823021322",
+    "n_capture": 27,
+    "n_shipped": 27,
+    "only_in_shipped": [
+     [
+      "AJ Green",
+      1600
+     ],
+     [
+      "TY Hilton",
+      2400
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "A.J. Green",
+      1600
+     ],
+     [
+      "T.Y. Hilton",
+      2400
+     ]
+    ],
+    "asof": "September 6, 2018"
+   }
+  ]
+ },
+ {
+  "season": 2018,
+  "market": "rec_yds",
+  "status": "DISAGREE",
+  "n_shipped": 51,
+  "comparators": 4,
+  "capture_ts": [
+   "20190824124002",
+   "20210416181056",
+   "20230203174912",
+   "20260511094742"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20190824124002",
+    "n_capture": 51,
+    "n_shipped": 51,
+    "only_in_shipped": [
+     [
+      "AJ Green",
+      1600
+     ],
+     [
+      "Odell Beckham Jr",
+      1050
+     ],
+     [
+      "TY Hilton",
+      1750
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "A.J. Green",
+      1600
+     ],
+     [
+      "Odell Beckham Jr.",
+      1050
+     ],
+     [
+      "T.Y. Hilton",
+      1750
+     ]
+    ],
+    "asof": "September 6, 2018"
+   }
+  ]
+ },
+ {
+  "season": 2018,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 28,
+  "comparators": 4,
+  "capture_ts": [
+   "20190817231739",
+   "20210411162025",
+   "20220930100654",
+   "20250622223328"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2018,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 34,
+  "comparators": 4,
+  "capture_ts": [
+   "20190824115917",
+   "20210509110135",
+   "20220930100224",
+   "20260309214206"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 33,
+  "comparators": 3,
+  "capture_ts": [
+   "20210414054218",
+   "20220728225730",
+   "20240413100126"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 95,
+  "comparators": 3,
+  "capture_ts": [
+   "20210731093209",
+   "20230609080852",
+   "20260422121441"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 49,
+  "comparators": 3,
+  "capture_ts": [
+   "20210516090631",
+   "20221129011706",
+   "20260113130605"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 38,
+  "comparators": 3,
+  "capture_ts": [
+   "20210302004658",
+   "20221129003130",
+   "20250712123008"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 34,
+  "comparators": 3,
+  "capture_ts": [
+   "20210519014143",
+   "20230606221003",
+   "20260416231310"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 83,
+  "comparators": 3,
+  "capture_ts": [
+   "20210519025743",
+   "20221208094521",
+   "20251210144650"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 75,
+  "comparators": 3,
+  "capture_ts": [
+   "20210619024256",
+   "20230323135425",
+   "20251117190211"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 53,
+  "comparators": 3,
+  "capture_ts": [
+   "20210414061218",
+   "20220927121339",
+   "20250613053946"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2019,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 55,
+  "comparators": 3,
+  "capture_ts": [
+   "20210414060809",
+   "20220927121045",
+   "20250523030331"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 23,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027025031",
+   "20211015225355",
+   "20240302060742",
+   "20251214233944"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "mvp",
+  "status": "AGREE",
+  "n_shipped": 89,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027024450",
+   "20211129080123",
+   "20230201051254",
+   "20251207154801"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 37,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027000918",
+   "20211129075551",
+   "20230126212320",
+   "20251214223331"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 35,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027010453",
+   "20211015235816",
+   "20230127050543",
+   "20250423063341"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 34,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027010042",
+   "20211016060930",
+   "20231207071328",
+   "20260310004034"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 54,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027024650",
+   "20211015224235",
+   "20240224151056",
+   "20251209013543"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 56,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027035801",
+   "20211129091938",
+   "20230201063851",
+   "20251115010612"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 36,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027032455",
+   "20211129085440",
+   "20230126221432",
+   "20250523215247"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2020,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 33,
+  "comparators": 4,
+  "capture_ts": [
+   "20201027032128",
+   "20211129085125",
+   "20231207065423",
+   "20251210143913"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 48,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919110239",
+   "20221208194428",
+   "20240425110030",
+   "20251205092801"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "mvp",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 107,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 57,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919104651",
+   "20221208091523",
+   "20240722204835",
+   "20260311005047"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 37,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919115329",
+   "20220706050056",
+   "20230607000501",
+   "20250813172135"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 37,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919114949",
+   "20220706045632",
+   "20230603054439",
+   "20250324210117"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 125,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919105324",
+   "20221208193157",
+   "20240719162058",
+   "20260311005333"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 122,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919101049",
+   "20221208084127",
+   "20240303175834",
+   "20250811071553"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 80,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919113551",
+   "20220706044327",
+   "20240224033250",
+   "20260317130001"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2021,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 94,
+  "comparators": 4,
+  "capture_ts": [
+   "20210919113400",
+   "20220706044053",
+   "20240301015153",
+   "20260307214304"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "comeback",
+  "status": "DISAGREE",
+  "n_shipped": 36,
+  "comparators": 4,
+  "capture_ts": [
+   "20221002005100",
+   "20230528165431",
+   "20240224164328",
+   "20260314025653"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20221002005100",
+    "n_capture": 36,
+    "n_shipped": 36,
+    "only_in_shipped": [
+     [
+      "Tre'Davious White",
+      8000
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "Tre\ufffdDavious White",
+      8000
+     ]
+    ],
+    "asof": "September 8, 2022"
+   }
+  ]
+ },
+ {
+  "season": 2022,
+  "market": "mvp",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 98,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 49,
+  "comparators": 4,
+  "capture_ts": [
+   "20221002003003",
+   "20230528163601",
+   "20240303192721",
+   "20250811091446"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 34,
+  "comparators": 4,
+  "capture_ts": [
+   "20221001234254",
+   "20230925155354",
+   "20240425071033",
+   "20250518005639"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 35,
+  "comparators": 4,
+  "capture_ts": [
+   "20221001233657",
+   "20230528154517",
+   "20250121143635",
+   "20260310061414"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 57,
+  "comparators": 4,
+  "capture_ts": [
+   "20221002003808",
+   "20230609082256",
+   "20240224031152",
+   "20250719193440"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "rec_yds",
+  "status": "DISAGREE",
+  "n_shipped": 77,
+  "comparators": 4,
+  "capture_ts": [
+   "20221001235347",
+   "20231001051328",
+   "20241003233106",
+   "20251206190705"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20221001235347",
+    "n_capture": 77,
+    "n_shipped": 77,
+    "only_in_shipped": [
+     [
+      "Ja'Marr Chase",
+      1100
+     ],
+     [
+      "Wan'Dale Robinson",
+      20000
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "Ja\ufffdMarr Chase",
+      1100
+     ],
+     [
+      "Wan\ufffdDale Robinson",
+      20000
+     ]
+    ],
+    "asof": "September 8, 2022"
+   }
+  ]
+ },
+ {
+  "season": 2022,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 46,
+  "comparators": 4,
+  "capture_ts": [
+   "20221001231421",
+   "20230127034232",
+   "20240425131729",
+   "20250516035618"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2022,
+  "market": "rush_yds",
+  "status": "DISAGREE",
+  "n_shipped": 48,
+  "comparators": 4,
+  "capture_ts": [
+   "20221002012333",
+   "20230127055030",
+   "20230604215454",
+   "20240303202512"
+  ],
+  "errors": [],
+  "diffs": [
+   {
+    "ts": "20221002012333",
+    "n_capture": 48,
+    "n_shipped": 48,
+    "only_in_shipped": [
+     [
+      "D'Onta Foreman",
+      10000
+     ]
+    ],
+    "only_in_capture": [
+     [
+      "D\ufffdOnta Foreman",
+      10000
+     ]
+    ],
+    "asof": "September 8, 2022"
+   }
+  ]
+ },
+ {
+  "season": 2023,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 59,
+  "comparators": 1,
+  "capture_ts": [
+   "20240422234938"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "mvp",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 52,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 32,
+  "comparators": 2,
+  "capture_ts": [
+   "20230921100101",
+   "20241202091607"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 30,
+  "comparators": 4,
+  "capture_ts": [
+   "20230921090023",
+   "20240425043257",
+   "20241014021616",
+   "20250523184912"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 32,
+  "comparators": 4,
+  "capture_ts": [
+   "20230921085538",
+   "20240722181822",
+   "20250418011540",
+   "20260519163253"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 45,
+  "comparators": 2,
+  "capture_ts": [
+   "20230921100535",
+   "20250524235359"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 49,
+  "comparators": 4,
+  "capture_ts": [
+   "20230921091734",
+   "20240524072803",
+   "20241006234939",
+   "20250616102007"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 71,
+  "comparators": 4,
+  "capture_ts": [
+   "20230921084250",
+   "20240425072801",
+   "20250520032026",
+   "20251209024441"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2023,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 38,
+  "comparators": 3,
+  "capture_ts": [
+   "20230921083615",
+   "20240425072023",
+   "20250517032616"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "comeback",
+  "status": "AGREE",
+  "n_shipped": 31,
+  "comparators": 3,
+  "capture_ts": [
+   "20241010194636",
+   "20250522225033",
+   "20251212193009"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "mvp",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 69,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "oroy",
+  "status": "AGREE",
+  "n_shipped": 80,
+  "comparators": 2,
+  "capture_ts": [
+   "20241010192942",
+   "20250518001817"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 38,
+  "comparators": 2,
+  "capture_ts": [
+   "20241010211805",
+   "20250522210711"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "pass_yds",
+  "status": "AGREE",
+  "n_shipped": 28,
+  "comparators": 1,
+  "capture_ts": [
+   "20250622224242"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 75,
+  "comparators": 3,
+  "capture_ts": [
+   "20250512020805",
+   "20251214231844",
+   "20260422111813"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "rec_yds",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 74,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "rush_td",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 35,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2024,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 55,
+  "comparators": 2,
+  "capture_ts": [
+   "20241010203024",
+   "20250622214118"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "comeback",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 24,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "mvp",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 98,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "oroy",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 48,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "pass_td",
+  "status": "AGREE",
+  "n_shipped": 62,
+  "comparators": 1,
+  "capture_ts": [
+   "20260311014135"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "pass_yds",
+  "status": "SINGLE_SOURCED",
+  "n_shipped": 34,
+  "comparators": 0,
+  "capture_ts": [],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "rec_td",
+  "status": "AGREE",
+  "n_shipped": 97,
+  "comparators": 1,
+  "capture_ts": [
+   "20260314022659"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "rec_yds",
+  "status": "AGREE",
+  "n_shipped": 97,
+  "comparators": 1,
+  "capture_ts": [
+   "20260417182426"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "rush_td",
+  "status": "AGREE",
+  "n_shipped": 62,
+  "comparators": 1,
+  "capture_ts": [
+   "20260310005105"
+  ],
+  "errors": []
+ },
+ {
+  "season": 2025,
+  "market": "rush_yds",
+  "status": "AGREE",
+  "n_shipped": 72,
+  "comparators": 1,
+  "capture_ts": [
+   "20260511093908"
+  ],
+  "errors": []
+ }
+]

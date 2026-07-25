@@ -31,7 +31,11 @@ expansion 40 → 51 → 53. The
 zero-fetch candidate round 1 (07-24, `bff/candidate_features.py`) shipped
 NOTHING (coach_scheme/qb_rush/ol_proxy/adp_gap all inert CANDIDATE_BLOCKS);
 round 2 (07-24, `bff/schedule_trajectory_features.py`) shipped the trajectory
-block (2 cols) and rejected `sos`. All current numbers and methodology live in
+block (2 cols) and rejected `sos`. The FETCHED round (07-24,
+`bff/props_wayback.py` + `bff/props.py`: 5233 preseason player-prop quotes,
+2012-2025) shipped NOTHING — all three prop variants hurt the tune window
+(−0.0022 to −0.0052), no test look spent; see "Player props". All current
+numbers and methodology live in
 `reports/REPORT.md` (the ONLY report file — no versioned reports).
 
 Run everything from the repo root with `uv run python ...`. Stack: polars +
@@ -102,6 +106,164 @@ scikit-learn. Never `git commit` or `git push` unless the user asks.
   window (clip 0.4515 / log 0.4513 / off 0.4512, noise-level tie);
   offset-log picked over clip on principle (smooth, no kink at the cap).
 
+## Player props (TESTED, REJECTED — data kept, columns inert)
+
+Built 2026-07-24 by `bff/props_wayback.py` + `bff/props.py`. Preseason
+player-level futures boards from sportsoddshistory's award / stat-leader pages
+(Wayback; the covers.com mirror is the same publisher). **Nine markets** — mvp,
+oroy, comeback, pass_yds, pass_td, rush_yds, rush_td, rec_yds, rec_td — as
+5233 attested quotes over 2012-2025, 99.5% matched to gsis ids.
+
+- **TESTED AND REJECTED on the tune window 2026-07-24; ZERO test looks spent.**
+  All three variants hurt: `props` (5 markets) −0.0052, `props_dense` (mvp +
+  rush_yds + rec_yds) −0.0024, `props_lean` (rush_yds + rec_yds) −0.0022
+  against the 0.4617 baseline (re-derived after the 2026-07-24 parser fix
+  below; the pre-fix numbers were −0.0051/−0.0033/−0.0026, same verdict). Harm is MONOTONE in the number of prop columns.
+  The columns stay in `build_dataset` and `CANDIDATE_BLOCKS` as inert
+  zero-filled candidates and are NOT in `FEATURES` (same status as
+  redzone/snaps/vegas). Verified inert: `preds_model.parquet` is byte-identical
+  before and after the join. Re-test via `bff.select_features`, never by
+  hand-editing FEATURES.
+- Why it failed is NOT the usual "already priced" story, and that is worth
+  remembering before anyone retries it. Max |r| against existing features is
+  only 0.20-0.61 (prop_rush_yds 0.20), so the information IS new; and reach is
+  wide — 72-97% of the scored ADP top-150 pool carries a quote, 86-100% of the
+  top 50. It is new, it is dense, and it still does not predict the residual.
+- The "ragged early folds" defence was tested and DIED. Fold 2012 contributes
+  exactly +0.0000 (train window predates all props → zero variance → coef fit
+  as 0, confirming the `vs_adp` mechanism in the fragility list). Restricting
+  the mean to the folds where props are genuinely active (2015-2017) makes the
+  deltas WORSE, not better: lean −0.0053, dense −0.0021, all5 −0.0029 against a
+  0.4216 sub-window baseline. Do not reopen this on a coverage argument.
+- Leakage: every accepted page carries the literal header "As of <date> -
+  prior to the start of the season", and `_validate` REJECTS any capture
+  without it, so a page's content is a permanent preseason artifact and capture
+  timing is irrelevant (same argument as `bff/vegas_wayback.py`). The `Result`
+  column is a season outcome and is never parsed. `bff.props.check_leakage`
+  asserts every board's as-of date ≤ that season's Week 1 kickoff date: all
+  fourteen land **exactly on opener day** (the site dates the board the morning
+  of the Thursday opener), the tightest margin of any input in the repo — hence
+  the executable check.
+- Coverage, after the Save-Page-Now backfill (below). **Complete 2012-2025
+  (6 tune + 8 test seasons): mvp, oroy, pass_yds, rush_yds, rec_yds.**
+  comeback runs 2014-2025 (4 tune). The three TD markets **start in 2017** — one
+  tune season, so they are effectively untunable on this protocol even though
+  their test coverage is 8/8; do not try to promote them.
+- **2026 IS NOT AVAILABLE, and that is a market fact, not a fetch bug** (checked
+  hard 2026-07-24). The mirror's 2026 pages exist and render — breadcrumb,
+  season selector, dead-heat boilerplate — with an EMPTY table; the leader
+  markets are not posted yet. RotoWire's DraftKings-fed leader pages
+  independently say "There are no odds available right now" for
+  rushing/receiving/passing leader and all three TD-leader variants. What IS
+  live for 2026 is a DIFFERENT market: season yardage OVER/UNDER totals
+  (rotowire.com/betting/nfl/{rush,rec,pass}-yards-odds.php, multi-book,
+  JS-rendered so it needs a browser), plus a thin 11-name editorial MVP table.
+  Those O/U totals have NO 2012-2025 history here, so they cannot extend this
+  series and cannot be tuned. **This is now MOOT for the decision: 2026
+  availability was never the binding constraint, the signal was.** The tune
+  gate is scored on 2012-2017 and does not involve 2026 at all, so a posted
+  2026 board would not change the verdict by one digit. Do NOT re-open this
+  block when the 2026 lines appear. (Had it passed, 2026 would then have
+  mattered a lot: with no 2026 boards every prop column zero-fills on the live
+  board, so the model would apply coefficients learned on real quotes to an
+  all-zero column — a silent train/serve skew, not a neutral default. Any
+  future market-price block must be checked for live-season availability
+  BEFORE it is tuned, not after.)
+- Backfill route when a board has no capture on either host: Wayback's Save
+  Page Now fetches server-side, so it reaches the live mirror this environment
+  cannot resolve (both odds hosts are DNS-blocked here; `web.archive.org`,
+  `rotowire.com` and `fantasypros.com` are not). Ten boards were recovered this
+  way on 2026-07-24 — mvp 2021-2025, rec_yds 2024, pass_yds/oroy/comeback 2025,
+  rush_td 2024 — every one validated for the preseason attestation before being
+  cached. It is `--save-missing`, OPT-IN, because it writes to a third-party
+  public archive; a normal run must never trigger it.
+- `ROW_RE`'s `&(?:amp;)?` is load-bearing: mirror pages come back
+  Wayback-rewritten with escaped ampersands, and a plain `&y=` silently parses
+  them to ZERO rows, which then look like empty shells and get rejected. That
+  bug is why mvp/rec_yds/etc. first appeared to be missing from the mirror.
+- Board depth swings 13 → 123 players, so raw implied probability is not
+  comparable across seasons. `novig_prob` (implied ÷ board total) is the
+  comparable column; `board_rank` / `board_n` keep the raw shape. The wide
+  table zero-fills absent players and carries `has_prop` / `prop_n_markets` /
+  `prop_market_seasons` so a consumer can tell an unpriced PLAYER from a
+  missing SOURCE — the distinction the vegas block never had.
+- gsis match rate 99.5% (5209/5233). `bff.props.season_identity` resolves names
+  against that season's ADP/ECR board FIRST, then `ctx_rosters_week1` — both
+  preseason-safe, no outcome table. That season scoping is what splits Alex
+  Smith QB from Alex Smith TE and the ARI David Johnson from the PIT one; a
+  crosswalk-only match left 4% unresolved. The 23 leftovers are defenders/OL
+  and never-NFL college names off the oroy/comeback boards. One non-player
+  entry exists (2017 rec_td "FIELD", 11.9% of that board): flagged `is_field`,
+  kept in the no-vig denominator, never given an id.
+- **An OUTCOME LEAK lived in the first build; found 2026-07-24 and fixed.**
+  Eight boards carry a row for a player with `N/A` odds and `** WINNER **` in
+  Result — the season's winner, who was never on the preseason board. The old
+  document-wide regex matched that name, skipped the `N/A`, and took the NEXT
+  row's price, FABRICATING quotes: "Josh Gordon +275" for 2013 rec_yds (the real
+  +275 favourite was Calvin Johnson), Ben Roethlisberger 2014 pass_yds, Kareem
+  Hunt 2017 rush_yds, Carson Wentz 2017 pass_td, Ryan Tannehill 2019 comeback,
+  Geno Smith 2022 comeback, Jamaal Williams 2022 rush_td, Joe Flacco 2023
+  comeback. That is season-t OUTCOME written into a preseason feature at the top
+  of the board, 4 of the 8 inside the tune window. Rows with no priced cell now
+  yield nothing. Note the direction: leakage would FLATTER the block, so the
+  reject is stronger post-fix, not weaker.
+- **Parser bug found and fixed 2026-07-24 (after the first reject), worth
+  knowing because of HOW it hid.** A single document-wide regex silently lost 74
+  rows across 53 files, and the losses were biased toward the most informative
+  rows: (1) the name character class excluded `'`, so EVERY apostrophe player
+  truncated at the quote and vanished — the dataset contained ZERO Ja'Marr
+  Chase, De'Von Achane or Le'Veon Bell quotes, i.e. part of the elite tier was
+  missing; (2) a stray `nfl-award-player` link above the table let the lazy
+  `.*?` consume the first data row's odds cell, eating the top line of the board
+  (the favourite/winner). Parsing is now ROW-SCOPED (`iter_rows`, one `<tr>` at
+  a time), which makes both failure modes structurally impossible. The
+  regression test is cheap and should be kept in mind for any future scrape:
+  **count player links and count parsed rows; they must be equal.** Nearly all
+  the loss was in 2016-2025 (the tune window gained only 2 rows), which is why
+  the verdict did not move — but that was luck, not design.
+- 2014 is genuinely the thinnest season (mvp 20 names, pass_yds 13) and that is
+  NOT a parse artifact: all six 2014 boards were re-fetched from the live mirror
+  and match the cached row counts exactly. The book simply priced fewer names
+  that year; the 13-name passing board is the 13 obvious starting QBs.
+- **The SOURCE duplicates a player on at least one board.** 2015 comeback lists
+  "Micahel Crabtree" +6600 and "Michael Crabtree" +10000 — one player, two
+  spellings, two prices, a site data-entry error (confirmed in the raw HTML).
+  `bff/props_wayback.py` cannot see it (the strings differ); the `_ALIASES`
+  mapping is what exposes it, by resolving both to one gsis_id.
+  `bff.props.dedupe_by_player` keeps the shortest price and runs BEFORE
+  novig_prob/board_n, so the phantom is also removed from the board denominator
+  (2015 comeback board_n 51 → 50) rather than diluting every other player's
+  share. `bff.props.check_join` asserts this as an identity — distinct
+  (season, market, gsis_id) triples must equal non-zero wide cells — which is
+  the check the curation step previously lacked entirely. The retained row still
+  DISPLAYS the site's misspelling; gsis_id is the key, the name is cosmetic.
+- **Cross-capture reconciliation (2026-07-24, `bff/props_reconcile.py`,
+  results in `reports/props_reconcile.json`).** Every board re-parsed from up to
+  4 timestamp-diverse INDEPENDENT Wayback captures (365 captures, read-only
+  replay, no Save Page Now) and required to yield an identical quote set:
+  **91 AGREE / 8 DISAGREE / 10 SINGLE-SOURCED.**
+  - 6 of the 8 disagreements are COSMETIC, identical odds: the source changed
+    punctuation between captures ("AJ Green" ↔ "A.J. Green", "TY Hilton" ↔
+    "T.Y. Hilton", "Odell Beckham Jr" ↔ "Jr.") or served curly vs straight
+    apostrophes. `norm_name` absorbs all of it.
+  - 2017 oroy: the comparator is dated **May 3, 2017** — an EARLY preseason
+    board (16 names, different field). Not an error: the page gets updated
+    within a preseason, and newest-first correctly selected the September
+    board. Verified corpus-wide: all 14 seasons carry exactly ONE as_of date
+    and every one is September, i.e. no board is an early snapshot.
+  - 2013 oroy: three OLD captures (2015/2020/2022) show 19 names, the NEWEST
+    capture and the shipped board show 20 (Zach Ertz +2000). The source revised
+    a historical board after 2022; newest-first takes the revision. Documented
+    rather than "fixed" — preferring the site's most-corrected version is the
+    same rule `bff.ecr` uses.
+  - The 10 SINGLE-SOURCED boards are exactly the 10 recovered via Save Page Now
+    (mvp 2021-2025, rec_yds 2024, rush_td 2024, comeback/oroy/pass_yds 2025).
+    By construction they had no other capture, so **this method cannot verify
+    them**; their only provenance is the live mirror at fetch time. Do not
+    describe the corpus as fully reconciled.
+- `norm_name` here is a FOURTH variant (adp/ecr/crosswalk have their own) and
+  also strips parentheticals ("Josh Allen (BUF)"). Do not unify them.
+
 ## Leakage rules
 
 - Walk-forward: predictions for season t use only seasons < t
@@ -154,6 +316,14 @@ uv run python -m bff.vegas_wayback         # one-time Wayback scrape (needs netw
 uv run python -m bff.candidate_features    # coach/qb-rush/ol/adp-gap candidates (all rejected, inert)
 uv run python -m bff.schedule_trajectory_features  # <- sched (games.csv) + trajectory (SHIPPED)
 
+# preseason player-prop boards (MVP / yardage+TD leaders / OROY / comeback).
+# Fetch is a one-time Wayback scrape (needs network; caches HTML, then offline);
+# curation is offline and byte-stable. NOT WIRED INTO THE MODEL -- see "Player
+# props" below. --save-missing additionally asks Wayback to archive live pages
+# that were never captured (writes to archive.org; opt-in).
+uv run python -m bff.props_wayback         # -> data/raw/props/season_props.parquet
+uv run python -m bff.props                 # -> data/processed/{season_props,props_features}.parquet
+
 # QB/TE streaming baseline derivation (tune window ONLY; justifies REPL_RANKS QB8/TE8)
 uv run python -m bff.streaming
 
@@ -191,6 +361,8 @@ uv run python -m bff.site --refresh    # rerun model + backtests, then render
 | `bff.model --season 2026` | `data/processed/preds_model_2026.parquet` (185 rows), `reports/rankings_2026.csv`, `reports/steals_2026.csv` |
 | `bff.vona` | `reports/vona_2026.csv` (150 rows) + prints the 12-seat snake-turn matrix |
 | `bff.streaming` | stdout only (tune-window QB streaming equiv-rank table; derivation behind QB8/TE8) |
+| `bff.props_wayback` | `data/raw/props/season_props.parquet` (5234 quotes, 2012-2025; 5233 after curation dedupe) + cached HTML (git-ignored) |
+| `bff.props` | `data/processed/season_props.parquet` (long, 5233 rows) and `props_features.parquet` (wide, 2697 rows keyed season × gsis_id) |
 | `bff.backtest <preds> --name <n>` | `reports/scores_<n>.csv` |
 | `bff.compare A B` | stdout only (per-season deltas + exact sign-flip p-values) |
 
@@ -285,7 +457,8 @@ without this sync is an incomplete change.
 - `build_dataset`'s candidate-block joins (incl. a `join_asof` that re-sorts
   rows) come AFTER the anchor's ordinal rank is materialized — keep it that
   way, or pre-2021 anchors drift (the rank ties break by row order).
-- Rejected candidate blocks (redzone/snaps/vegas/landing_spot) stay in
+- Rejected candidate blocks (redzone/snaps/vegas/landing_spot, and the
+  player-prop blocks props/props_dense/props_lean) stay in
   `build_dataset` as inert zero-filled columns and in `CANDIDATE_BLOCKS`;
   they are NOT in FEATURES. Re-test via `bff.select_features`, never by
   hand-editing FEATURES.

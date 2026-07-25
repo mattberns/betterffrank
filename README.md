@@ -155,6 +155,7 @@ uv run python -m bff.site --refresh              # rerun model + backtests first
 | `reports/rankings_2026.csv`, `reports/steals_2026.csv` | `uv run python -m bff.model --season 2026` |
 | `reports/vona_2026.csv` | `uv run python -m bff.vona` (draft-timing overlay; 150 picks) |
 | `reports/REPORT.md` | written by hand; every number maps to a command above |
+| `data/processed/season_props.parquet`, `props_features.parquet` | `uv run python -m bff.props` (preseason player-prop boards, 2012–2025; **data only, not an input to the model**) |
 
 ## Repo layout
 
@@ -170,6 +171,8 @@ bff/                      the pipeline (run as python -m bff.<module>)
   redzone_features.py     prior-year red-zone/goal-line usage (from pbp; candidate block)
   situation_features.py   snap share, injury history, contracts, Vegas (candidate blocks)
   vegas_wayback.py        one-time: preseason win totals from Wayback sportsoddshistory
+  props_wayback.py        one-time: preseason player-prop boards from Wayback sportsoddshistory
+  props.py                curate those boards -> gsis-keyed tables (data only; not in the model)
   select_features.py      candidate-block selection harness (tune window only)
   vorp.py                 leakage-safe VORP curve library
   streaming.py            QB/TE streaming-baseline derivation (tune window; justifies QB8/TE8 replacement)
@@ -195,6 +198,21 @@ docs/                     generated static site (bff.site)
   the full ECR anchor with `vs_adp` live. All six new seasons match the gsis
   crosswalk at 150/150 of the top 150. A future season without ECR rows falls
   back to an ADP-only anchor, and the CLI prints a warning when that happens.
+- **Preseason player props** (`bff/props_wayback.py` → `bff/props.py`): nine
+  markets (MVP, OROY, comeback, passing/rushing/receiving yards and TD leaders)
+  from Wayback captures of sportsoddshistory's award and stat-leader pages,
+  5,234 quotes across 2012–2025, 99.5% matched to gsis ids. Only pages that
+  carry the site's literal "prior to the start of the season" header are
+  accepted, and a check asserts every board predates its season's Week 1
+  kickoff. Five markets (MVP, OROY, and the passing/rushing/receiving yards
+  leaders) are complete across all fourteen seasons; the three TD-leader markets
+  only start in 2017. **Tested on the 2012-2017 tune window and
+  rejected**: every variant hurt (−0.0022 to −0.0052), monotone in how many prop
+  columns were added, so the columns stay inert and are not features. No test
+  look was spent. Notably the failure is not redundancy — max correlation with
+  an existing feature is only 0.20–0.61 and 72–97% of the scored pool carries a
+  quote — the market's leader prices just don't predict where the experts are
+  wrong. The curated data is kept for the record.
 - **Season-t roster membership** (vacated volume, arriving vets, returning
   competition) uses each team's **week-1 REG roster** from the nflverse
   weekly-rosters release (`data/raw/context/roster_weekly_*.parquet`), not the

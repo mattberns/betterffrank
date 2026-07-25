@@ -31,3 +31,7 @@ data/raw/injuries/
 data/raw/contracts/
 # Vegas win-totals scrape cache (sportsoddshistory HTML + parsed parquet)
 data/raw/vegas/
+# Preseason player-props scrape cache (sportsoddshistory award/stat-leader HTML
+# + parsed parquet). The derived data/processed/season_props.parquet IS
+# committed, so the curation step reproduces without re-fetching.
+data/raw/props/
