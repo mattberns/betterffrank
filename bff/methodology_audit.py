@@ -214,20 +214,33 @@ def reliability() -> dict:
 
 
 def redundancy(df: pl.DataFrame) -> dict:
-    """How much of the market anchor do the features already explain?"""
+    """How much of the market anchor do the features already explain?
+
+    `features_to_anchor` DELIBERATELY EXCLUDES ppg_mismatch, which is derived
+    from the anchor's own implied points (prev_ppg minus implied/schedule).
+    Including it makes the regression partly circular -- an anchor-derived
+    column of course predicts the anchor -- and inflates the R2 from 0.655 to
+    0.691. The 52-column number is the one that supports the claim "the experts
+    already price what these features know"; the 53-column number is kept
+    alongside it, labelled, so the inflation is visible rather than quietly
+    baked in."""
     tr = df.filter((pl.col("season") >= M.FIRST_TARGET)
                    & (pl.col("season") <= max(M.TUNE_SEASONS)))
-    feats = [f for f in M.FEATURES if f in df.columns]
-    X = StandardScaler().fit_transform(tr.select(feats).to_numpy())
+    X, _, _, _ = _design(tr, tr)      # the real 53-column matrix, not 52 from df
+    X = StandardScaler().fit_transform(X)
+    X_indep = X[:, :-1]               # ppg_mismatch is the last column (contract)
     y = tr["log_pts"].to_numpy()
-    anchor = tr["log_rank"].to_numpy().reshape(-1, 1)
+    log_rank = tr["log_rank"].to_numpy()
+    anchor = log_rank.reshape(-1, 1)
     resid = y - M.implied_expectation(tr, tr)
 
     def r2(A, b):
         return round(float(LinearRegression().fit(A, b).score(A, b)), 4)
 
-    return {"n_rows": tr.height, "n_features": len(feats),
-            "features_to_anchor": r2(X, tr["log_rank"].to_numpy()),
+    return {"n_rows": tr.height, "n_features": X.shape[1],
+            "features_to_anchor": r2(X_indep, log_rank),
+            "features_to_anchor_n": X_indep.shape[1],
+            "features_to_anchor_incl_anchor_derived": r2(X, log_rank),
             "features_to_outcome": r2(X, y),
             "anchor_linear_to_outcome": r2(anchor, y),
             "anchor_quadratic_to_outcome": round(1 - float(resid.var() / y.var()), 4),
@@ -262,11 +275,16 @@ def oos_residual(df: pl.DataFrame, alpha: float, shrink: float) -> dict:
 
 
 def geometry(df: pl.DataFrame, alpha: float, shrink: float) -> dict:
-    """How much model does the tuned regularization actually permit?"""
+    """How much model does the tuned regularization actually permit?
+
+    Built through _design so p counts the REAL design matrix: ppg_mismatch is
+    derived inside fit_predict and is not a dataframe column, so selecting
+    FEATURES from df alone silently drops it and undercounts p by one."""
     tr = df.filter((pl.col("season") >= M.FIRST_TARGET)
                    & (pl.col("season") <= max(M.TUNE_SEASONS)))
-    feats = [f for f in M.FEATURES if f in df.columns]
-    X = StandardScaler().fit_transform(tr.select(feats).to_numpy())
+    X, _, _, _ = _design(tr, tr)
+    assert X.shape[1] == len(M.FEATURES), (X.shape[1], len(M.FEATURES))
+    X = StandardScaler().fit_transform(X)
     sv = np.linalg.svd(X, compute_uv=False)
     edof = float((sv ** 2 / (sv ** 2 + alpha)).sum())
     return {"n_rows": tr.height, "n_players": tr["gsis_id"].n_unique(),

@@ -155,15 +155,15 @@
         {
           "season": 2025,
           "n": 150,
-          "r_half": 0.8293,
-          "r_full": 0.9067,
+          "r_half": 0.8295,
+          "r_full": 0.9068,
           "r_full_QB": 0.9062,
           "r_full_RB": 0.9492,
           "r_full_WR": 0.8605,
           "r_full_TE": 0.6335
         }
       ],
-      "r_half_mean": 0.8082,
+      "r_half_mean": 0.8083,
       "r_full_mean": 0.8937,
       "ceiling_mean": 0.9453,
       "by_position": {
@@ -175,13 +175,15 @@
     },
     "redundancy": {
       "n_rows": 978,
-      "n_features": 52,
+      "n_features": 53,
       "features_to_anchor": 0.6546,
-      "features_to_outcome": 0.2428,
+      "features_to_anchor_n": 52,
+      "features_to_anchor_incl_anchor_derived": 0.6906,
+      "features_to_outcome": 0.2451,
       "anchor_linear_to_outcome": 0.0677,
       "anchor_quadratic_to_outcome": 0.1984,
       "anchor_plus_features_to_outcome": 0.2703,
-      "features_to_residual_in_sample": 0.1051
+      "features_to_residual_in_sample": 0.1063
     },
     "oos_residual": {
       "folds": [
@@ -239,12 +241,12 @@
       "n_rows": 978,
       "n_players": 368,
       "n_seasons": 6,
-      "p": 52,
-      "condition_number": 21.71,
+      "p": 53,
+      "condition_number": 22.22,
       "alpha": 300.0,
       "shrink": 0.3,
-      "effective_dof": 31.2,
-      "effective_dof_x_shrink": 9.4
+      "effective_dof": 31.7,
+      "effective_dof_x_shrink": 9.5
     },
     "bust": {
       "n_rows": 978,
