@@ -5,11 +5,12 @@ never touched here.
 WHY THIS EXISTS. The shipped 53-feature set was accumulated block by block,
 each block gated against the then-current set, and nobody ever asked whether
 the accumulation beats doing nothing. It does not: on the tune window the
-shipped model scores 0.4293 against a NULL of 0.4306. The null is the same
+shipped model scores 0.4354 against a NULL of 0.4366 (post the 2026-07-27
+look-15 feature audit; 0.4293 vs 0.4306 before it). The null is the same
 pipeline with the ridge stage switched off -- `score = implied_expectation
 (market rank)`, i.e. fit_predict(features=[]) -- so a delta against it is
 attributable to features and to nothing else. (The separate `preds_ecr`
-baseline reads 0.4298; it differs only because it bottoms pool players with
+baseline reads 0.4356; it differs only because it bottoms pool players with
 no ECR row instead of falling back to their ADP, which in the tune window is
 one player, Blount 2013.)
 
@@ -242,19 +243,20 @@ def check(df: pl.DataFrame) -> None:
     assert len(pool) == 76, f"expected a 76-column pool, got {len(pool)}"
 
     # grid-independent regression anchors: the null has no hyperparameters, and
-    # the shipped set at the ORIGINAL frozen optimum must still be 0.4293
-    # whatever the grid now contains.
+    # the shipped set at the frozen optimum must still be 0.4354 whatever the
+    # grid now contains. (Anchors re-measured after the 2026-07-27 look-15
+    # feature audit; the pre-audit values were 0.4306 / 0.4293.)
     null = evaluate(df, [], TUNE_SEASONS)
     print("null (anchor only)   " + "  ".join(f"{v:.4f}" for v in null["per_season"])
-          + f"   mean {null['mean']:.4f}   expect 0.4306")
+          + f"   mean {null['mean']:.4f}   expect 0.4366")
     legacy = season_scores(df, 300.0, 0.3, TUNE_SEASONS, features=list(FEATURES))
     print("shipped 53 @300/0.3  " + "  ".join(f"{v:.4f}" for v in legacy)
-          + f"   mean {np.mean(legacy):.4f}   expect 0.4293")
+          + f"   mean {np.mean(legacy):.4f}   expect 0.4354")
     ship = evaluate(df, list(FEATURES), TUNE_SEASONS)
     print(f"shipped 53, tuned on the frozen grid: {ship['mean']:.4f} "
           f"(alpha={ship['alpha']:g} shrink={ship['shrink']:g})")
-    assert abs(null["mean"] - 0.4306) < 5e-5, null["mean"]
-    assert abs(np.mean(legacy) - 0.4293) < 5e-5, np.mean(legacy)
+    assert abs(null["mean"] - 0.4366) < 5e-5, null["mean"]
+    assert abs(np.mean(legacy) - 0.4354) < 5e-5, np.mean(legacy)
 
     # cross-check against the block-wise tool: this delta must match
     # `uv run python -m bff.select_features --blocks sos`

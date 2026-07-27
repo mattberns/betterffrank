@@ -22,6 +22,12 @@ features preseason-known for season t:
   last_was_career_best 1 if the t-1 ppg_ppr equalled the career best (broke
                  out / peaked last season). Regression-vs-continuation signal.
 
+Career history spans source seasons 1999-2025: actuals.parquet (2010+) plus
+legacy_career_ppg() aggregating raw player_stats_{1999..2009}.parquet
+(fetched from the nflverse player_stats release, same as 2010+). Do NOT
+extend actuals.parquet itself -- it feeds training targets and backtest
+ground truth, and pre-2010 seasons are never scored.
+
 Leakage: sos uses season-t opponents (preseason schedule) x t-1 defense
 outcomes; trajectory uses only seasons < t plus static draft_year.
 
@@ -147,10 +153,47 @@ def sos_features(pool: pl.DataFrame) -> pl.DataFrame:
 
 # ----------------------------------------------------------- TRAJECTORY
 
-def trajectory_features(pool: pl.DataFrame) -> pl.DataFrame:
-    actuals = pl.read_parquet(PROC / "actuals.parquet").select(
-        "gsis_id", pl.col("season").cast(pl.Int64), "ppg_ppr"
+def legacy_career_ppg() -> pl.DataFrame:
+    """(gsis_id, season, ppg_ppr) for source seasons 1999-2009, aggregated from
+    raw weekly stats exactly like bff.actuals.build_weekly (games = distinct REG
+    weeks). Career-history ONLY: actuals.parquet deliberately stays 2010+ (it
+    feeds training targets and the backtest ground truth; pre-2010 seasons are
+    never scored). Without this, tune-fold players had 2-7 visible career
+    seasons vs 8-15 in test folds -- yrs_since_peak pool mean ramped 0.33
+    (2012) -> 1.5 (2025) purely from window truncation (fixed 2026-07-27)."""
+    frames = []
+    for y in range(1999, 2010):
+        f = RAW_STATS / f"player_stats_{y}.parquet"
+        if not f.exists():
+            continue
+        w = pl.read_parquet(f).filter(pl.col("season_type") == "REG")
+        frames.append(
+            w.group_by("player_id", "season").agg(
+                games=pl.col("week").n_unique(),
+                pts_ppr=pl.col("fantasy_points_ppr").sum(),
+            )
+        )
+    if not frames:
+        return pl.DataFrame(
+            schema={"gsis_id": pl.String, "season": pl.Int64, "ppg_ppr": pl.Float64}
+        )
+    return (
+        pl.concat(frames)
+        .select(
+            pl.col("player_id").alias("gsis_id"),
+            pl.col("season").cast(pl.Int64),
+            (pl.col("pts_ppr") / pl.col("games")).alias("ppg_ppr"),
+        )
     )
+
+
+def trajectory_features(pool: pl.DataFrame) -> pl.DataFrame:
+    actuals = pl.concat([
+        legacy_career_ppg(),
+        pl.read_parquet(PROC / "actuals.parquet").select(
+            "gsis_id", pl.col("season").cast(pl.Int64), "ppg_ppr"
+        ),
+    ])
     xw = pl.read_csv(CROSSWALK, null_values=["NA"], infer_schema_length=10000).filter(
         pl.col("gsis_id").is_not_null()
     ).select("gsis_id", "draft_year").unique("gsis_id")

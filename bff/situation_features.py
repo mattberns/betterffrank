@@ -12,15 +12,38 @@ is computable BEFORE season t kicks off. Timing rule per feature:
                       order); null when < 6 t-1 games (mirrors opp velocity).
     snap_share_max4   mean of the 4 highest weekly offense_pct values (usage
                       ceiling); null when < 4 t-1 games.
-  BLOCK 2 -- injury history (source: t-1 and t-2 REG injury reports). Past
-             outcomes, concluded by preseason t. 0 (never null) when the player
-             simply had no listings; injury files cover every target season.
-    inj_weeks_listed_l2y  # distinct (season, week) with report_status non-null
-                          over t-2..t-1.
-    inj_soft_tissue_l2y   same count restricted to soft-tissue keywords in
-                          report_primary_injury OR practice_primary_injury.
+  BLOCK 2 -- injury history (source: t-1 and t-2 REG injury reports + weekly
+             reserve-list rosters). Past outcomes, concluded by preseason t.
+             0 (never null) when the player simply had no listings; both
+             sources cover every target season.
+    inj_weeks_listed_l2y  # distinct (season, week) over t-2..t-1 where the
+                          player was EITHER listed Questionable/Doubtful/Out on
+                          the game-status report OR on a reserve list
+                          (roster status RES/PUP).
+    inj_soft_tissue_l2y   QDO-listed weeks restricted to soft-tissue keywords
+                          in report_primary_injury OR practice_primary_injury.
     inj_recurrence        1 if the same lowercased report_primary_injury value
-                          appears in BOTH t-1 and t-2, else 0.
+                          appears on QDO-listed rows in BOTH t-1 and t-2.
+
+             TWO measurement rules, both load-bearing (2026-07-27) -- do not
+             "simplify" back to report_status non-null:
+             (1) Only Questionable/Doubtful/Out count. The NFL abolished the
+                 "Probable" designation after 2015 (~2,500 listings/season),
+                 and 2016+ files carry ~3,000 practice-only rows/season with
+                 NULL report_status (pre-2016: ~200). Counting non-null status
+                 made target seasons <=2017 measure ~2x what 2018+ measured --
+                 the tune window was graded on a different variable than the
+                 test window (pool mean 6.2 vs 3.1; QDO-only is level, 2.5-3.4
+                 across all seasons).
+             (2) Reserve-list weeks are unioned in because IR players drop OFF
+                 the weekly injury report: the most severe injuries otherwise
+                 produce the LOWEST counts (CMC 2024: 13 games missed, 12 RES
+                 weeks, only 3 report-listed weeks -- less than a nagging
+                 hamstring). RES/PUP only: INA (game-day inactive) exists only
+                 2020+ and includes healthy scratches; PUP is folded into RES
+                 before 2016. Known residual, reported not hidden: league IR
+                 usage genuinely rose ~2016 (RES rows 1.9k -> 4.3k-5.4k); that
+                 is roster-behavior reality, not taxonomy.
   BLOCK 3 -- contracts (source: historical_contracts, filtered year_signed <= t).
              Preseason-known. Players with no contract row: nulls.
     apy_cap_pct       APY as % of the cap on the most recent contract signed <= t.
@@ -80,6 +103,17 @@ FANTASY_POS = ["QB", "RB", "WR", "TE"]
 
 MIN_GAMES_L4F4 = 6  # snap_share_l4f4 null below this (mirrors opp velocity guard)
 MIN_GAMES_MAX4 = 4  # snap_share_max4 null below this
+
+# Game-status designations that count as an injury listing. The only era-stable
+# subset: "Probable" existed 2010-2015 only, and null-status practice-only rows
+# explode after 2015 (see BLOCK 2 docstring). 2024's stray "Note" status is
+# deliberately excluded.
+QDO = ["Questionable", "Doubtful", "Out"]
+
+# Reserve-list roster statuses that count as injury weeks (IR players drop off
+# the game-status report). RES/PUP only -- INA is 2020+-only and includes
+# healthy scratches (see BLOCK 2 docstring).
+RESERVE_STATUS = ["RES", "PUP"]
 
 # Soft-tissue keywords (lowercase, substring match on report/practice primary injury).
 SOFT_TISSUE = [
@@ -243,11 +277,44 @@ def _spread_to_targets(df: pl.DataFrame, valcol: str) -> pl.DataFrame:
     )
 
 
-def injury_features(inj: pl.DataFrame) -> pl.DataFrame:
-    """Per (season t, gsis_id): l2y listing/soft-tissue counts + recurrence flag."""
-    listed = inj.filter(pl.col("report_status").is_not_null())
+def load_reserve_weeks() -> pl.DataFrame:
+    """Distinct (season, gsis_id, week) on a reserve list (RES/PUP), REG weeks,
+    source seasons 2010-2025, from the weekly roster snapshots."""
+    frames = []
+    for y in range(2010, 2026):
+        f = RAW / "context" / f"roster_weekly_{y}.parquet"
+        if not f.exists():
+            continue
+        df = pl.read_parquet(f, columns=["season", "week", "gsis_id", "status", "game_type"])
+        frames.append(
+            df.filter(
+                (pl.col("game_type") == "REG")
+                & pl.col("status").is_in(RESERVE_STATUS)
+                & pl.col("gsis_id").is_not_null()
+            ).select(
+                pl.col("season").cast(pl.Int32),
+                pl.col("week").cast(pl.Int32),
+                "gsis_id",
+            )
+        )
+    if not frames:
+        return pl.DataFrame(
+            schema={"season": pl.Int32, "week": pl.Int32, "gsis_id": pl.String}
+        )
+    return pl.concat(frames).unique()
 
-    per_src_weeks = listed.group_by("season", "gsis_id").agg(
+
+def injury_features(inj: pl.DataFrame, reserve: pl.DataFrame) -> pl.DataFrame:
+    """Per (season t, gsis_id): l2y listing/soft-tissue counts + recurrence flag.
+    A listed week = QDO game status OR reserve-list roster status (see the
+    BLOCK 2 docstring for why both rules are load-bearing)."""
+    listed = inj.filter(pl.col("report_status").is_in(QDO))
+
+    listed_weeks = pl.concat([
+        listed.select("season", "gsis_id", "week"),
+        reserve.select("season", "gsis_id", "week"),
+    ]).unique()
+    per_src_weeks = listed_weeks.group_by("season", "gsis_id").agg(
         pl.col("week").n_unique().alias("inj_weeks_listed_l2y")
     )
     per_src_soft = (
@@ -258,9 +325,11 @@ def injury_features(inj: pl.DataFrame) -> pl.DataFrame:
     weeks = _spread_to_targets(per_src_weeks, "inj_weeks_listed_l2y")
     soft = _spread_to_targets(per_src_soft, "inj_soft_tissue_l2y")
 
-    # recurrence: same lowercased report_primary_injury present in both t-1 and t-2
+    # recurrence: same lowercased report_primary_injury present on QDO-listed
+    # rows in both t-1 and t-2 (practice-only rows carry a primary injury with
+    # null status in 2016+ only -- counting them is era-asymmetric)
     distinct_inj = (
-        inj.filter(pl.col("report_primary_injury").is_not_null())
+        listed.filter(pl.col("report_primary_injury").is_not_null())
         .select(
             "season", "gsis_id",
             pl.col("report_primary_injury").str.to_lowercase().alias("inj_lower"),
@@ -388,7 +457,7 @@ def build() -> pl.DataFrame:
 
     snaps = load_snaps()
     snap_feat = snap_features(snaps, ids)
-    inj_feat = injury_features(load_injuries())
+    inj_feat = injury_features(load_injuries(), load_reserve_weeks())
     con_feat = contract_features(pool.select("gsis_id").unique())
     veg_feat = vegas_features(pool)
 
@@ -472,6 +541,11 @@ def sanity(out: pl.DataFrame) -> None:
     show(2019, "Saquon Barkley", ["apy_cap_pct", "rookie_deal_yr", "contract_year"])
     show(2024, "Christian McCaffrey", ["inj_weeks_listed_l2y", "inj_soft_tissue_l2y",
                                        "inj_recurrence", "snap_share"])
+    # IR-blindness regression check: CMC missed 13 games in 2024 (RES weeks 2-8,
+    # 14-18) but had only 3 QDO-listed weeks; the union must push his 2026
+    # l2y count well into double digits.
+    show(2026, "Christian McCaffrey", ["inj_weeks_listed_l2y", "inj_soft_tissue_l2y",
+                                       "inj_recurrence"])
     # 2026 rookie-deal coverage note: the 2026 draft class has null gsis_id in the
     # contracts source (ids not yet assigned), so those rows are dropped and the
     # 2026 draftees get NULL contract features. The 2025 draft class shows

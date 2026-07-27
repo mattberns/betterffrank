@@ -3,7 +3,9 @@
 One row per season-t ADP-pool player (QB/RB/WR/TE, from data/processed/adp.parquet).
 Every feature is computable BEFORE season t kicks off. Timing rule per feature:
 
-    team_missing                 season-t ADP team is null/FA (preseason fact).
+    team_missing                 season-t team unresolvable: ADP board says
+                                 null/FA AND no week-1 roster row (both
+                                 preseason facts; fallback added 2026-07-27).
     vacated_target_share         t-1 team volume x season-t roster membership.
     vacated_carry_share          same.
     vacated_rec_fp_share         same (receiving PPR points instead of raw volume).
@@ -106,8 +108,18 @@ def load_inputs() -> dict[str, pl.DataFrame]:
     )
 
 
-def build_pool(adp: pl.DataFrame) -> pl.DataFrame:
-    """Season-t ADP pool: one row per (season, gsis_id), QB/RB/WR/TE, 2011-2026."""
+def build_pool(adp: pl.DataFrame, rosters_w1: pl.DataFrame) -> pl.DataFrame:
+    """Season-t ADP pool: one row per (season, gsis_id), QB/RB/WR/TE, 2011-2026.
+
+    Team resolution: ADP-board team, falling back to the week-1 roster team
+    when the board says null/FA (2026-07-27). FFC listed 17 pool players FA at
+    capture time (2011-2015, mostly BUF -- C.J. Spiller 2013 at ADP 6), and
+    with no fallback every team-keyed feature zero-filled for them.
+    ctx_rosters_week1 is the sanctioned season-t membership table, so this is
+    a preseason fact, not leakage. team_missing = 1 only when both fail."""
+    w1_team = rosters_w1.select(
+        "season", "gsis_id", pl.col("team").alias("_w1_team")
+    ).unique(subset=["season", "gsis_id"], keep="first")
     pool = (
         adp.filter(
             pl.col("season").is_between(2011, 2026)
@@ -120,6 +132,9 @@ def build_pool(adp: pl.DataFrame) -> pl.DataFrame:
             .otherwise(pl.col("team"))
             .alias("team")
         )
+        .join(w1_team, on=["season", "gsis_id"], how="left")
+        .with_columns(pl.coalesce("team", "_w1_team").alias("team"))
+        .drop("_w1_team")
         .with_columns(pl.col("team").is_null().cast(pl.Int8).alias("team_missing"))
         .select("season", "gsis_id", "name", "position", "team", "adp", "team_missing")
     )
@@ -222,7 +237,7 @@ def draft_rows(draft: pl.DataFrame, rosters: pl.DataFrame) -> pl.DataFrame:
 def build(inputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     adp, rosters, vol = inputs["adp"], inputs["rosters"], inputs["vol"]
     rosters_w1 = inputs["rosters_w1"]
-    pool = build_pool(adp)
+    pool = build_pool(adp, rosters_w1)
     usage = player_prior_usage(vol)
 
     feat = pool.with_columns(norm_name().alias("nn"))

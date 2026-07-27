@@ -11,12 +11,17 @@ the anchor when ECR exists. As of the 2026-07-25 rebuild (§2a, §2b)
 a real preseason expert board**, with no season standing in ADP for a missing
 ECR. Pool ECR coverage is 99.3-100% across 2012-2025.
 
-That sentence cost something to be able to write, and the current headline is
-weaker than any previous version of this report: **the model beats ADP and
-does not beat ECR** (§3). Earlier versions claimed an ECR edge; they were
-measured on inputs that included an ADP-anchored training season, a
-half-missing 2012 ADP board, and three ADP-anchored tuning folds. Each
-correction shrank the measured edge.
+That sentence cost something to be able to write. The current headline:
+**the model beats ADP (one-sided) and does not beat ECR** (§3). Earlier
+versions claimed
+an ECR edge; they were measured on inputs that included an ADP-anchored
+training season, a half-missing 2012 ADP board, and three ADP-anchored tuning
+folds — each of those corrections shrank the measured edge. A fourth
+correction (§2f, fabricated zero-point outcome seasons) moved it back up
+some, and a fifth (§2g, the player-season feature audit: a regime-shifted
+and IR-blind injury variable, a stale QB table, unresolvable teams, one ECR
+duplicate, truncated career histories) took a hair back; the verdict never
+changed.
 
 Every number below reproduces from the commands in the last section.
 
@@ -95,7 +100,8 @@ the failed gate to keep coach_scheme (whose presence coincided with a
 stronger p = 0.016) was considered and REJECTED as test-set selection.
 Look 10 (2026-07-24) scored the trajectory block: it passed the tune gate
 at +0.0059 (lean 2-column form), and the confirming test look held positive
-(+0.0003, ADP p 0.020 → 0.0195) — it produced the current §3 headline. Its
+(+0.0003, ADP p 0.020 → 0.0195) — it produced the 53-feature configuration
+that still stands in §3. Its
 sibling block `sos` failed the tune gate and never earned a look; a
 GBT/RF model-class experiment the same day also failed on the tune window
 with no look spent.
@@ -114,16 +120,29 @@ wrong.
 Look 13 (2026-07-25) scored the extended hyperparameter grid (alpha ×1000,
 shrink down to 0.10) jointly with the `inj_pos` block, and REVERTED it: tune
 +0.0068 (LOFO-validated) landed as −0.0037 on test, the ECR edge went to
-−0.0004 and the ADP p_one from 0.0469 to 0.0820. See §2e. Total: 4 looks on
-2026-07-23, six on 2026-07-24, three on 2026-07-25 (13); future looks should
+−0.0004 and the ADP p_one from 0.0469 to 0.0820. See §2e. Look 14
+(2026-07-27) scored the actuals repair in §2f: the player-season outcomes
+table had silently dropped drafted players whose nflverse position field is
+null, FB, or CB, fabricating 0.0-point seasons for Trent Richardson
+(2012-2014), Mike Tolbert (2012), Marcel Reece (2013) and Travis Hunter
+(2025) — poisoning training targets, prev-season features AND the backtest's
+ground truth. Like looks 11-12 it is a data correction, not a selection: it
+was tune-window-validated first (the model, ADP and ECR all rise; the model
+rises most), then scored once on test. Look 15 (2026-07-27) scored the
+player-season feature audit in §2g: five more input defects (regime-shifted
+and IR-blind injury features, a stale expected-QB table, unresolvable pool
+teams, one ECR duplicate, truncated career histories), bundled into ONE
+look, each verified against raw sources and none gated on the metric.
+Total: 4 looks on 2026-07-23, six on
+2026-07-24, three on 2026-07-25, two on 2026-07-27 (15); future looks should
 stay rare.
 
 Two residual caveats, both real. An operator who has seen 2018-2020 results
-cannot fully unsee them. And **thirteen looks is a lot.** The test set has now
+cannot fully unsee them. And **fifteen looks is a lot.** The test set has now
 been consulted often enough that "never touched for any decision" is true of
 each individual look and increasingly strained as a description of the whole
-process; the ADP p-value sitting at 0.0469 should be read with that in mind,
-not as a clean pre-registered result.
+process; the ADP p-value of 0.0313 should be read with that in mind, not as a
+clean pre-registered result.
 
 ### 2a. The tuning surface was ADP-anchored until 2026-07-25
 
@@ -239,7 +258,11 @@ smaller training set. And the tune-window edge disappears entirely:
 
 The model is 0.0013 *behind* ADP and 0.0005 behind ECR on its own validation
 window. It still shows +0.0197 over ADP on test, which is a real tension and
-is left standing rather than explained away.
+is left standing rather than explained away. (*These numbers were measured on
+the corrupted actuals table found two days later — §2f. After the §2f repair
+the tune window briefly read model 0.4392 / ECR 0.4356 / ADP 0.4336; the §2g
+feature audit put it back to 0.4354 — the tension stands: the model does not
+lead its anchors on its own window.*)
 
 A metric that improves when fabricated rows are added is not evidence those
 rows belong; it is evidence the edge was partly resting on them. Restoring
@@ -328,50 +351,193 @@ beats the anchor-only null on this window.)
 
 Total test looks: 13.
 
+### 2f. Look 14: the actuals table silently dropped drafted players (2026-07-27)
+
+Found while investigating why tune fold 2015 responded so strongly to
+de-weighting bust rows (the residual-cap and drop-injury-season experiments,
+both tune-window only). The answer was not a modeling insight; it was a bug.
+
+**The defect.** `bff/actuals.py` kept only weekly rows whose nflverse
+`position` ∈ {QB, RB, WR, TE}. That field is not trustworthy for fantasy
+purposes: it is **null** for some ids (Trent Richardson, all three of his
+seasons — an upstream metadata gap), and it uses roster positions the fantasy
+boards don't (**FB** for Mike Tolbert and Marcel Reece, **CB** for two-way
+Travis Hunter 2025). Those player-seasons vanished from `actuals.parquet`, and
+a missing actuals row reads as **0.0 points** everywhere downstream. The full
+audit (every ADP-board player × every season 2010-2025, same-id raw-weekly
+comparison plus a name-based cross-id sweep) found exactly four affected
+players, eight corrupt board-rows:
+
+| player | seasons | real PPR recorded as 0.0 | where it bit |
+|---|---|---|---|
+| Trent Richardson | 2012, 2013, 2014 | 254.7 / 144.9 / 117.8 | training targets; scored 2013/2014 pool truth; his 2013 row (ADP **10**) also read `has_prior = 0` — a top-10 pick coded as a rookie |
+| Mike Tolbert | 2012 | 114.1 | training target |
+| Marcel Reece | 2013 | 111.8 | training target; scored 2013 pool truth; prev-season features |
+| Travis Hunter | 2025 | 63.8 | scored 2025 **test** pool truth; 2026 board prev-season features (`has_prior = 0` on the live board) |
+
+Three channels, stated explicitly: fabricated mega-busts in the training
+target (the model learned that the 2013 #10 pick scored zero); corrupted
+prev-season features (`prev_ppg = 0`, `has_prior = 0`, `games_missed` wrong);
+and corrupted **ground truth** — a pool player missing from actuals is scored
+as if he scored nothing, so folds 2013, 2014 and 2025 graded every list
+(model, ADP, ECR) against a false outcome. 162 player-seasons were missing in
+total (mostly FB seasons of sometime-board players); all channels by which
+any of them reach the model or the metric are the eight rows above.
+
+**The fix.** Rows whose raw position fails the filter now fall back to the
+player's ADP/ECR-board position (`board_positions` in `bff/actuals.py`), so a
+player the fantasy market drafts is always scored. `check_board_coverage`
+asserts the invariant that would have caught this years of data ago: **every
+ADP-board player with nonzero raw weekly points must appear in actuals for
+that season.** Downstream feature tables (`context_features`,
+`schedule_trajectory_features`) rebuilt from the corrected actuals.
+
+**Tune-window validation (before the test look).** Model 0.4293 → **0.4392**;
+ADP baseline 0.4305 → 0.4336; ECR baseline 0.4298 → 0.4356. All three rise
+because the eval truth improved; the model rises most because it alone also
+sheds the training poison. The tuner moves shrink 0.3 → 0.5 (alpha stays at
+the 300 grid maximum): with the fabricated busts gone, the tune window
+supports more model. The anchor-only null is 0.4366, so the model is +0.0026
+over doing-nothing on its own window, where §2b had it *behind* the null.
+
+**Why the earlier bust-tail findings must be re-read.** The residual-cap
+sweep and the drop-injury-season experiments both "improved" the tune window
+mostly by de-weighting these fabricated rows: on corrected data, dropping
+points<50 training rows at fixed hyperparameters is worth +0.0001 (mixed
+across folds). The loss-vs-metric mismatch argument (§ methodology audit)
+survives as theory; its measurable payoff on this window was mostly the bug.
+
+**Test (look 14), the current headline in §3:** model 0.5250 / ECR 0.5190 /
+ADP 0.5045. vs ADP +0.0205, 6/8, p_one 0.0195 (two-sided 0.0391 — the ADP
+claim clears both tests for the first time since the clean-data rebuild). vs
+ECR +0.0060 at 5/8, p_one 0.117 — still not an edge. Note the direction: this
+is the first data correction that moved the measured edges UP. The 07-25
+corrections removed *flattering* inputs; this one removed fabricated
+*outcomes* that had been degrading both the training signal and the grading.
+
+### 2g. Look 15: the player-season feature audit (2026-07-27)
+
+A column-by-column audit of every feature parquet (per-season null/zero
+rates, means, ranges, adjacent-season discontinuities, verified against raw
+sources before anything was called a defect) found five input defects. All
+five are data corrections under the standing rule — none was gated on the
+metric — and they shipped as ONE bundle with one test look. Several suspects
+were checked and cleared as real (Guerendo's 0.0-point 2025 is a genuine
+special-teams-only season, play-by-play confirmed; Shaheed's 18 games in
+2025 is a midseason trade that dodged both byes; the `opp_fp_oe_pg` level
+shift at 2019 is real league scoring drift over deliberately fixed weights).
+
+**(1) The injury features were doubly broken.** `inj_weeks_listed_l2y`
+counted any non-null `report_status`. The NFL abolished the "Probable"
+designation after 2015 (~2,500 listings/season), and 2016+ files carry
+~3,000 practice-only rows/season with null status (pre-2016: ~200), so tune
+targets measured ~2x what test targets measured (pool mean 6.2 vs 3.1) —
+the tune window was graded on a different variable than the test window.
+Independently, players on injured reserve drop OFF the weekly report, so
+the most severe injuries produced the LOWEST counts: Christian McCaffrey
+missed 13 games in 2024 but had 3 listed weeks — less than a nagging
+hamstring. Fix: count only Questionable/Doubtful/Out weeks (all three
+features, recurrence included), unioned with reserve-list weeks (roster
+status RES/PUP; INA excluded as 2020+-only, PUP folded into RES pre-2016).
+The repaired series is level (3.5-5.2 tune, 4.3-6.1 test; the mild 2022+
+rise is the real league-wide increase in IR usage). CMC's target-2026 count:
+4 → 15.
+
+**(2) `ctx_team_qb.parquet` was stale — built Jul 23 from the broken 2012
+ADP board,** never rebuilt after the Jul 25 board repair. 18 of 32 teams had
+no expected QB in 2012, so the whole 2012 tune fold had `qb_change` /
+`qb_quality_delta` / `qb_rookie` constant at 0 and `qb_expected_missing`
+firing on 44% of rows; 2012 rows also train every test fold. Rebuilt: 7 of
+32 missing (in family with other seasons), all four features live.
+
+**(3) 17 pool rows (2011-2015, mostly BUF) had a null team** — FFC listed
+them FA at capture (C.J. Spiller 2013 at ADP **6**, Watkins 2014/2015, Fred
+Jackson x4), and `build_pool` had no fallback, so every team-keyed feature
+zero-filled. Fix: fall back to the week-1 roster team (the sanctioned
+season-t membership table). All 17 resolve; `team_missing` now 0 everywhere.
+
+**(4) One ECR duplicate:** 2019 "Mike Davis" the WR name-resolved onto RB
+Mike Davis's gsis_id (rank 409 vs the RB's 169; both outside the pool, so
+impact ~0). Fixed by id-level dedup keeping the best rank — NOT by
+position-gating the name fallback, which legitimately rescues cross-position
+listings (Cordarrelle Patterson WR/RB at ECR 48, Jordan Matthews WR/TE at
+30). `bff.ecr` now asserts (season, gsis_id) uniqueness. Verified surgical:
+exactly one row changed.
+
+**(5) The trajectory features truncated careers at source-2010:** tune-fold
+players had 2-7 visible seasons vs 8-15 in test, so `yrs_since_peak` pool
+mean ramped 0.33 (2012) → 1.5 (2025) purely from window truncation. Fix:
+career history now spans 1999-2025 via raw `player_stats_{1999..2009}`
+(actuals.parquet deliberately stays 2010+ — it feeds training targets and
+backtest truth, and pre-2010 seasons are never scored). The ramp is gone
+(1.13-1.5, flat); Steven Jackson 2013 now correctly peaks in 2006.
+
+**Tune-window validation (before the test look).** Model 0.4392 → **0.4354**
+(−0.0038, ~1.7 SE); ADP 0.4336 and ECR 0.4356 baselines unchanged (no board
+or outcome moved); anchor-only null 0.4366. The tuner returns to alpha=300,
+shrink=0.3 (was 0.5 after §2f). The small §2f tune edge over the anchor is
+gone again (−0.0012 vs the null): part of what looked like signal was fit to
+the corrupted injury variable and the truncated career window. LOFO on the
+repaired surface, for the record: dropping the inj trio would gain +0.0016,
+dropping trajectory would lose −0.0018 — both under one SE (~0.0022), so per
+the §2e lesson neither justifies a FEATURES change.
+
+**Test (look 15), the current headline in §3:** model 0.5245 / ECR 0.5190 /
+ADP 0.5045. vs ADP **+0.0201, 6/8, p_one = 0.0313 — but two-sided 0.0625,
+so the ADP claim no longer clears the two-sided test** (§2f briefly had
+0.0391). vs ECR +0.0056 at 5/8, p_one 0.117 — unchanged story. The
+correction moved the model −0.0005 on test while both baselines held still;
+per-season model numbers shuffled more (2018 0.4485 → 0.4376, 2023 0.5765 →
+0.5876) than the mean suggests.
+
+Total test looks: 15.
+
 ## 3. Headline (test seasons 2018-2025)
 
 | | mean spearman_vorp |
 |---|---|
-| **model** | **0.5237** |
-| ECR baseline | 0.5205 |
-| ADP baseline | 0.5040 |
+| **model** | **0.5245** |
+| ECR baseline | 0.5190 |
+| ADP baseline | 0.5045 |
 
 | Comparison | mean delta | seasons won | p (one-sided / two-sided) |
 |---|---|---|---|
-| vs **ECR** (primary benchmark) | +0.0032 | **4 of 8** | 0.227 / 0.453 |
-| vs **ADP** | **+0.0197** | 7 of 8 | 0.0469 / 0.0938 |
+| vs **ECR** (primary benchmark) | +0.0056 | **5 of 8** | 0.117 / 0.234 |
+| vs **ADP** | **+0.0201** | 6 of 8 | 0.0313 / 0.0625 |
 
-**The claim, as of the 2026-07-25 clean-data rebuild: the model beats ADP
-(+0.0197, one-sided p = 0.0469, which clears 0.05 by a hair and does not
-clear two-sided). It does NOT beat ECR. The ECR edge is +0.0032, positive in
-4 of 8 seasons — a coin flip — at p = 0.227.** ECR is the primary benchmark,
-so the correct summary of this model is: *it beats the drafting market and
-matches the expert consensus.* Per-season deltas:
+**The claim, as of the 2026-07-27 feature audit (§2g): the model beats ADP
+one-sided (+0.0201, p = 0.0313) but the two-sided test reads 0.0625 and no
+longer clears 0.05. It does NOT beat ECR: +0.0056 at 5 of 8, p = 0.117.**
+ECR is the primary benchmark, so the correct summary of this model is still:
+*it beats the drafting market and matches the expert consensus* — with the
+ADP claim now resting on the one-sided test alone. Per-season deltas:
 
 | season | model | vs ADP | vs ECR |
 |---|---|---|---|
-| 2018 | 0.4254 | −0.0387 | −0.0091 |
-| 2019 | 0.5104 | +0.0341 | +0.0146 |
-| 2020 | 0.5384 | +0.0198 | +0.0101 |
-| 2021 | 0.5227 | +0.0047 | −0.0030 |
-| 2022 | 0.5828 | +0.0184 | +0.0077 |
-| 2023 | 0.5930 | +0.0380 | +0.0202 |
-| 2024 | 0.4997 | +0.0330 | −0.0077 |
-| 2025 | 0.5168 | +0.0479 | −0.0075 |
+| 2018 | 0.4376 | −0.0250 | +0.0067 |
+| 2019 | 0.5259 | +0.0408 | +0.0259 |
+| 2020 | 0.5366 | +0.0242 | +0.0161 |
+| 2021 | 0.5202 | −0.0014 | −0.0026 |
+| 2022 | 0.5706 | +0.0025 | +0.0005 |
+| 2023 | 0.5876 | +0.0384 | +0.0118 |
+| 2024 | 0.4976 | +0.0320 | −0.0080 |
+| 2025 | 0.5200 | +0.0490 | −0.0058 |
 
-Note the ECR baseline itself nearly matches the model (0.5205 vs 0.5237) and
-comfortably beats ADP (0.5040). Expert consensus is a strong draft signal;
-almost all of the model's apparent skill is inherited from its anchor.
+Note the ECR baseline itself nearly matches the model (0.5190 vs 0.5245) and
+comfortably beats ADP (0.5045). Expert consensus is a strong draft signal;
+most of the model's apparent skill is inherited from its anchor (§3a).
 
-**What changed on 2026-07-25, and why the ECR claim got weaker.** Three data
-corrections landed the same day (§2a, §2b). The previous headline read ECR
-+0.0053 at 5 of 8, then +0.0050 at 6 of 8; it now reads **+0.0032 at 4 of 8**.
-The ADP claim went +0.0205 (p = 0.0195) → +0.0201 (0.0352) → +0.0197 (0.0469),
-i.e. it has degraded at every step and now sits on the 0.05 line. None of
-these moves came from changing the model. They came from removing bad inputs.
-That direction of travel is the honest signal: each time the data got cleaner,
-the measured edge got smaller. Read §2b before quoting any earlier version of
-these numbers.
+**How the headline has moved with the data corrections.** The 2026-07-25
+corrections (§2a, §2b) removed flattering inputs and shrank every edge: ECR
++0.0053 → +0.0050 → +0.0032, ADP +0.0205 (p = 0.0195) → +0.0201 (0.0352) →
++0.0197 (0.0469). The 2026-07-27 actuals repair (§2f) removed fabricated
+*outcomes* and partially reversed that (ECR +0.0060, ADP +0.0205 at 0.0195 /
+0.0391 two-sided). The same-day feature audit (§2g) took a hair back: ECR
++0.0056, ADP +0.0201 at 0.0313 / 0.0625. None of these moves came from
+changing the model; all came from fixing inputs. Quote only the current row;
+the older figures were measured against inputs now known to be wrong. And
+after fifteen test looks, none of these p-values should be read as a clean
+pre-registered result.
 
 ## 3a. Anchor quality: ECR vs ADP, and how much of the win is inherited
 
@@ -382,43 +548,45 @@ became measurable after §2a/§2b.
 
 | | ADP | ECR | ECR − ADP | ECR wins |
 |---|---|---|---|---|
-| tune 2013-2017 | 0.4305 | 0.4298 | **−0.0008** | 3 of 5 |
-| test 2018-2025 | 0.5040 | 0.5205 | **+0.0165** | 7 of 8 |
+| tune 2013-2017 | 0.4336 | 0.4356 | **+0.0020** | 3 of 5 |
+| test 2018-2025 | 0.5045 | 0.5190 | **+0.0145** | 7 of 8 |
 
-Per season on test: −0.0296 (2018), +0.0194, +0.0097, +0.0076, +0.0108,
-+0.0178, +0.0407, **+0.0554** (2025). The margin widens materially over time.
-Per season on tune: −0.0151 (2013), +0.0032, −0.0052, +0.0005, +0.0129.
+Per season on test: −0.0317 (2018), +0.0149, +0.0080, +0.0012, +0.0020,
++0.0266, +0.0400, **+0.0548** (2025). The margin widens materially over time.
+Per season on tune: +0.0010, +0.0017, −0.0064 (2015), −0.0014, +0.0152.
 
-Two readings, one soft and one hard.
+(Numbers re-measured after the §2f actuals repair. One earlier soft reading
+did not survive it: the pre-repair table had 2013 as ECR's largest ADP loss
+anywhere, −0.0151, and blamed the mid-August 2013 snapshot's staleness. On
+corrected ground truth 2013 reads **+0.0010** — the "stale board" deficit was
+mostly Trent Richardson's and Marcel Reece's fabricated zero-point seasons.
+The one large ADP win left standing is test 2018.)
 
-**Soft:** 2013 is the largest single ADP win anywhere in either table, and
-2013 is also the one season whose ECR snapshot is a mid-August capture (the
-last Wayback archived that preseason) rather than early September. Staleness
-is a plausible cause, so that row is weaker evidence than the others. Not
-provable at n=1.
+The hard reading, and it belongs in any honest summary of this project: the
+model beats ADP on test by +0.0201, but ECR *alone* beats ADP by +0.0145 over
+the same seasons. The ridge contributes the remaining **+0.0056**. Roughly
+seven tenths of the margin over the market is the expert list, not the model.
 
-**Hard, and it belongs in any honest summary of this project:** the model
-beats ADP on test by +0.0197, but ECR *alone* beats ADP by +0.0165 over the
-same seasons. The ridge contributes the remaining **+0.0032**. About five
-sixths of the margin over the market is the expert list, not the model.
-
-This also dissolves the §2b tension. The model shows no tune-window edge
-(0.4293 vs ADP 0.4305) yet +0.0197 on test, which looks contradictory until
-you notice the anchor itself is worth −0.0008 in the tune years and +0.0165 in
-the test years. A model that adds a small constant on top of its anchor will
-look worthless in the first window and useful in the second, without its own
-contribution changing much at all — and indeed the model's own contribution is
-+0.0005 over ECR on tune and +0.0032 on test. The model is roughly as good, or
-as marginal, in both windows; what moved is the thing it stands on.
+After the §2g feature audit the model's own contribution over its anchor is
+**−0.0002 on tune and +0.0056 on test** (it was +0.0036 / +0.0060 after §2f;
+part of the brief tune edge was fit to the corrupted injury variable and the
+truncated career window). What differs between windows is mostly the anchor's
+own value (+0.0020 in the tune years, +0.0145 in the test years), which the
+model inherits wherever it stands — plus a test-window ridge contribution
+that the tune window does not corroborate.
 
 ## 4. Features (53)
 
 Score(t, player) = market-implied expectation of log1p(season points) from
 the ECR anchor (per-position quadratic in log rank, vertex-clamped) +
-shrink × ridge residual. Tuned: alpha = 300, shrink = 0.3. Alpha now sits ON
-the grid maximum, which is a warning sign rather than a result: the tuner is
-regularizing as hard as it is allowed to, consistent with the smaller
-post-§2b training set. The grid stays frozen regardless. Feature groups:
+shrink × ridge residual. Tuned: alpha = 300, shrink = 0.3 (§2f briefly moved
+shrink to 0.5; the §2g feature audit moved it back — with the corrupted
+injury variable and truncated career window repaired, the tune window again
+supports less model). Alpha still sits ON
+the grid maximum, which remains a warning sign rather than a result: the
+tuner is regularizing as hard as it is allowed to, consistent with the
+smaller post-§2b training set. The grid stays frozen regardless. Feature
+groups:
 
 - **Base (11)**: age curve (centered, squared, RB/QB interactions),
   ppg_mismatch (prior production vs market-implied, always the LAST matrix
@@ -443,16 +611,19 @@ post-§2b training set. The grid stays frozen regardless. Feature groups:
 - **Expansion (11, added 2026-07-23)**: selected block-wise on the tune
   window (joint 0.4513 vs 0.4456 baseline, +0.0057):
   - *trend*: ppg_delta (t-1 minus t-2 ppg), career_missed_rate
-  - *injury*: weeks on injury report (2y), soft-tissue mentions (2y),
-    same-injury recurrence — from nflverse injury reports
+  - *injury*: weeks injured (2y: Questionable/Doubtful/Out listings unioned
+    with reserve-list RES/PUP weeks — see §2g for why both rules are
+    load-bearing), soft-tissue mentions (2y), same-injury recurrence — from
+    nflverse injury reports + weekly rosters
   - *contracts*: apy_cap_pct (largest new coefficient, +0.04),
     contract_year, rookie_deal_yr — from nflverse/OTC contracts
   - *draft capital*: draft_r1, draft_r23 round buckets, rb_early_rookie
 - **Trajectory (2, added 2026-07-24)**: `yrs_since_peak` (seasons since the
   player's career-best ppg — a decline clock) and `last_was_career_best`
   (broke out / peaked last season — regression-vs-continuation flag), from
-  `bff/schedule_trajectory_features.py` (zero-fetch round 2). Kept on the
-  tune gate at +0.0059 (the strongest new block since the original
+  `bff/schedule_trajectory_features.py`. Career history spans source seasons
+  1999-2025 as of §2g (was 2010+, which truncated tune-fold careers). Kept
+  on the tune gate at +0.0059 (the strongest new block since the original
   expansion). Shipped as a LEAN 2 of 4: the other two candidates (`yrs_exp`
   r=0.80 vs age_c, `career_best_ppg` r=0.79 vs has_prior) were dead weight —
   dropping both raised the tune mean 0.4605 → 0.4617 (both measured on the
@@ -499,7 +670,9 @@ durability history, team financial commitment, draft-round structure.
 
 ## 5. Data
 
-nflverse (weekly stats, rosters incl. week-1 snapshots, draft picks,
+nflverse (weekly stats 1999-2025 — 2010+ feeds actuals/training, 1999-2009
+career-history only per §2g; rosters incl. week-1 snapshots and the weekly
+reserve-list statuses feeding the injury features; draft picks,
 schedules/coaches, play-by-play, snap counts, injuries, contracts), ADP
 exports (FantasyFootballCalculator API, except 2012 and 2025 which come from
 Wayback captures — see §2b for why 2012 must not use the API),
@@ -513,21 +686,19 @@ parquets committed. Fetch commands live in the module docstrings.
 
 185 players, `reports/rankings_2026.csv`; steals (ADP-rank minus our-rank ≥
 24, ADP ≤ 120) with plain-language reasons in `reports/steals_2026.csv`
-(**3** after the 2026-07-25 clean-data rebuild; 6 mid-day, 4 before that, and
-the finish-rank curve manufactured 15 before any of it — the steal count has
-fallen at every data correction, which is what a board converging toward its
-anchor looks like). Sanity gates (asserted every run): ≤ 2 QBs in top 15,
-top-3 all RB/WR, only QB/RB/WR/TE. Top 5: Nacua, Smith-Njigba, Jefferson,
-then Bijan Robinson and Gibbs; Taylor, Chase, Lamb and McCaffrey fill 6-9.
-The WR-heavy top is the drafted-slot curve expressing itself. QB8 streaming
-replacement (§1) keeps the first QB at **#27** (Josh Allen), with none in the
-top 15. The conservative TE8 left the elite TEs roughly put (McBride TE1 #21,
-Bowers TE2 #29), as intended. Justin Herbert sits #73 (ADP 82).
-
-The alpha = 300 tuning point (§4) is visible here: the board hugs ECR more
-tightly than previous versions did, which is the honest consequence of a
-model that no longer demonstrates an edge over its anchor.
-Ja'Marr Chase sits #4 (ECR 1 / ADP 4), consistent with his expert rank.
+(**4** after the §2g feature audit — Lamar Jackson, Maye, Hurts, Caleb
+Williams, all QBs; the §2f board had Maye/Hurts/Caleb/Herbert; it was 3
+after the 2026-07-25 rebuild, and the finish-rank curve manufactured 15
+before any of it). Sanity gates (asserted every run): ≤ 2 QBs in top
+15, top-3 all RB/WR, only QB/RB/WR/TE. Top 5: Jefferson, Nacua,
+Smith-Njigba, Chase, CeeDee Lamb; Bijan Robinson, Gibbs, Taylor and
+McCaffrey fill 6-9 (CMC holds #9 despite his repaired injury count of 15
+listed weeks — the coefficient is small). The WR-heavy top is the
+drafted-slot curve expressing itself. QB8
+streaming replacement (§1) keeps the first QB at **#27** (Josh Allen), with
+none in the top 15. Travis Hunter sits #148 (ADP 163) — before §2f the board
+scored him as a rookie with no 2025 season. Ja'Marr Chase sits #4
+(ECR 1 / ADP 4), consistent with his expert rank.
 
 Live-2026 caveats: contracts data lacks the 2026 draft class (14 pool
 players zero-filled); Vegas/snap 2026 inputs are null (both blocks rejected

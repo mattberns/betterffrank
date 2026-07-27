@@ -10,21 +10,32 @@ selection):
 
 | Metric (mean VORP Spearman, walk-forward) | Model | Baseline | Verdict |
 | --- | --- | --- | --- |
-| vs **ECR** (2018–2025) | 0.5237 | 0.5205 | **matches ECR**, 4 of 8 seasons, p = 0.227 one-sided (no demonstrated edge) |
-| vs **ADP** (2018–2025) | **0.5237** | 0.5040 | **beats ADP**, 7 of 8 seasons, p = 0.0469 one-sided (0.094 two-sided) |
+| vs **ECR** (2018–2025) | 0.5245 | 0.5190 | **matches ECR**, 5 of 8 seasons, p = 0.117 one-sided (no demonstrated edge) |
+| vs **ADP** (2018–2025) | **0.5245** | 0.5045 | **beats ADP**, 6 of 8 seasons, p = 0.0313 one-sided (two-sided 0.0625 — does not clear) |
 
 The defensible claim is deliberately narrow: **the model beats the drafting
 market and matches the expert consensus.** ECR is the primary benchmark, and
-against it the model wins 4 of 8 seasons, which is a coin flip. The model is
-built *on top of* the experts' list, so it wins only where it corrects them
-well, and on this evidence it does not reliably do so.
+against it the model wins 5 of 8 seasons at p = 0.117 — suggestive, not
+demonstrated. The model is built *on top of* the experts' list, so it wins
+only where it corrects them well, and on this evidence it does not reliably
+do so.
 
 Earlier versions of this README claimed an edge over ECR. That claim did not
 survive contact with clean data: on 2026-07-25 three input defects were fixed
 (a 2011 training season with no expert board, a half-missing 2012 ADP board,
 and three tuning folds that ranked off ADP instead of ECR), and the measured
-ECR edge shrank at every step. Full methodology, per-season tables, and every
-caveat: [`reports/REPORT.md`](reports/REPORT.md).
+ECR edge shrank at every step. A fourth defect fixed on 2026-07-27 — the
+outcomes table had silently recorded real seasons as 0.0 points for four
+drafted players whose nflverse position field is null/FB/CB — moved the
+numbers back up some, because it had been corrupting the *grading* as well as
+the training. A same-day column-by-column feature audit then repaired five
+more input defects (an injury variable that measured ~2x more in the tuning
+years than the test years — the NFL abolished the "Probable" designation
+after 2015 — and was blind to injured reserve; a stale expected-QB table; 17
+free-agent-listed pool players with every team feature zero-filled; one
+duplicate ECR row; career histories truncated at 2010), which took a hair
+back off both edges. Full methodology, per-season tables, and every caveat:
+[`reports/REPORT.md`](reports/REPORT.md).
 
 ## How it works, in plain English
 
@@ -66,12 +77,13 @@ players' *actual* end-of-season value over replacement. Best correlation wins
 the year. No board sees the season before predicting it, and the model's
 knobs were frozen on 2013–2017 before any test season was scored.
 
-Over eight rounds the challenger beats ADP 7 of 8 (average 0.5237 vs 0.5040;
-p = 0.0469 one-sided, which clears the usual 0.05 bar by a hair and does not
-clear the stricter two-sided version at 0.094). Against ECR it wins 4 of 8
-(0.5237 vs 0.5205); that is a tie, and it should be described as a tie. Note
-ECR itself beats ADP comfortably, so most of what looks like the model's skill
-is inherited from the expert list it starts from.
+Over eight rounds the challenger beats ADP 6 of 8 (average 0.5245 vs 0.5045;
+p = 0.0313 one-sided, 0.0625 two-sided — the win rests on the one-sided
+test). Against ECR it wins
+5 of 8 (0.5245 vs 0.5190, p = 0.117); that is a lean, and it should be
+described as a tie until it isn't. Note ECR itself beats ADP comfortably, so
+most of what looks like the model's skill is inherited from the expert list
+it starts from.
 
 ## Are the experts actually better than the market?
 
@@ -81,53 +93,54 @@ realized VORP, is the expert consensus a better preseason board than ADP? The
 answer depends sharply on the era, and it was invisible until the 2026-07-25
 data cleanup made both windows measurable.
 
-**Tuning years — a dead heat.**
+**Tuning years — close to a dead heat.**
 
 | Season | ADP | ECR | ECR − ADP | Better |
 | --- | --- | --- | --- | --- |
-| 2013 | 0.5563 | 0.5412 | −0.0151 | ADP |
-| 2014 | 0.4134 | 0.4165 | +0.0031 | ECR |
-| 2015 | 0.3958 | 0.3906 | −0.0052 | ADP |
-| 2016 | 0.3448 | 0.3453 | +0.0005 | ECR |
-| 2017 | 0.4423 | 0.4552 | +0.0129 | ECR |
-| **mean** | **0.4305** | **0.4298** | **−0.0008** | ECR 3/5 |
+| 2013 | 0.5579 | 0.5589 | +0.0010 | ECR |
+| 2014 | 0.4213 | 0.4230 | +0.0017 | ECR |
+| 2015 | 0.3953 | 0.3889 | −0.0064 | ADP |
+| 2016 | 0.3530 | 0.3516 | −0.0014 | ADP |
+| 2017 | 0.4405 | 0.4557 | +0.0152 | ECR |
+| **mean** | **0.4336** | **0.4356** | **+0.0020** | ECR 3/5 |
 
-The mean favours ADP by 0.0008, which is noise; ECR still wins the majority of
-seasons. One caveat on 2013, the largest single ADP win in the table: its ECR
-snapshot is the Aug 18 capture, the last one Wayback archived that preseason
-and roughly two weeks staler than the early-September boards every other
-season uses. A staler board is a plausible reason for it to underperform, so
-that row is weaker evidence than the rest.
+The mean favours ECR by 0.0020, which is noise. (An earlier version of this
+table had 2013 as ECR's largest loss anywhere, −0.0151, and blamed the
+mid-August staleness of that season's snapshot. The 2026-07-27 outcomes
+repair erased it: the deficit was mostly two players whose real seasons had
+been recorded as zero. The staleness caveat is retired.)
 
 **Test years — the experts pull clearly ahead, and the gap widens.**
 
 | Season | ADP | ECR | ECR − ADP | Better |
 | --- | --- | --- | --- | --- |
-| 2018 | 0.4641 | 0.4346 | −0.0296 | ADP |
-| 2019 | 0.4764 | 0.4958 | +0.0194 | ECR |
-| 2020 | 0.5186 | 0.5283 | +0.0097 | ECR |
-| 2021 | 0.5180 | 0.5257 | +0.0076 | ECR |
-| 2022 | 0.5644 | 0.5751 | +0.0108 | ECR |
-| 2023 | 0.5550 | 0.5728 | +0.0178 | ECR |
-| 2024 | 0.4667 | 0.5074 | +0.0407 | ECR |
-| 2025 | 0.4689 | 0.5243 | +0.0554 | ECR |
-| **mean** | **0.5040** | **0.5205** | **+0.0165** | ECR 7/8 |
+| 2018 | 0.4626 | 0.4309 | −0.0317 | ADP |
+| 2019 | 0.4851 | 0.5000 | +0.0149 | ECR |
+| 2020 | 0.5125 | 0.5205 | +0.0080 | ECR |
+| 2021 | 0.5216 | 0.5228 | +0.0012 | ECR |
+| 2022 | 0.5681 | 0.5701 | +0.0020 | ECR |
+| 2023 | 0.5492 | 0.5758 | +0.0266 | ECR |
+| 2024 | 0.4656 | 0.5056 | +0.0400 | ECR |
+| 2025 | 0.4710 | 0.5258 | +0.0548 | ECR |
+| **mean** | **0.5045** | **0.5190** | **+0.0145** | ECR 7/8 |
 
-ECR wins 7 of 8 by a mean of +0.0165, and the margin grows over time (+0.008
+ECR wins 7 of 8 by a mean of +0.0145, and the margin grows over time (+0.001
 in 2021 to +0.055 in 2025). Whether that is FantasyPros improving, the ADP
 sample thinning, or both, this data cannot settle.
 
 **What it implies about the model, and it is not flattering.** On the test set
-the model beats ADP by +0.0197. ECR on its own, with no model attached,
-already beats ADP by **+0.0165** over the same seasons. The ridge contributes
-the remaining **+0.0032**. So roughly five sixths of the margin over the market
-is the expert list this project starts from, not the corrections it applies.
+the model beats ADP by +0.0201. ECR on its own, with no model attached,
+already beats ADP by **+0.0145** over the same seasons. The ridge contributes
+the remaining **+0.0056**. So roughly seven tenths of the margin over the
+market is the expert list this project starts from, not the corrections it
+applies.
 
-It also resolves a puzzle in the numbers above. The model shows no edge on its
-own tuning window (0.4293 vs ADP 0.4305) yet +0.0197 on test. That is not a
-contradiction: in the tuning years the anchor is worth nothing over ADP, so a
-model built on that anchor has nothing inherited to win with. In the test years
-the anchor is worth +0.0165 before the model does anything.
+And the model's own contribution is not corroborated by its validation
+window: −0.0002 over ECR on the tuning years, +0.0056 on test. What differs
+between windows is partly the anchor's own value (+0.0020 in the tuning
+years, +0.0145 in the test years), which the model inherits wherever it
+stands — and partly a test-window ridge edge the tuning window simply does
+not show.
 
 ## Why draft value, not raw points
 
@@ -332,30 +345,32 @@ any raw file.
 ## Caveats
 
 See the integrity ledger and caveats in [`reports/REPORT.md`](reports/REPORT.md).
-In short: the ADP win (+0.0197 over 2018–2025) holds one-sided at p = 0.0469
-and does **not** clear two-sided (0.094); there is **no demonstrated ECR
-edge** (+0.0032, 4 of 8 seasons, p = 0.227); seasons 2018–2020 briefly served
-as tuning folds during the 2026-07-23 protocol work before moving to the test
-set (all selections were re-derived from scratch and reproduced exactly); and
-the 2012–2020 ECR comes from a different capture pipeline (Wayback cheatsheet
-HTML) than 2021–2025 (DynastyProcess archive), with 2012–2013 predating
-FantasyPros' inline player ids so those seasons resolve by name.
+In short: the ADP win (+0.0201 over 2018–2025) holds at p = 0.0313 one-sided
+but not two-sided (0.0625); there is **no demonstrated ECR edge** (+0.0056,
+5 of 8 seasons, p = 0.117); seasons 2018–2020 briefly served as tuning folds during
+the 2026-07-23 protocol work before moving to the test set (all selections
+were re-derived from scratch and reproduced exactly); and the 2012–2020 ECR
+comes from a different capture pipeline (Wayback cheatsheet HTML) than
+2021–2025 (DynastyProcess archive), with 2012–2013 predating FantasyPros'
+inline player ids so those seasons resolve by name.
 
-Three more that matter more than the above, all from the 2026-07-25 cleanup:
+Three more that matter more than the above:
 
-**The model has no edge on its own validation window.** On 2013–2017 it scores
-0.4293 against ADP 0.4305 and ECR 0.4298. It is very slightly behind both. The
-+0.0197 it shows against ADP on the 2018–2025 test set is therefore in tension
-with its own tuning evidence, and that tension is unresolved.
+**There is no tune-window edge.** On 2013–2017 the model scores 0.4354
+against ADP 0.4336, ECR 0.4356 and an anchor-only null of 0.4366. The
+outcomes repair briefly put it ahead of both baselines (0.4392); the
+same-day feature audit showed part of that was fit to a corrupted injury
+variable and truncated career histories. The test-window ridge contribution
+(+0.0056) is not corroborated by the model's own validation window.
 
-**The test set has been consulted twelve times.** Each look was individually
-defensible, but twelve is enough that a p-value of 0.0469 should not be read
-as a clean pre-registered result.
+**The test set has been consulted fifteen times.** Each look was
+individually defensible, but fifteen is enough that a p-value of 0.0313
+should not be read as a clean pre-registered result.
 
 **Every rejected-feature verdict in `reports/REPORT.md` §4 is stale.** All of
 them were decided on the old six-fold, partly-ADP-anchored window with a
-truncated 2012 board. Re-deriving them costs no test look and is the top open
-item.
+truncated 2012 board — and graded against the pre-2026-07-27 corrupted
+outcomes. Re-deriving them costs no test look and is the top open item.
 
 ## License
 

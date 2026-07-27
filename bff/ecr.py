@@ -187,6 +187,30 @@ def build() -> pl.DataFrame:
         pl.coalesce("gsis_fp", "gsis_era", "gsis_np", "gsis_n").alias("gsis_id")
     ).drop("gsis_fp", "gsis_era", "gsis_np", "gsis_n")
 
+    # Two source rows may resolve to one gsis_id: the name-only fallback maps
+    # a same-named DIFFERENT player onto an id the board already carries
+    # (2019 "Mike Davis" WR, rank 409, landed on RB Mike Davis's gsis, rank
+    # 169). Do NOT position-gate the fallback instead -- it legitimately
+    # rescues cross-position listings (Cordarrelle Patterson WR/RB ECR 48,
+    # Jordan Matthews WR/TE ECR 30). Keep the id on the best (lowest) rank
+    # and null the rest; the id is the key, the name is cosmetic (same rule
+    # as bff.props.dedupe_by_player). Fixed 2026-07-27.
+    ecr = ecr.with_columns(
+        pl.when(
+            pl.col("gsis_id").is_not_null()
+            & (pl.col("ecr_rank")
+               > pl.col("ecr_rank").min().over("season", "gsis_id"))
+        )
+        .then(None)
+        .otherwise(pl.col("gsis_id"))
+        .alias("gsis_id")
+    )
+    dups = (
+        ecr.filter(pl.col("gsis_id").is_not_null())
+        .group_by("season", "gsis_id").len().filter(pl.col("len") > 1)
+    )
+    assert dups.height == 0, f"duplicate (season, gsis_id) in ecr:\n{dups}"
+
     ecr.write_parquet(OUT)
 
     for yr in SEASONS:
