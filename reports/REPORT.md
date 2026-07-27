@@ -133,12 +133,42 @@ player-season feature audit in §2g: five more input defects (regime-shifted
 and IR-blind injury features, a stale expected-QB table, unresolvable pool
 teams, one ECR duplicate, truncated career histories), bundled into ONE
 look, each verified against raw sources and none gated on the metric.
-Total: 4 looks on 2026-07-23, six on
-2026-07-24, three on 2026-07-25, two on 2026-07-27 (15); future looks should
-stay rare.
+Look 16 (2026-07-27, late): the operator-directed
+challenger test. A global backward-elimination search over the full
+76-column pool (see §4) found a k=32 subset scoring 0.4511 on the tune
+window — +0.0145 over the null and +0.0155 over ECR, the best in-sample
+configuration ever measured — while the nested version of the same search
+predicted it would NOT transfer (−0.0144 held-out). The user directed one
+test look to settle it. Result: test mean 0.5195 — vs ECR **+0.0005**
+(4/8, p_one 0.45, a dead tie), vs ADP +0.0150 (6/8, p 0.09, weaker than the
+shipped model's +0.0201), vs the shipped 53 **−0.0051** (4/8). The +0.0155
+tune edge over ECR evaporated on contact with the test set, exactly as the
+nested evaluation predicted; selection bias measured on REAL test data is
+~0.015, the third such measurement (look 12's challenger: tune +0.0192 →
+test −0.0013; look 13: tune +0.0068 → test −0.0037). The k=32 set is
+rejected; the shipped 53 remains the best tested configuration. Look 17
+(2026-07-27, late, also user-directed): the kitchen-sink complement — ALL 76
+pool columns, tuned on the frozen grid (alpha 300, shrink 0.3; tune 0.4329,
+below both the shipped 53 and the null). Test: mean 0.5245, vs ECR +0.0055
+at 5/8 (p_one 0.20), vs the shipped 53 **−0.0000** (5/8). At this
+regularization strength the 23 extra columns change nothing: feature-set
+choice between "curated 53" and "everything" is invisible on test, which
+brackets look 16 from the other side — neither searching hard nor not
+searching at all beats the shipped set, because the ridge stage itself is
+worth ≈ +0.005 however it is fed. Look 18 (2026-07-27, late, user-directed):
+looks 17's pool plus the seven live-unservable betting-market columns (five
+player-prop markets + two Vegas win-total columns; they exist for 2012-2025
+so the measurement is legal, but this model could never ship a 2026 board).
+83 features, tune 0.4345, test mean 0.5211 — vs ECR +0.0022 at 4/8 (p_one
+0.38), vs the shipped 53 −0.0034. The market-price columns DILUTE: worse
+than the same model without them, consistent with their tune-window verdict
+(inert, t ≈ 0.4). Total: 4
+looks on 2026-07-23, six on
+2026-07-24, three on 2026-07-25, five on 2026-07-27 (18); future looks
+should stay rare.
 
 Two residual caveats, both real. An operator who has seen 2018-2020 results
-cannot fully unsee them. And **fifteen looks is a lot.** The test set has now
+cannot fully unsee them. And **eighteen looks is a lot.** The test set has now
 been consulted often enough that "never touched for any decision" is true of
 each individual look and increasingly strained as a description of the whole
 process; the ADP p-value of 0.0313 should be read with that in mind, not as a
@@ -536,7 +566,7 @@ corrections (§2a, §2b) removed flattering inputs and shrank every edge: ECR
 +0.0056, ADP +0.0201 at 0.0313 / 0.0625. None of these moves came from
 changing the model; all came from fixing inputs. Quote only the current row;
 the older figures were measured against inputs now known to be wrong. And
-after fifteen test looks, none of these p-values should be read as a clean
+after eighteen test looks, none of these p-values should be read as a clean
 pre-registered result.
 
 ## 3a. Anchor quality: ECR vs ADP, and how much of the win is inherited
@@ -635,18 +665,89 @@ groups:
 **Rejected candidate blocks** (kept building as inert zero-filled columns;
 re-test only via `bff.select_features`).
 
-**Every tune delta in this table is HISTORICAL and none of it is current.**
-All of it was measured on the pre-2026-07-25 window: six folds starting at
-2012, a half-ADP-anchored tuning surface (§2a), a truncated 2012 ADP board and
-a 2011 training season (§2b), against a 0.4617 baseline that is now 0.4293 on
-a different fold set. Two things invalidate the numbers rather than merely
-shifting them: a block judged against an ADP anchor in folds 2012-2014 was
-being asked "do you beat the market?" when the test set asks "do you beat the
-experts?", and the tuner's operating point has moved from alpha 100 to the
-grid maximum. Re-deriving every gate below on the current window costs no test
-look and is now the **highest-value open item in the repo** — more so than
-before, because §2b leaves the model with no measurable tune-window edge, and
-a rejected block might not deserve its rejection.
+**Every tune delta in the historical table below is stale** — measured on the
+pre-2026-07-25 window (six folds from 2012, half-ADP-anchored surface §2a,
+broken 2012 board and 2011 training season §2b) and against the corrupted
+actuals (§2f). It is kept as the record of what was decided when.
+
+**Re-derived 2026-07-27 on the corrected surface** (5 folds 2013-2017,
+baseline 53-feature tune 0.4354, anchor-only null 0.4366; zero test looks).
+This closed the open item flagged in earlier versions of this section.
+Headline: every block's delta moved UP — the old harm was largely an artifact
+of the bad inputs — but **no block passes an honest gate, and every rejection
+stands**. Two methodology upgrades landed with the re-derivation:
+
+1. The sweep delta (tuner re-selects hyperparams per candidate) is inflated
+   by hyperparameter re-selection; the honest gate quantity is the PAIRED
+   per-fold delta at the baseline's fixed (alpha=300, shrink=0.3), which
+   `bff.select_features` now prints (`paired@fixed` line: mean, paired SE,
+   t, fold sign count). The old "~0.0022 SE" yardstick was the unpaired SE
+   of the tune-mean *level* and is the wrong scale for a nested comparison.
+   Demonstration: landing_spot reads +0.0034 in the sweep and **−0.0007**
+   paired — its entire "gain" was the tuner moving alpha to 100.
+2. Tune-window significance still gets the era-shift haircut before a test
+   look: inj_pos below is tune-significant at t = +4.3 with 5/5 folds
+   positive and ALREADY FAILED its test look (#13, −0.0037). The tune→test
+   gap is nonstationarity, not sampling noise; no within-tune statistic
+   protects against it, and the empirical record is that gains under ~+0.01
+   transfer at ~zero or negative.
+
+| block | stale delta | sweep delta (corrected) | paired@fixed(300, 0.3) | verdict |
+|---|---|---|---|---|
+| inj_pos | +0.0003 (joint look-13 +0.0068) | +0.0061 | +0.0061, SE 0.0014, t +4.3, 5/5 | stays rejected: test-disconfirmed at look 13 despite the strongest tune evidence any block has ever shown |
+| redzone | −0.0049 | +0.0035 | +0.0035, SE 0.0026, t +1.4, 4/5 | rejected: 1.4 paired SEs, driven by fold 2014; rz_ez_target_share collinear (r 0.90) |
+| landing_spot | hurt the joint | +0.0034 | −0.0007, t −1.2 | rejected: pure hyperparameter mirage |
+| props / dense / lean | −0.0052 / −0.0024 / −0.0022 | +0.0022 / +0.0007 / +0.0012 | +0.0013, t +0.4 (one fold, 2017) | rejected, verdict softened from "harmful" to "inert" — the old negative deltas were measured against corrupted actuals |
+| qb_rush | −0.0026 | +0.0016 | not computed (sub-noise) | rejected |
+| vegas | −0.0027 | +0.0013 | not computed | rejected |
+| sos | −0.0068 | +0.0009 | not computed | rejected; no longer "actively harmful", just noise |
+| snaps | −0.0020 | +0.0006 | not computed | rejected |
+| coach_scheme | +0.0008 | +0.0004 | not computed | rejected |
+| adp_gap | −0.0037 | +0.0002 | not computed | rejected |
+| trajectory leftovers (yrs_exp, career_best_ppg) | dilutive | +0.0005 | not computed | stay dropped |
+| ol_proxy | −0.0003 | −0.0003 | not computed | rejected |
+
+Joint combinations are SUB-additive: inj_pos+redzone +0.0057 < inj_pos
+alone; the everything-combo (inj_pos+redzone+landing_spot+props, 13 cols)
+reaches +0.0066, i.e. inj_pos plus noise. The candidate pool is heavily
+redundant with the shipped 53. (GBT/RF model-class verdicts were NOT re-run;
+those numbers remain stale-surface.)
+
+**Stepwise re-run, same date** (`reports/stepwise.json` regenerated; the
+previous artifact was computed against the pre-§2f corrupted actuals). The
+majority set collapsed from 3 columns to 2 — career_missed_rate (4/5 runs) +
+inj_recurrence_qb (3/5) — and its full-window eval reads 0.4516, **+0.0150
+over null**, which LOOKS like the first honest clear of the gate but is
+selection-contaminated. Stripping the contamination in layers shows how much
+is mirage: LOFO-honest hyperparams with full-info feature votes +0.0142
+(t 2.1, 3/5 folds); fully nested — each run's own greedy path scored at its
+own stopping point on its own held-out fold — **−0.0087** (t −0.6, fold 2016
+−0.062); nested k=1 +0.0054 (t 0.6, 2/5; the first pick is
+career_missed_rate in 4/5 runs, a column ALREADY in the shipped 53). The
+held-out curve now bumps at k=1 (0.4420 vs null 0.4366, the stale run
+degraded monotonically) before degrading from k=2. Conclusion unchanged, now
+on clean data: **no feature set beats anchor-only out of honest selection**,
+and the shipped 53's tune mean (0.4354) remains below the null (0.4366).
+
+**Global subset search + test look 16, same date.** To answer "is the 53
+optimal" properly rather than by block gates: backward greedy elimination
+from the FULL 76-column pool with a frozen-grid re-tune at every path size,
+a 240-subset random calibration, and the whole search repeated 5x
+leave-one-fold-out. In-sample the search demolishes the 53: best point
+k=32 at 0.4511 (+0.0145 over null, +0.0157 over the shipped 53; 20 shipped
++ 12 rejected-candidate columns). Random calibration: random subsets of any
+size average ~0.433, max-of-40 ~0.442 — the greedy mechanism manufactures
+~+0.01 over even the best random draw. Nested, the same search+pick scores
+**−0.0144 vs null (t −2.2, 1/5 folds)** — searching harder makes the honest
+result strictly worse (from-empty greedy −0.0087, full backward search
+−0.0144, doing nothing 0). The k=32 set was then scored ONCE on test at the
+user's direction (look 16, ledger §2): its +0.0155 tune-window edge over ECR
+came out **+0.0005** (tie), and it trails the shipped 53 by −0.0051. The
+tune window cannot identify a feature set better than the shipped one; the
+in-sample/nested/test triangle (+0.0145 / −0.0144 / +0.0005-vs-anchor) is
+the repo's cleanest measurement of pure selection bias. Search artifacts:
+the session scratchpad's `subset_search.{py,json}` (ephemeral; the numbers
+are recorded here and in the ledger).
 
 | block | tune delta | why it failed |
 |---|---|---|

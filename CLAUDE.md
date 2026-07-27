@@ -31,9 +31,26 @@ artifacts). Integrity ledger: 2018-2020 briefly served as tune folds
 during the 2026-07-23 protocol work before moving to test (all selections
 re-derived from scratch on 2012-2017; they reproduced exactly). Test-set
 looks: FOUR on 2026-07-23, SIX on 2026-07-24, THREE on 2026-07-25, TWO on
-2026-07-27 (FIFTEEN total) — count future looks, keep them rare. **Fifteen
+2026-07-27, plus THREE more late on 07-27 (EIGHTEEN total) — count future
+looks, keep them rare. **Eighteen
 is a lot; the 0.0313 ADP p-value should not be read as a clean pre-registered
-result.** Three 07-24 looks were a-priori data-corrections to
+result.** **Look 17 (07-27 late, user-directed): the ALL-76-column model**
+— tune 0.4329 (below shipped AND null), test mean 0.5245, vs ECR +0.0055
+5/8 (p 0.20), vs shipped 53 −0.0000. At alpha=300 the feature-set choice
+between the curated 53 and the whole pool is invisible on test; together
+with look 16 this brackets selection from both sides — the ridge stage is
+worth ≈ +0.005 over ECR however it is fed. **Look 18 (07-27 late,
+user-directed): all 83** — look 17 plus the seven live-unservable
+betting-market columns (5 props + 2 vegas win totals; could never ship a
+2026 board). Test 0.5211, vs ECR +0.0022 4/8 (p 0.38), vs shipped −0.0034:
+the market-price columns dilute, consistent with their inert tune verdict. **Look 16 (07-27 late, user-directed): the k=32
+backward-search challenger** — a global subset search over the 76-col pool
+found the best in-sample configuration ever (tune 0.4511, +0.0155 over ECR)
+while its nested evaluation predicted non-transfer (−0.0144); one test look
+settled it: vs ECR +0.0005 (tie), vs shipped 53 −0.0051. REJECTED. Third
+direct measurement of ~0.015-0.02 selection bias on real test data (looks
+12, 13, 16). The shipped 53 remains the best tested configuration; see
+REPORT §4's subset-search paragraph before proposing any new selection. Three 07-24 looks were a-priori data-corrections to
 the VORP conversion, each tune-window-validated before one test look:
 (1) finish-rank → drafted-slot curve, (2) QB12 → QB8 and (3) TE12 → TE8
 streaming replacements (derived by `bff/streaming.py`; see "The metric").
@@ -240,12 +257,21 @@ the easy benchmark on half its folds.** `bff/ecr_wayback.py` now backfills
   while test delivered +0.0053. It now reads **+0.0068** on all 6 folds — in
   family with test. The validation surface went from optimistic to calibrated.
   Edge over ADP went +0.0205 → +0.0155.
-- **Every rejected-block tune delta in `reports/REPORT.md` §4 was measured on
-  the OLD surface** (props, coach_scheme, sos, qb_rush, ol_proxy, adp_gap,
-  redzone, snaps, vegas, the GBT/RF model classes). Those verdicts were sound
-  at the time but were decided against a partly-ADP anchor. Re-deriving them
-  on the corrected window costs NO test look and is the highest-value open
-  item in the repo. Do not cite those deltas as current.
+- **Every rejected-block tune delta was RE-DERIVED 2026-07-27 on the
+  corrected surface (REPORT §4); all rejections stand.** Every delta moved UP
+  (props −0.0052 → +0.0022, sos −0.0068 → +0.0009 — the old "harm" was the
+  bad inputs), but nothing passes an honest gate. Only inj_pos is
+  tune-significant (paired t +4.3, 5/5 folds) and it already failed test
+  look 13, which is the repo's clearest proof that the tune→test gap is era
+  shift, not sampling noise. Joint combos are sub-additive. The GBT/RF
+  model-class verdicts were NOT re-run and remain stale-surface. Gate
+  methodology upgraded with the re-derivation: `bff.select_features` now
+  prints a `paired@fixed` line (per-fold delta at the baseline's tuned
+  hyperparams, paired SE, t, fold signs) — the sweep delta includes
+  hyperparameter re-selection and overstates blocks (landing_spot: +0.0034
+  sweep, −0.0007 paired). Judge on the paired t, then apply the era-shift
+  haircut; the old "~0.0022 SE" figure is the unpaired level SE and is the
+  wrong yardstick for a nested gate.
 - Uncomfortable corollary: the model now ties its ECR anchor in tune fold 2012
   (−0.0003) and trails it in 2014 (−0.0182) — the same failure mode as test
   2018 and 2024. The old configuration hid it on three folds.
@@ -282,7 +308,12 @@ oroy, comeback, pass_yds, pass_td, rush_yds, rush_td, rec_yds, rec_td — as
   All three variants hurt: `props` (5 markets) −0.0052, `props_dense` (mvp +
   rush_yds + rec_yds) −0.0024, `props_lean` (rush_yds + rec_yds) −0.0022
   against the 0.4617 baseline (re-derived after the 2026-07-24 parser fix
-  below; the pre-fix numbers were −0.0051/−0.0033/−0.0026, same verdict). Harm is MONOTONE in the number of prop columns.
+  below; the pre-fix numbers were −0.0051/−0.0033/−0.0026, same verdict). Harm was MONOTONE in the number of prop columns.
+  **Re-derived 2026-07-27 on the corrected surface (REPORT §4): the "harm"
+  was an artifact of the bad inputs — the sweep now reads +0.0022/+0.0007/
+  +0.0012 — but the paired evidence is noise (t +0.4, driven by one fold,
+  2017), so the verdict softens from "harmful" to "inert" and the rejection
+  STANDS.**
   The columns stay in `build_dataset` and `CANDIDATE_BLOCKS` as inert
   zero-filled candidates and are NOT in `FEATURES` (same status as
   redzone/snaps/vegas). Verified inert: `preds_model.parquet` is byte-identical
@@ -505,9 +536,14 @@ uv run python -m bff.select_features [--blocks k ...] [--joint k ...]
 
 # stepwise selection audit (tune window ONLY, zero test looks): greedy
 # forward-backward search from the EMPTY set over the 76-column pool, with
-# leave-one-fold-out overfit control. Verdict on record: the held-out curve
-# degrades monotonically from k=0, so no selected set beats anchor-only out
-# of selection. --check asserts the null/shipped/pool regression anchors.
+# leave-one-fold-out overfit control. Verdict on record (re-run 2026-07-27 on
+# the corrected surface): no selected set beats anchor-only out of HONEST
+# selection. The majority set {career_missed_rate, inj_recurrence_qb} reads
+# +0.0150 over null full-window but that is selection-contaminated; fully
+# nested (each run's own path at its own stop, own held-out fold) it is
+# -0.0087, and nested k=1 is +0.0054 (t 0.6). The held-out curve now bumps at
+# k=1 before degrading (the pre-§2f run degraded from k=0). --check asserts
+# the null/shipped/pool regression anchors.
 uv run python -m bff.stepwise [--check] [--runs both|lofo|full] [--workers N]
 
 # model

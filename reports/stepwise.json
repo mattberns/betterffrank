@@ -105,31 +105,31 @@
         2017
       ],
       "holdout": 2013,
-      "null_mean": 0.4020016423952544,
+      "null_mean": 0.40510711145718326,
       "null_per_season": [
-        0.41653273936157476,
-        0.39093659646715595,
-        0.3453093993609118,
-        0.45522783439137504
+        0.4229517980164937,
+        0.390118521175158,
+        0.3516218206827584,
+        0.45573630595432296
       ],
       "selected": [
-        "games_missed",
-        "inj_recurrence_qb",
-        "ol_stuff_rate_prior",
-        "qb_quality_delta",
-        "team_pass_rate_prior",
-        "vs_adp"
+        "career_missed_rate",
+        "draft_ovr_log",
+        "ol_sack_rate_prior",
+        "opp_ts_l4f4",
+        "qb_expected_missing",
+        "rb_early_rookie"
       ],
       "k": 6,
-      "mean": 0.4287407243911785,
-      "delta_vs_null": 0.02673908199592412,
+      "mean": 0.4371379511847477,
+      "delta_vs_null": 0.03203083972756443,
       "alpha": 3.0,
       "shrink": 1.0,
       "per_season": [
-        0.4522396398559858,
-        0.4155024361113423,
-        0.353820284660367,
-        0.493400536937019
+        0.47510178319035407,
+        0.41667603858123736,
+        0.36145867724263603,
+        0.4953153057247633
       ],
       "path": [
         {
@@ -137,73 +137,93 @@
           "move": "null",
           "feature": null,
           "k": 0,
-          "mean": 0.4020016423952544,
+          "mean": 0.40510711145718326,
           "alpha": null,
           "shrink": null,
-          "heldout": 0.5449007348429842
+          "heldout": 0.5625922641529714
         },
         {
           "step": 1,
           "move": "add",
-          "feature": "games_missed",
+          "feature": "career_missed_rate",
           "k": 1,
-          "mean": 0.40897879269396753,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.5371559720022366
+          "mean": 0.4210365892937282,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.5617970099879973
         },
         {
           "step": 2,
           "move": "add",
-          "feature": "vs_adp",
+          "feature": "ol_sack_rate_prior",
           "k": 2,
-          "mean": 0.416945131399988,
-          "alpha": 30.0,
+          "mean": 0.4242509904349701,
+          "alpha": 3.0,
           "shrink": 1.0,
-          "heldout": 0.5186932129765132
+          "heldout": 0.5614626632250509
         },
         {
           "step": 3,
           "move": "add",
-          "feature": "qb_quality_delta",
+          "feature": "inj_recurrence_qb",
           "k": 3,
-          "mean": 0.4223437058961412,
-          "alpha": 3.0,
+          "mean": 0.4261953582957061,
+          "alpha": 10.0,
           "shrink": 1.0,
-          "heldout": 0.5164528986523359
+          "heldout": 0.5612699888192852
         },
         {
           "step": 4,
           "move": "add",
-          "feature": "ol_stuff_rate_prior",
+          "feature": "qb_expected_missing",
           "k": 4,
-          "mean": 0.42555027648002214,
-          "alpha": 3.0,
+          "mean": 0.42939869747489434,
+          "alpha": 30.0,
           "shrink": 1.0,
-          "heldout": 0.4860820945173264
+          "heldout": 0.5589068939015118
         },
         {
           "step": 5,
           "move": "add",
-          "feature": "inj_recurrence_qb",
+          "feature": "opp_ts_l4f4",
           "k": 5,
-          "mean": 0.4283393283621373,
+          "mean": 0.43556802478558454,
           "alpha": 3.0,
           "shrink": 1.0,
-          "heldout": 0.48397211888485947
+          "heldout": 0.5607731910867717
         },
         {
           "step": 6,
           "move": "add",
-          "feature": "team_pass_rate_prior",
+          "feature": "draft_ovr_log",
           "k": 6,
-          "mean": 0.4287407243911785,
+          "mean": 0.43569729242876204,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.5608789731134666
+        },
+        {
+          "step": 6,
+          "move": "drop",
+          "feature": "inj_recurrence_qb",
+          "k": 5,
+          "mean": 0.4364520872133351,
           "alpha": 3.0,
           "shrink": 1.0,
-          "heldout": 0.4876537146840343
+          "heldout": 0.5607731910867717
+        },
+        {
+          "step": 7,
+          "move": "add",
+          "feature": "rb_early_rookie",
+          "k": 6,
+          "mean": 0.4371379511847477,
+          "alpha": 3.0,
+          "shrink": 1.0,
+          "heldout": 0.5607731910867717
         }
       ],
-      "seconds": 149.5
+      "seconds": 170.9
     },
     {
       "label": "lofo-2014",
@@ -214,33 +234,30 @@
         2017
       ],
       "holdout": 2014,
-      "null_mean": 0.4340936412656068,
+      "null_mean": 0.44001722799130266,
       "null_per_season": [
-        0.5449007348429842,
-        0.39093659646715595,
-        0.3453093993609118,
-        0.45522783439137504
+        0.5625922641529714,
+        0.390118521175158,
+        0.3516218206827584,
+        0.45573630595432296
       ],
       "selected": [
-        "adp_gap_ahead",
-        "coach_pass_oe",
+        "career_missed_rate",
         "coach_pass_shift",
-        "has_prior",
+        "expqb_rush_wrte",
         "inj_recurrence_qb",
-        "qb_delta_wrte",
-        "qb_quality_delta",
-        "qb_rookie"
+        "snap_share_max4"
       ],
-      "k": 8,
-      "mean": 0.4568677670501273,
-      "delta_vs_null": 0.022774125784520538,
-      "alpha": 300.0,
-      "shrink": 0.7,
+      "k": 5,
+      "mean": 0.45867495336003994,
+      "delta_vs_null": 0.018657725368737277,
+      "alpha": 10.0,
+      "shrink": 1.0,
       "per_season": [
-        0.5599727989176975,
-        0.4379713909716049,
-        0.35853464759584963,
-        0.4709922307153574
+        0.5698194433339474,
+        0.4099101387161546,
+        0.36561435461285174,
+        0.4893558767772062
       ],
       "path": [
         {
@@ -248,93 +265,63 @@
           "move": "null",
           "feature": null,
           "k": 0,
-          "mean": 0.4340936412656068,
+          "mean": 0.44001722799130266,
           "alpha": null,
           "shrink": null,
-          "heldout": 0.41653273936157476
+          "heldout": 0.4229517980164937
         },
         {
           "step": 1,
           "move": "add",
-          "feature": "coach_pass_oe",
+          "feature": "career_missed_rate",
           "k": 1,
-          "mean": 0.4411283899363997,
-          "alpha": 100.0,
-          "shrink": 0.5,
-          "heldout": 0.3947984197413546
+          "mean": 0.44917590604710506,
+          "alpha": 30.0,
+          "shrink": 1.0,
+          "heldout": 0.44937868963381444
         },
         {
           "step": 2,
           "move": "add",
-          "feature": "qb_delta_wrte",
+          "feature": "coach_pass_shift",
           "k": 2,
-          "mean": 0.4445599287279522,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.39606090400572397
+          "mean": 0.4522964079413947,
+          "alpha": 3.0,
+          "shrink": 1.0,
+          "heldout": 0.44225364122466926
         },
         {
           "step": 3,
           "move": "add",
-          "feature": "qb_rookie",
+          "feature": "expqb_rush_wrte",
           "k": 3,
-          "mean": 0.4470332007027619,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.39606090400572397
+          "mean": 0.4547056144342013,
+          "alpha": 3.0,
+          "shrink": 1.0,
+          "heldout": 0.447216505900693
         },
         {
           "step": 4,
           "move": "add",
           "feature": "inj_recurrence_qb",
           "k": 4,
-          "mean": 0.4487047145540641,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.39606090400572397
+          "mean": 0.4562948590494027,
+          "alpha": 3.0,
+          "shrink": 1.0,
+          "heldout": 0.447216505900693
         },
         {
           "step": 5,
           "move": "add",
-          "feature": "has_prior",
+          "feature": "snap_share_max4",
           "k": 5,
-          "mean": 0.45050875957925873,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.38827377046127354
-        },
-        {
-          "step": 6,
-          "move": "add",
-          "feature": "qb_quality_delta",
-          "k": 6,
-          "mean": 0.4541023029607276,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.3976027310527267
-        },
-        {
-          "step": 7,
-          "move": "add",
-          "feature": "coach_pass_shift",
-          "k": 7,
-          "mean": 0.4562851692630002,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.39716013599452826
-        },
-        {
-          "step": 8,
-          "move": "add",
-          "feature": "adp_gap_ahead",
-          "k": 8,
-          "mean": 0.4568677670501273,
-          "alpha": 300.0,
-          "shrink": 0.7,
-          "heldout": 0.39783128423851766
+          "mean": 0.45867495336003994,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.4455368228999627
         }
       ],
-      "seconds": 178.5
+      "seconds": 128.2
     },
     {
       "label": "lofo-2015",
@@ -345,31 +332,29 @@
         2017
       ],
       "holdout": 2015,
-      "null_mean": 0.44049267698921146,
+      "null_mean": 0.4482255472016366,
       "null_per_season": [
-        0.5449007348429842,
-        0.41653273936157476,
-        0.3453093993609118,
-        0.45522783439137504
+        0.5625922641529714,
+        0.4229517980164937,
+        0.3516218206827584,
+        0.45573630595432296
       ],
       "selected": [
-        "age_qb",
-        "contract_year",
-        "games_missed",
-        "last_was_career_best",
-        "opp_target_share",
-        "vs_adp"
+        "career_missed_rate",
+        "expqb_rush_wrte",
+        "inj_recurrence_qb",
+        "opp_air_yards_share"
       ],
-      "k": 6,
-      "mean": 0.4632575045265681,
-      "delta_vs_null": 0.022764827537356647,
+      "k": 4,
+      "mean": 0.47040094693646,
+      "delta_vs_null": 0.02217539973482341,
       "alpha": 3.0,
       "shrink": 1.0,
       "per_season": [
-        0.5457451028892804,
-        0.4703388754736253,
-        0.34798129493765895,
-        0.48896474480570784
+        0.5734991466911197,
+        0.44937868963381444,
+        0.37174175668905807,
+        0.4869841947318478
       ],
       "path": [
         {
@@ -377,73 +362,53 @@
           "move": "null",
           "feature": null,
           "k": 0,
-          "mean": 0.44049267698921146,
+          "mean": 0.4482255472016366,
           "alpha": null,
           "shrink": null,
-          "heldout": 0.39093659646715595
+          "heldout": 0.390118521175158
         },
         {
           "step": 1,
           "move": "add",
-          "feature": "games_missed",
+          "feature": "career_missed_rate",
           "k": 1,
-          "mean": 0.447211588901616,
-          "alpha": 3.0,
+          "mean": 0.4655259730306234,
+          "alpha": 30.0,
           "shrink": 1.0,
-          "heldout": 0.3828374696849591
+          "heldout": 0.3839784216997411
         },
         {
           "step": 2,
           "move": "add",
-          "feature": "vs_adp",
+          "feature": "expqb_rush_wrte",
           "k": 2,
-          "mean": 0.4517960614797649,
-          "alpha": 100.0,
-          "shrink": 0.7,
-          "heldout": 0.38722895589765755
+          "mean": 0.46766894682283006,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.3787108149415105
         },
         {
           "step": 3,
           "move": "add",
-          "feature": "last_was_career_best",
+          "feature": "inj_recurrence_qb",
           "k": 3,
-          "mean": 0.45695366917333585,
-          "alpha": 3.0,
+          "mean": 0.469376096240127,
+          "alpha": 10.0,
           "shrink": 1.0,
-          "heldout": 0.3911125461419316
+          "heldout": 0.38494705186809347
         },
         {
           "step": 4,
           "move": "add",
-          "feature": "age_qb",
+          "feature": "opp_air_yards_share",
           "k": 4,
-          "mean": 0.4605309090714826,
+          "mean": 0.47040094693646,
           "alpha": 3.0,
           "shrink": 1.0,
-          "heldout": 0.39277227761017564
-        },
-        {
-          "step": 5,
-          "move": "add",
-          "feature": "contract_year",
-          "k": 5,
-          "mean": 0.4623769814557645,
-          "alpha": 3.0,
-          "shrink": 1.0,
-          "heldout": 0.37170003666308027
-        },
-        {
-          "step": 6,
-          "move": "add",
-          "feature": "opp_target_share",
-          "k": 6,
-          "mean": 0.4632575045265681,
-          "alpha": 3.0,
-          "shrink": 1.0,
-          "heldout": 0.38082221103881775
+          "heldout": 0.3805156595435902
         }
       ],
-      "seconds": 135.4
+      "seconds": 105.1
     },
     {
       "label": "lofo-2016",
@@ -454,41 +419,31 @@
         2017
       ],
       "holdout": 2016,
-      "null_mean": 0.4518994762657724,
+      "null_mean": 0.4578497223247365,
       "null_per_season": [
-        0.5449007348429842,
-        0.41653273936157476,
-        0.39093659646715595,
-        0.45522783439137504
+        0.5625922641529714,
+        0.4229517980164937,
+        0.390118521175158,
+        0.45573630595432296
       ],
       "selected": [
-        "career_missed_rate",
-        "contract_year",
         "games_missed",
         "inj_recurrence_qb",
-        "last_was_career_best",
-        "opp_air_yards_share",
-        "opp_fp_oe_pg",
-        "opp_ts_slope",
-        "qb_quality_delta",
-        "rb_early_rookie",
-        "rz_ez_target_share",
-        "snap_share_l4f4",
-        "snap_share_max4",
-        "td_share_c",
+        "inj_weeks_listed_l2y_qb",
+        "sos_dvp_first4",
         "team_pass_fp_share_prior",
-        "yrs_since_peak"
+        "team_pass_rate_prior"
       ],
-      "k": 16,
-      "mean": 0.4945568313336064,
-      "delta_vs_null": 0.04265735506783397,
-      "alpha": 3.0,
-      "shrink": 0.5,
+      "k": 6,
+      "mean": 0.48880159790879885,
+      "delta_vs_null": 0.03095187558406237,
+      "alpha": 30.0,
+      "shrink": 1.0,
       "per_season": [
-        0.5609078373582267,
-        0.45133631059785945,
-        0.47920166012263177,
-        0.4867815172557078
+        0.5628038282063612,
+        0.46859709286571183,
+        0.4320743559953626,
+        0.49173111456776
       ],
       "path": [
         {
@@ -496,233 +451,73 @@
           "move": "null",
           "feature": null,
           "k": 0,
-          "mean": 0.4518994762657724,
+          "mean": 0.4578497223247365,
           "alpha": null,
           "shrink": null,
-          "heldout": 0.3453093993609118
+          "heldout": 0.3516218206827584
         },
         {
           "step": 1,
           "move": "add",
           "feature": "games_missed",
           "k": 1,
-          "mean": 0.4601520526114015,
+          "mean": 0.4708019810810333,
           "alpha": 3.0,
-          "shrink": 1.0,
-          "heldout": 0.3310756148458169
+          "shrink": 0.7,
+          "heldout": 0.3335643050910966
         },
         {
           "step": 2,
           "move": "add",
-          "feature": "rb_early_rookie",
+          "feature": "sos_dvp_first4",
           "k": 2,
-          "mean": 0.4652479172422457,
-          "alpha": 30.0,
+          "mean": 0.47572866104971767,
+          "alpha": 3.0,
           "shrink": 1.0,
-          "heldout": 0.3327226489148504
+          "heldout": 0.29861199289263046
         },
         {
           "step": 3,
           "move": "add",
-          "feature": "inj_recurrence_qb",
+          "feature": "inj_weeks_listed_l2y_qb",
           "k": 3,
-          "mean": 0.4683542372043468,
-          "alpha": 30.0,
+          "mean": 0.4814378377861209,
+          "alpha": 10.0,
           "shrink": 1.0,
-          "heldout": 0.3327226489148504
+          "heldout": 0.293699913312297
         },
         {
           "step": 4,
           "move": "add",
-          "feature": "coach_pass_shift",
+          "feature": "inj_recurrence_qb",
           "k": 4,
-          "mean": 0.4721486141570622,
+          "mean": 0.4852608916658346,
           "alpha": 10.0,
           "shrink": 1.0,
-          "heldout": 0.3277488962526368
+          "heldout": 0.29098266988122623
         },
         {
           "step": 5,
           "move": "add",
-          "feature": "qb_quality_delta",
+          "feature": "team_pass_fp_share_prior",
           "k": 5,
-          "mean": 0.47506651941344713,
-          "alpha": 30.0,
+          "mean": 0.4859151034147312,
+          "alpha": 3.0,
           "shrink": 1.0,
-          "heldout": 0.327839591961284
+          "heldout": 0.290073898880581
         },
         {
           "step": 6,
           "move": "add",
-          "feature": "sos_dvp_first4",
+          "feature": "team_pass_rate_prior",
           "k": 6,
-          "mean": 0.4767639004384952,
+          "mean": 0.48880159790879885,
           "alpha": 30.0,
           "shrink": 1.0,
-          "heldout": 0.3221420875440656
-        },
-        {
-          "step": 7,
-          "move": "add",
-          "feature": "last_was_career_best",
-          "k": 7,
-          "mean": 0.47875025769485907,
-          "alpha": 30.0,
-          "shrink": 1.0,
-          "heldout": 0.3214908923559785
-        },
-        {
-          "step": 8,
-          "move": "add",
-          "feature": "draft_competition",
-          "k": 8,
-          "mean": 0.47932979848967383,
-          "alpha": 30.0,
-          "shrink": 0.7,
-          "heldout": 0.3227660740195585
-        },
-        {
-          "step": 9,
-          "move": "add",
-          "feature": "team_pass_fp_share_prior",
-          "k": 9,
-          "mean": 0.48218891247851636,
-          "alpha": 30.0,
-          "shrink": 0.7,
-          "heldout": 0.32840371926906975
-        },
-        {
-          "step": 10,
-          "move": "add",
-          "feature": "td_share_c",
-          "k": 10,
-          "mean": 0.4839162712820628,
-          "alpha": 10.0,
-          "shrink": 0.7,
-          "heldout": 0.3249463988554377
-        },
-        {
-          "step": 11,
-          "move": "add",
-          "feature": "yrs_since_peak",
-          "k": 11,
-          "mean": 0.48412840509614663,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.3495575863539476
-        },
-        {
-          "step": 11,
-          "move": "drop",
-          "feature": "draft_competition",
-          "k": 10,
-          "mean": 0.48446701034074374,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.3401705805089602
-        },
-        {
-          "step": 11,
-          "move": "drop",
-          "feature": "coach_pass_shift",
-          "k": 9,
-          "mean": 0.48569359617664976,
-          "alpha": 10.0,
-          "shrink": 0.5,
-          "heldout": 0.34541279246876966
-        },
-        {
-          "step": 12,
-          "move": "add",
-          "feature": "opp_ts_slope",
-          "k": 10,
-          "mean": 0.48752930662358507,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.33299836386913795
-        },
-        {
-          "step": 13,
-          "move": "add",
-          "feature": "contract_year",
-          "k": 11,
-          "mean": 0.48884101832631033,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.3399728638641093
-        },
-        {
-          "step": 14,
-          "move": "add",
-          "feature": "career_missed_rate",
-          "k": 12,
-          "mean": 0.4893667867332616,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.3372120864928879
-        },
-        {
-          "step": 15,
-          "move": "add",
-          "feature": "snap_share_l4f4",
-          "k": 13,
-          "mean": 0.4895129470803039,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.3237310763595649
-        },
-        {
-          "step": 16,
-          "move": "add",
-          "feature": "rz_ez_target_share",
-          "k": 14,
-          "mean": 0.491796272201232,
-          "alpha": 10.0,
-          "shrink": 0.5,
-          "heldout": 0.318113384165956
-        },
-        {
-          "step": 16,
-          "move": "drop",
-          "feature": "sos_dvp_first4",
-          "k": 13,
-          "mean": 0.491907755311668,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.316480861410306
-        },
-        {
-          "step": 17,
-          "move": "add",
-          "feature": "opp_fp_oe_pg",
-          "k": 14,
-          "mean": 0.4929722705014586,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.316480861410306
-        },
-        {
-          "step": 18,
-          "move": "add",
-          "feature": "opp_air_yards_share",
-          "k": 15,
-          "mean": 0.4942040250269687,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.3203299872852941
-        },
-        {
-          "step": 19,
-          "move": "add",
-          "feature": "snap_share_max4",
-          "k": 16,
-          "mean": 0.4945568313336064,
-          "alpha": 3.0,
-          "shrink": 0.5,
-          "heldout": 0.32014859586799965
+          "heldout": 0.2898943213774595
         }
       ],
-      "seconds": 402.4
+      "seconds": 155.0
     },
     {
       "label": "lofo-2017",
@@ -733,31 +528,30 @@
         2016
       ],
       "holdout": 2017,
-      "null_mean": 0.42441986750815663,
+      "null_mean": 0.43182110100684534,
       "null_per_season": [
-        0.5449007348429842,
-        0.41653273936157476,
-        0.39093659646715595,
-        0.3453093993609118
+        0.5625922641529714,
+        0.4229517980164937,
+        0.390118521175158,
+        0.3516218206827584
       ],
       "selected": [
-        "has_prior",
-        "inj_weeks_listed_l2y",
-        "qb_quality_delta",
-        "rookie_pedigree",
-        "yrs_exp",
-        "yrs_since_peak"
+        "adp_gap_ahead",
+        "career_missed_rate",
+        "ol_sack_rate_prior",
+        "opp_ts_slope",
+        "qb_expected_missing"
       ],
-      "k": 6,
-      "mean": 0.4498518513549698,
-      "delta_vs_null": 0.025431983846813166,
-      "alpha": 100.0,
-      "shrink": 0.5,
+      "k": 5,
+      "mean": 0.4535926560451101,
+      "delta_vs_null": 0.021771555038264778,
+      "alpha": 10.0,
+      "shrink": 1.0,
       "per_season": [
-        0.560057802412291,
-        0.43745623934648875,
-        0.4352378223129777,
-        0.3666555413481218
+        0.5598135969874681,
+        0.47657830798797224,
+        0.4295584570374887,
+        0.3484202621675115
       ],
       "path": [
         {
@@ -765,73 +559,63 @@
           "move": "null",
           "feature": null,
           "k": 0,
-          "mean": 0.42441986750815663,
+          "mean": 0.43182110100684534,
           "alpha": null,
           "shrink": null,
-          "heldout": 0.45522783439137504
+          "heldout": 0.45573630595432296
         },
         {
           "step": 1,
           "move": "add",
-          "feature": "has_prior",
+          "feature": "career_missed_rate",
           "k": 1,
-          "mean": 0.43106819766216165,
-          "alpha": 300.0,
+          "mean": 0.44119593891447373,
+          "alpha": 30.0,
           "shrink": 1.0,
-          "heldout": 0.4411381940544449
+          "heldout": 0.4812985581643396
         },
         {
           "step": 2,
           "move": "add",
-          "feature": "inj_weeks_listed_l2y",
+          "feature": "ol_sack_rate_prior",
           "k": 2,
-          "mean": 0.4350057883119432,
-          "alpha": 300.0,
-          "shrink": 0.5,
-          "heldout": 0.45145341086641566
+          "mean": 0.44673748045831163,
+          "alpha": 3.0,
+          "shrink": 1.0,
+          "heldout": 0.47151670313168476
         },
         {
           "step": 3,
           "move": "add",
-          "feature": "yrs_since_peak",
+          "feature": "opp_ts_slope",
           "k": 3,
-          "mean": 0.4408127464463803,
-          "alpha": 300.0,
-          "shrink": 0.5,
-          "heldout": 0.44227781038958336
+          "mean": 0.44955250940992286,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.45164186536177403
         },
         {
           "step": 4,
           "move": "add",
-          "feature": "yrs_exp",
+          "feature": "qb_expected_missing",
           "k": 4,
-          "mean": 0.4442522983030903,
-          "alpha": 100.0,
-          "shrink": 0.5,
-          "heldout": 0.45747862110008847
+          "mean": 0.45181043015951733,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.4568368090923115
         },
         {
           "step": 5,
           "move": "add",
-          "feature": "qb_quality_delta",
+          "feature": "adp_gap_ahead",
           "k": 5,
-          "mean": 0.44827646689576756,
-          "alpha": 100.0,
-          "shrink": 0.5,
-          "heldout": 0.4590431489860819
-        },
-        {
-          "step": 6,
-          "move": "add",
-          "feature": "rookie_pedigree",
-          "k": 6,
-          "mean": 0.4498518513549698,
-          "alpha": 100.0,
-          "shrink": 0.5,
-          "heldout": 0.4588226927839647
+          "mean": 0.4535926560451101,
+          "alpha": 10.0,
+          "shrink": 1.0,
+          "heldout": 0.4629811367900315
         }
       ],
-      "seconds": 148.8
+      "seconds": 127.5
     }
   ],
   "full_run": {
@@ -844,36 +628,33 @@
       2017
     ],
     "holdout": null,
-    "null_mean": 0.4305814608848003,
+    "null_mean": 0.4366041419963409,
     "null_per_season": [
-      0.5449007348429842,
-      0.41653273936157476,
-      0.39093659646715595,
-      0.3453093993609118,
-      0.45522783439137504
+      0.5625922641529714,
+      0.4229517980164937,
+      0.390118521175158,
+      0.3516218206827584,
+      0.45573630595432296
     ],
     "selected": [
-      "coach_pass_shift",
-      "draft_competition",
-      "expqb_rush_wrte",
-      "inj_weeks_listed_l2y_qb",
-      "is_rookie",
-      "ol_stuff_rate_prior",
-      "opp_air_yards_share",
-      "qb_quality_delta",
-      "rb_early_rookie"
+      "career_missed_rate",
+      "inj_recurrence_qb",
+      "ol_sack_rate_prior",
+      "opp_ts_l4f4",
+      "qb_expected_missing",
+      "vacated_tgt_wrte"
     ],
-    "k": 9,
-    "mean": 0.45287315362067265,
-    "delta_vs_null": 0.022291692735872337,
+    "k": 6,
+    "mean": 0.460733732917691,
+    "delta_vs_null": 0.024129590921350086,
     "alpha": 3.0,
-    "shrink": 0.7,
+    "shrink": 1.0,
     "per_season": [
-      0.5584238463495479,
-      0.4533932892699784,
-      0.4381691076164559,
-      0.3529931397975044,
-      0.46138638506987684
+      0.5638030905656755,
+      0.4682887277359881,
+      0.43129255898682356,
+      0.35573577802699635,
+      0.48454850927297155
     ],
     "path": [
       {
@@ -881,7 +662,7 @@
         "move": "null",
         "feature": null,
         "k": 0,
-        "mean": 0.4305814608848003,
+        "mean": 0.4366041419963409,
         "alpha": null,
         "shrink": null,
         "heldout": null
@@ -889,268 +670,154 @@
       {
         "step": 1,
         "move": "add",
-        "feature": "inj_weeks_listed_l2y_qb",
+        "feature": "career_missed_rate",
         "k": 1,
-        "mean": 0.4356990092610144,
-        "alpha": 3.0,
+        "mean": 0.4492164627644469,
+        "alpha": 30.0,
         "shrink": 1.0,
         "heldout": null
       },
       {
         "step": 2,
         "move": "add",
-        "feature": "rb_early_rookie",
+        "feature": "ol_sack_rate_prior",
         "k": 2,
-        "mean": 0.4377618011818537,
-        "alpha": 10.0,
-        "shrink": 0.7,
+        "mean": 0.45169332499298626,
+        "alpha": 3.0,
+        "shrink": 1.0,
         "heldout": null
       },
       {
         "step": 3,
         "move": "add",
-        "feature": "draft_competition",
+        "feature": "inj_recurrence_qb",
         "k": 3,
-        "mean": 0.44097752162113046,
-        "alpha": 10.0,
-        "shrink": 0.5,
+        "mean": 0.453232131271184,
+        "alpha": 3.0,
+        "shrink": 1.0,
         "heldout": null
       },
       {
         "step": 4,
         "move": "add",
-        "feature": "qb_quality_delta",
+        "feature": "qb_expected_missing",
         "k": 4,
-        "mean": 0.4443903064310274,
+        "mean": 0.45530033676021775,
         "alpha": 30.0,
-        "shrink": 0.7,
+        "shrink": 1.0,
         "heldout": null
       },
       {
         "step": 5,
         "move": "add",
-        "feature": "coach_pass_shift",
+        "feature": "opp_ts_l4f4",
         "k": 5,
-        "mean": 0.44605258802519127,
-        "alpha": 30.0,
-        "shrink": 0.7,
+        "mean": 0.4606090580458219,
+        "alpha": 3.0,
+        "shrink": 1.0,
         "heldout": null
       },
       {
         "step": 6,
         "move": "add",
-        "feature": "qb_rookie",
+        "feature": "vacated_tgt_wrte",
         "k": 6,
-        "mean": 0.4474127003490002,
-        "alpha": 30.0,
-        "shrink": 0.7,
-        "heldout": null
-      },
-      {
-        "step": 7,
-        "move": "add",
-        "feature": "expqb_rush_wrte",
-        "k": 7,
-        "mean": 0.4483619448182046,
-        "alpha": 30.0,
-        "shrink": 0.7,
-        "heldout": null
-      },
-      {
-        "step": 8,
-        "move": "add",
-        "feature": "ol_stuff_rate_prior",
-        "k": 8,
-        "mean": 0.44874546046301,
-        "alpha": 30.0,
-        "shrink": 0.7,
-        "heldout": null
-      },
-      {
-        "step": 8,
-        "move": "drop",
-        "feature": "qb_rookie",
-        "k": 7,
-        "mean": 0.4488578272893447,
+        "mean": 0.460733732917691,
         "alpha": 3.0,
-        "shrink": 0.7,
-        "heldout": null
-      },
-      {
-        "step": 9,
-        "move": "add",
-        "feature": "is_rookie",
-        "k": 8,
-        "mean": 0.45003198385838433,
-        "alpha": 3.0,
-        "shrink": 0.7,
-        "heldout": null
-      },
-      {
-        "step": 10,
-        "move": "add",
-        "feature": "opp_air_yards_share",
-        "k": 9,
-        "mean": 0.45287315362067265,
-        "alpha": 3.0,
-        "shrink": 0.7,
+        "shrink": 1.0,
         "heldout": null
       }
     ],
-    "seconds": 277.1
+    "seconds": 187.1
   },
   "selection_counts": {
-    "qb_quality_delta": 4,
-    "games_missed": 3,
+    "career_missed_rate": 4,
     "inj_recurrence_qb": 3,
-    "contract_year": 2,
-    "has_prior": 2,
-    "last_was_career_best": 2,
-    "vs_adp": 2,
-    "yrs_since_peak": 2,
+    "expqb_rush_wrte": 2,
+    "ol_sack_rate_prior": 2,
+    "qb_expected_missing": 2,
     "adp_gap_ahead": 1,
-    "age_qb": 1,
-    "career_missed_rate": 1,
-    "coach_pass_oe": 1,
     "coach_pass_shift": 1,
-    "inj_weeks_listed_l2y": 1,
-    "ol_stuff_rate_prior": 1,
+    "draft_ovr_log": 1,
+    "games_missed": 1,
+    "inj_weeks_listed_l2y_qb": 1,
     "opp_air_yards_share": 1,
-    "opp_fp_oe_pg": 1,
-    "opp_target_share": 1,
+    "opp_ts_l4f4": 1,
     "opp_ts_slope": 1,
-    "qb_delta_wrte": 1,
-    "qb_rookie": 1,
     "rb_early_rookie": 1,
-    "rookie_pedigree": 1,
-    "rz_ez_target_share": 1,
-    "snap_share_l4f4": 1,
     "snap_share_max4": 1,
-    "td_share_c": 1,
+    "sos_dvp_first4": 1,
     "team_pass_fp_share_prior": 1,
-    "team_pass_rate_prior": 1,
-    "yrs_exp": 1
+    "team_pass_rate_prior": 1
   },
   "majority_set": [
-    "games_missed",
-    "inj_recurrence_qb",
-    "qb_quality_delta"
+    "career_missed_rate",
+    "inj_recurrence_qb"
   ],
   "heldout_curve": [
     {
       "k": 0,
-      "mean_heldout": 0.4305814608848003,
+      "mean_heldout": 0.4366041419963409,
       "n_runs": 5
     },
     {
       "k": 1,
-      "mean_heldout": 0.4174011340657624,
+      "mean_heldout": 0.44200339691539775,
       "n_runs": 5
     },
     {
       "k": 2,
-      "mean_heldout": 0.4172318265322321,
+      "mean_heldout": 0.43051116308310916,
       "n_runs": 5
     },
     {
       "k": 3,
-      "mean_heldout": 0.4157253616208851,
+      "mean_heldout": 0.42775506505242855,
       "n_runs": 5
     },
     {
       "k": 4,
-      "mean_heldout": 0.41202855869719024,
+      "mean_heldout": 0.4268917076638665,
       "n_runs": 5
     },
     {
       "k": 5,
-      "mean_heldout": 0.4061657333913159,
-      "n_runs": 5
+      "mean_heldout": 0.43984126241433674,
+      "n_runs": 4
     },
     {
       "k": 6,
-      "mean_heldout": 0.4094086874207218,
-      "n_runs": 5
-    },
-    {
-      "k": 7,
-      "mean_heldout": 0.3593255141752534,
+      "mean_heldout": 0.4253337562321156,
       "n_runs": 2
-    },
-    {
-      "k": 8,
-      "mean_heldout": 0.36029867912903807,
-      "n_runs": 2
-    },
-    {
-      "k": 9,
-      "mean_heldout": 0.34541279246876966,
-      "n_runs": 1
-    },
-    {
-      "k": 10,
-      "mean_heldout": 0.33299836386913795,
-      "n_runs": 1
-    },
-    {
-      "k": 11,
-      "mean_heldout": 0.3399728638641093,
-      "n_runs": 1
-    },
-    {
-      "k": 12,
-      "mean_heldout": 0.3372120864928879,
-      "n_runs": 1
-    },
-    {
-      "k": 13,
-      "mean_heldout": 0.316480861410306,
-      "n_runs": 1
-    },
-    {
-      "k": 14,
-      "mean_heldout": 0.316480861410306,
-      "n_runs": 1
-    },
-    {
-      "k": 15,
-      "mean_heldout": 0.3203299872852941,
-      "n_runs": 1
-    },
-    {
-      "k": 16,
-      "mean_heldout": 0.32014859586799965,
-      "n_runs": 1
     }
   ],
   "majority_eval": {
     "features": [
-      "games_missed",
-      "inj_recurrence_qb",
-      "qb_quality_delta"
+      "career_missed_rate",
+      "inj_recurrence_qb"
     ],
-    "alpha": 3.0,
+    "alpha": 30.0,
     "shrink": 1.0,
-    "mean": 0.4397583642026019,
+    "mean": 0.4516204664661946,
     "per_season": [
-      0.5386331438416181,
-      0.4375414933126171,
-      0.4063312860529353,
-      0.3293959303216703,
-      0.4868899674841687
+      0.5619613499223268,
+      0.44937868963381444,
+      0.3884406505651844,
+      0.3720628194976692,
+      0.4862588227119782
     ]
   },
   "null_eval": {
     "features": [],
     "alpha": null,
     "shrink": null,
-    "mean": 0.4305814608848003,
+    "mean": 0.4366041419963409,
     "per_season": [
-      0.5449007348429842,
-      0.41653273936157476,
-      0.39093659646715595,
-      0.3453093993609118,
-      0.45522783439137504
+      0.5625922641529714,
+      0.4229517980164937,
+      0.390118521175158,
+      0.3516218206827584,
+      0.45573630595432296
     ]
   },
   "shipped_eval": {
@@ -1211,13 +878,13 @@
     ],
     "alpha": 300.0,
     "shrink": 0.3,
-    "mean": 0.42926843178889607,
+    "mean": 0.43535494514712597,
     "per_season": [
-      0.5432214435831245,
-      0.40749219112361973,
-      0.39484013976733234,
-      0.3464068174355432,
-      0.4543815670348604
+      0.5509203508860475,
+      0.4115295908290224,
+      0.39837727240457393,
+      0.35862534330449686,
+      0.45732216831148914
     ]
   }
 }

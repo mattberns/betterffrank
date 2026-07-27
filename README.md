@@ -301,10 +301,12 @@ docs/                     generated static site (bff.site); index.html is the me
   accepted, and a check asserts every board predates its season's Week 1
   kickoff. Five markets (MVP, OROY, and the passing/rushing/receiving yards
   leaders) are complete across all fourteen seasons; the three TD-leader markets
-  only start in 2017. **Tested on the 2012-2017 tune window and
-  rejected**: every variant hurt (−0.0022 to −0.0052), monotone in how many prop
-  columns were added, so the columns stay inert and are not features. No test
-  look was spent. Notably the failure is not redundancy — max correlation with
+  only start in 2017. **Tested on the tune window and rejected**: on the
+  original surface every variant hurt (−0.0022 to −0.0052); re-derived
+  2026-07-27 on the corrected data the deltas turn mildly positive
+  (+0.0007 to +0.0022) but are statistical noise (paired t ≈ 0.4, one fold
+  carries it), so the columns stay inert and are not features. No test look
+  was spent. Notably the failure is not redundancy — max correlation with
   an existing feature is only 0.20–0.61 and 72–97% of the scored pool carries a
   quote — the market's leader prices just don't predict where the experts are
   wrong. The curated data is kept for the record.
@@ -363,14 +365,24 @@ same-day feature audit showed part of that was fit to a corrupted injury
 variable and truncated career histories. The test-window ridge contribution
 (+0.0056) is not corroborated by the model's own validation window.
 
-**The test set has been consulted fifteen times.** Each look was
-individually defensible, but fifteen is enough that a p-value of 0.0313
-should not be read as a clean pre-registered result.
+**The test set has been consulted eighteen times.** Each look was
+individually defensible, but eighteen is enough that a p-value of 0.0313
+should not be read as a clean pre-registered result. (The last three were
+deliberate challenger tests: the best feature subset a global tune-window
+search could find — +0.0155 over ECR in-sample — scored a dead tie with ECR
+and below the shipped model on test, measuring selection bias directly; the
+all-76-column kitchen sink matched the shipped model to four decimals; and
+adding the seven betting-market columns on top made it worse. Feature-set
+choice is nearly invisible at this regularization strength, and nothing
+findable beats the shipped set.)
 
-**Every rejected-feature verdict in `reports/REPORT.md` §4 is stale.** All of
-them were decided on the old six-fold, partly-ADP-anchored window with a
-truncated 2012 board — and graded against the pre-2026-07-27 corrupted
-outcomes. Re-deriving them costs no test look and is the top open item.
+**Every rejected-feature verdict was re-derived 2026-07-27 on the corrected
+data (`reports/REPORT.md` §4); all rejections stand.** Every candidate's tune
+delta improved — the old "harm" was mostly the bad inputs — but nothing
+clears an honest gate: the only tune-significant block (QB-conditional
+injury history, paired t +4.3) is the one that already failed its test look,
+and a re-run of the stepwise audit confirms no feature set beats the
+anchor-only null out of fully nested selection.
 
 ## License
 
