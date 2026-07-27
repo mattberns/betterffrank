@@ -110,11 +110,16 @@ Look 12 (2026-07-25) scored the clean-data rebuild in §2b: the repaired 2012
 ADP board, the draft-year-gated ECR name resolution, and the removal of 2011
 from the training set. Like look 11 it was not gated on the metric; it makes
 the metric substantially worse and shipped because the inputs it removes are
-wrong. Total: 4 looks on 2026-07-23, six on 2026-07-24, two on 2026-07-25
-(12); future looks should stay rare.
+wrong.
+Look 13 (2026-07-25) scored the extended hyperparameter grid (alpha ×1000,
+shrink down to 0.10) jointly with the `inj_pos` block, and REVERTED it: tune
++0.0068 (LOFO-validated) landed as −0.0037 on test, the ECR edge went to
+−0.0004 and the ADP p_one from 0.0469 to 0.0820. See §2e. Total: 4 looks on
+2026-07-23, six on 2026-07-24, three on 2026-07-25 (13); future looks should
+stay rare.
 
 Two residual caveats, both real. An operator who has seen 2018-2020 results
-cannot fully unsee them. And **twelve looks is a lot.** The test set has now
+cannot fully unsee them. And **thirteen looks is a lot.** The test set has now
 been consulted often enough that "never touched for any decision" is true of
 each individual look and increasingly strained as a description of the whole
 process; the ADP p-value sitting at 0.0469 should be read with that in mind,
@@ -241,10 +246,10 @@ rows belong; it is evidence the edge was partly resting on them. Restoring
 2011 would raise the tune mean to 0.4446 and manufacture a +0.0140 tune-window
 ADP edge out of an input we know to be wrong. Do not do it.
 
-### 2b. Pre-registration for look 12 (written BEFORE the test look)
+### 2c. Pre-registration for look 12 (written BEFORE the test look)
 
 Challenger: an 8-feature ridge selected by cluster-guided forward selection on
-the corrected tune window (2013-2017, all ECR-anchored), `stepwise/`:
+the corrected tune window (2013-2017, all ECR-anchored):
 
     age_qb, ol_stuff_rate_prior, opp_ts_slope, ppg_delta, qb_rush_ypg,
     rb_early_rookie, team_pass_fp_share_prior, yrs_since_peak
@@ -265,9 +270,9 @@ more than the shipped 53 does. Whatever the number, it is recorded here.
 The tune-window figures above are optimistically biased (selected on that
 window); the test look is the unbiased read.
 
-### 2c. Look 12 RESULT: the stepwise challenger FAILED
+### 2d. Look 12 RESULT: the stepwise challenger FAILED
 
-Run 2026-07-25, exactly as pre-registered in §2b. Test seasons 2018-2025.
+Run 2026-07-25, exactly as pre-registered in §2c. Test seasons 2018-2025.
 
 | | mean spearman_vorp | vs ECR | folds won |
 |---|---|---|---|
@@ -293,7 +298,35 @@ Secondary reading, also unflattering: the shipped 53 beats ECR by +0.0032 on 4 o
 seasons (paired t = 0.78). That is not a demonstrated edge over the expert consensus
 -- it is a coin flip. Both models still beat ADP (+0.0197 and +0.0152, 7/8 each).
 
-Total test looks: 12.
+Total test looks after look 12: 12.
+
+### 2e. Look 13: extended grid + inj_pos block, REVERTED (2026-07-25)
+
+The tuned optimum sits ON the grid boundary at (alpha 300, shrink 0.3) — the
+tuner asking for less model than the grid can express. The grid was extended
+to a strict superset (alpha up to 1000, shrink down to 0.10) jointly with a
+position-conditional injury block (`inj_recurrence_qb`,
+`inj_weeks_listed_l2y_qb`; found via the QB-split residual-correlation table,
+not a metric sweep). Tune-window evidence: 0.4293 → 0.4361 (+0.0068,
+LOFO-validated), beating the ECR baseline by +0.0064 on 4 of 5 folds — the
+first tune-window ECR win the project has had.
+
+It did not transfer. One test look: mean spearman_vorp 0.5237 → 0.5200
+(−0.0037); the ECR edge +0.0032 → −0.0004 (4/8, p_one 0.543); the ADP edge
++0.0197 → +0.0160, p_one 0.0469 → 0.0820. Reverted in full: the grid stays
+frozen at {3,10,30,100,300} × {0.3,0.5,0.7,1.0} and the two columns stay as
+the inert `inj_pos` CANDIDATE_BLOCK.
+
+The lesson mirrors §2d at hyperparameter scale: the 5-fold tune mean has a
+standard error of ~0.0022, so it cannot resolve effects of the size this
+project chases. Do not spend a test look on a tune-window gain under ~0.01.
+(A follow-up stepwise audit, `bff/stepwise.py` — forward-backward from the
+empty set with leave-one-fold-out control, `reports/stepwise.json`, zero test
+looks — makes the same point from the other direction: its held-out curve
+degrades monotonically from k=0, so out of selection no selected feature set
+beats the anchor-only null on this window.)
+
+Total test looks: 13.
 
 ## 3. Headline (test seasons 2018-2025)
 

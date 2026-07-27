@@ -1,0 +1,175 @@
+column,group,in_model,ridge_coef,label,description
+our_rank,identity,false,,"",""
+name,identity,false,,"",""
+position,identity,false,,"",""
+team,identity,false,,"",""
+gsis_id,identity,false,,"",""
+adp,market,false,,"",""
+adp_rank,market,false,,"",""
+ecr_rank,market,false,,"",""
+mkt_val,market,false,,"",""
+mkt_rank,market,false,,"",""
+log_rank,market,false,,"",""
+vs_adp,market feature (IN MODEL),true,0.004816,ECR vs ADP gap,log(ECR rank) - log(ADP rank). Positive = the market drafts him earlier than the experts rank him.
+vs_adp_log,market,false,,"",""
+vs_adp_pct,market,false,,"",""
+vs_adp_clip,market,false,,"",""
+score_log_pts,output,false,,"",""
+pred_vorp,output,false,,"",""
+pos_rank,output,false,,"",""
+delta,output,false,,"",""
+anchor_rank,output,false,,"",""
+scarcity_gain,output,false,,"",""
+feature_gain,output,false,,"",""
+age_c,feature (IN MODEL),true,0.019605,Age vs 26,Player age centered at 26; the spine of the aging curve.
+age_c2,feature (IN MODEL),true,-0.002581,Age curvature,Squared age term; lets value fall off faster at the extremes.
+age_rb,feature (IN MODEL),true,0.010462,Age x RB,"Age effect specific to running backs, who decline earliest."
+age_qb,feature (IN MODEL),true,-0.009645,Age x QB,"Age effect specific to quarterbacks, who age most gracefully."
+games_missed,feature (IN MODEL),true,-0.051078,Games missed (prior yr),Games absent last season vs a full schedule.
+rookie_pedigree,feature (IN MODEL),true,0.002011,Rookie draft pedigree,For rookies: how early they were taken in the NFL draft.
+td_share_c,feature (IN MODEL),true,-0.0409,TD-share (regression proxy),"Share of last year's points from TDs, centered by position. High = more regression risk."
+team_change,feature (IN MODEL),true,0.006645,Changed NFL team,Returning veteran on a new team this season.
+has_prior,feature (IN MODEL),true,0.114536,Has prior-season stats,Player has prior NFL production to learn from.
+draft_ovr_log,feature (IN MODEL),true,0.020516,Draft slot (log),Log of overall NFL draft pick; a static pedigree prior.
+vacated_target_share,feature (IN MODEL),true,-0.002139,Vacated target share,Team targets left behind by departed teammates.
+vacated_carry_share,feature (IN MODEL),true,0.001354,Vacated carry share,Team carries left behind by departed teammates.
+arriving_vet_usage,feature (IN MODEL),true,-0.017839,Arriving vets' usage,Prior-year usage of veterans who just joined and compete for his role.
+draft_competition,feature (IN MODEL),true,-0.031785,Rookie draft competition,April draft capital the team spent at his position.
+qb_change,feature (IN MODEL),true,0.0062,QB change,Projected starting QB changed.
+qb_quality_delta,feature (IN MODEL),true,0.016192,QB quality delta,Expected change in QB play vs last year.
+qb_rookie,feature (IN MODEL),true,-0.003145,Rookie QB,Projected starter is a rookie.
+qb_expected_missing,feature (IN MODEL),true,0.014649,QB expected missing,Expected starter-QB games lost (known preseason).
+coach_change,feature (IN MODEL),true,0.014319,Coaching change,Team changed head coach / play-caller.
+team_fp_prior,feature (IN MODEL),true,0.022248,Team fantasy pts (prior),Team fantasy offense last year.
+team_fp_prior_z,feature (IN MODEL),true,-0.02106,Team fantasy pts (z),"Team offense, standardized across the league."
+team_pass_fp_share_prior,feature (IN MODEL),true,0.034905,Team pass-offense share,Share of team fantasy offense through the air.
+team_pass_rate_prior,feature (IN MODEL),true,-0.036392,Team pass rate (prior),How pass-heavy the team was last season.
+returning_target_competition,feature (IN MODEL),true,0.003398,Returning target competition,Returning teammates competing for targets.
+returning_carry_competition,feature (IN MODEL),true,0.004792,Returning carry competition,Returning teammates competing for carries.
+depth_rank_adp,feature (IN MODEL),true,-0.023684,Depth rank by ADP,ADP rank among teammates at the same position.
+is_rookie,feature (IN MODEL),true,0.061669,Is rookie,The player's rookie season.
+qb_delta_wrte,feature (IN MODEL),true,-0.001524,QB delta x WR/TE,QB-quality change applied to pass-catchers only.
+vacated_tgt_wrte,feature (IN MODEL),true,-0.003184,Vacated targets x WR/TE,Vacated target share applied to pass-catchers only.
+vacated_carry_rb,feature (IN MODEL),true,-0.003945,Vacated carries x RB,Vacated carry share applied to running backs only.
+opp_target_share,feature (IN MODEL),true,-0.007098,Target share (last yr),Share of team targets last season.
+opp_air_yards_share,feature (IN MODEL),true,0.004837,Air-yards share,Share of team downfield volume aimed at him.
+opp_ts_slope,feature (IN MODEL),true,0.022347,Target-share trend,Within-season slope of target share.
+opp_ts_l4f4,feature (IN MODEL),true,-0.024491,Target share: last 4 vs first 4,"Change in target share, first four to last four games."
+opp_cs_l6_delta,feature (IN MODEL),true,0.020921,Carry-share trend (last 6),Change in carry share over the final six games.
+opp_fp_oe_pg,feature (IN MODEL),true,0.018594,Points over expected/game,Fantasy points above what opportunity volume predicted.
+opp_td_per_opp_vs_pos,feature (IN MODEL),true,0.027381,TD rate vs position,Touchdowns per opportunity vs positional baseline.
+opp_boom_rate,feature (IN MODEL),true,-0.059599,Boom-week rate,Share of spike-week outliers; high = volatile.
+ppg_delta,feature (IN MODEL),true,-0.000196,PPG change (yr/yr),Change in PPR points/game vs the prior year.
+career_missed_rate,feature (IN MODEL),true,-0.039159,Career missed-game rate,Share of career games missed; long-run durability.
+inj_weeks_listed_l2y,feature (IN MODEL),true,-0.025212,Weeks on injury report (2y),Weeks listed on the injury report over two seasons.
+inj_soft_tissue_l2y,feature (IN MODEL),true,0.005472,Soft-tissue injuries (2y),"Soft-tissue injuries (hamstring, groin, calf) over two seasons."
+inj_recurrence,feature (IN MODEL),true,-0.01269,Injury recurrence,Same injury recurring; re-injury risk.
+apy_cap_pct,feature (IN MODEL),true,-0.002582,Contract size (% of cap),Average annual value as a share of the salary cap.
+contract_year,feature (IN MODEL),true,0.001914,Contract year,Playing in a contract (walk) year.
+rookie_deal_yr,feature (IN MODEL),true,0.017833,On rookie contract,Still on the initial rookie contract.
+draft_r1,feature (IN MODEL),true,0.010002,First-round pick,Taken in the first round of the NFL draft.
+draft_r23,feature (IN MODEL),true,0.020484,Second/third-round pick,Taken in round two or three of the NFL draft.
+rb_early_rookie,feature (IN MODEL),true,-0.011334,Early-drafted rookie RB,Running back taken early as a rookie.
+yrs_since_peak,feature (IN MODEL),true,0.009741,"",""
+last_was_career_best,feature (IN MODEL),true,0.017891,"",""
+c_age_c,contribution (log-points),true,0.019605,Age vs 26,Player age centered at 26; the spine of the aging curve.
+c_age_c2,contribution (log-points),true,-0.002581,Age curvature,Squared age term; lets value fall off faster at the extremes.
+c_age_rb,contribution (log-points),true,0.010462,Age x RB,"Age effect specific to running backs, who decline earliest."
+c_age_qb,contribution (log-points),true,-0.009645,Age x QB,"Age effect specific to quarterbacks, who age most gracefully."
+c_games_missed,contribution (log-points),true,-0.051078,Games missed (prior yr),Games absent last season vs a full schedule.
+c_rookie_pedigree,contribution (log-points),true,0.002011,Rookie draft pedigree,For rookies: how early they were taken in the NFL draft.
+c_td_share_c,contribution (log-points),true,-0.0409,TD-share (regression proxy),"Share of last year's points from TDs, centered by position. High = more regression risk."
+c_team_change,contribution (log-points),true,0.006645,Changed NFL team,Returning veteran on a new team this season.
+c_has_prior,contribution (log-points),true,0.114536,Has prior-season stats,Player has prior NFL production to learn from.
+c_draft_ovr_log,contribution (log-points),true,0.020516,Draft slot (log),Log of overall NFL draft pick; a static pedigree prior.
+c_vs_adp,contribution (log-points),true,0.004816,ECR vs ADP gap,log(ECR rank) - log(ADP rank). Positive = the market drafts him earlier than the experts rank him.
+c_vacated_target_share,contribution (log-points),true,-0.002139,Vacated target share,Team targets left behind by departed teammates.
+c_vacated_carry_share,contribution (log-points),true,0.001354,Vacated carry share,Team carries left behind by departed teammates.
+c_arriving_vet_usage,contribution (log-points),true,-0.017839,Arriving vets' usage,Prior-year usage of veterans who just joined and compete for his role.
+c_draft_competition,contribution (log-points),true,-0.031785,Rookie draft competition,April draft capital the team spent at his position.
+c_qb_change,contribution (log-points),true,0.0062,QB change,Projected starting QB changed.
+c_qb_quality_delta,contribution (log-points),true,0.016192,QB quality delta,Expected change in QB play vs last year.
+c_qb_rookie,contribution (log-points),true,-0.003145,Rookie QB,Projected starter is a rookie.
+c_qb_expected_missing,contribution (log-points),true,0.014649,QB expected missing,Expected starter-QB games lost (known preseason).
+c_coach_change,contribution (log-points),true,0.014319,Coaching change,Team changed head coach / play-caller.
+c_team_fp_prior,contribution (log-points),true,0.022248,Team fantasy pts (prior),Team fantasy offense last year.
+c_team_fp_prior_z,contribution (log-points),true,-0.02106,Team fantasy pts (z),"Team offense, standardized across the league."
+c_team_pass_fp_share_prior,contribution (log-points),true,0.034905,Team pass-offense share,Share of team fantasy offense through the air.
+c_team_pass_rate_prior,contribution (log-points),true,-0.036392,Team pass rate (prior),How pass-heavy the team was last season.
+c_returning_target_competition,contribution (log-points),true,0.003398,Returning target competition,Returning teammates competing for targets.
+c_returning_carry_competition,contribution (log-points),true,0.004792,Returning carry competition,Returning teammates competing for carries.
+c_depth_rank_adp,contribution (log-points),true,-0.023684,Depth rank by ADP,ADP rank among teammates at the same position.
+c_is_rookie,contribution (log-points),true,0.061669,Is rookie,The player's rookie season.
+c_qb_delta_wrte,contribution (log-points),true,-0.001524,QB delta x WR/TE,QB-quality change applied to pass-catchers only.
+c_vacated_tgt_wrte,contribution (log-points),true,-0.003184,Vacated targets x WR/TE,Vacated target share applied to pass-catchers only.
+c_vacated_carry_rb,contribution (log-points),true,-0.003945,Vacated carries x RB,Vacated carry share applied to running backs only.
+c_opp_target_share,contribution (log-points),true,-0.007098,Target share (last yr),Share of team targets last season.
+c_opp_air_yards_share,contribution (log-points),true,0.004837,Air-yards share,Share of team downfield volume aimed at him.
+c_opp_ts_slope,contribution (log-points),true,0.022347,Target-share trend,Within-season slope of target share.
+c_opp_ts_l4f4,contribution (log-points),true,-0.024491,Target share: last 4 vs first 4,"Change in target share, first four to last four games."
+c_opp_cs_l6_delta,contribution (log-points),true,0.020921,Carry-share trend (last 6),Change in carry share over the final six games.
+c_opp_fp_oe_pg,contribution (log-points),true,0.018594,Points over expected/game,Fantasy points above what opportunity volume predicted.
+c_opp_td_per_opp_vs_pos,contribution (log-points),true,0.027381,TD rate vs position,Touchdowns per opportunity vs positional baseline.
+c_opp_boom_rate,contribution (log-points),true,-0.059599,Boom-week rate,Share of spike-week outliers; high = volatile.
+c_ppg_delta,contribution (log-points),true,-0.000196,PPG change (yr/yr),Change in PPR points/game vs the prior year.
+c_career_missed_rate,contribution (log-points),true,-0.039159,Career missed-game rate,Share of career games missed; long-run durability.
+c_inj_weeks_listed_l2y,contribution (log-points),true,-0.025212,Weeks on injury report (2y),Weeks listed on the injury report over two seasons.
+c_inj_soft_tissue_l2y,contribution (log-points),true,0.005472,Soft-tissue injuries (2y),"Soft-tissue injuries (hamstring, groin, calf) over two seasons."
+c_inj_recurrence,contribution (log-points),true,-0.01269,Injury recurrence,Same injury recurring; re-injury risk.
+c_apy_cap_pct,contribution (log-points),true,-0.002582,Contract size (% of cap),Average annual value as a share of the salary cap.
+c_contract_year,contribution (log-points),true,0.001914,Contract year,Playing in a contract (walk) year.
+c_rookie_deal_yr,contribution (log-points),true,0.017833,On rookie contract,Still on the initial rookie contract.
+c_draft_r1,contribution (log-points),true,0.010002,First-round pick,Taken in the first round of the NFL draft.
+c_draft_r23,contribution (log-points),true,0.020484,Second/third-round pick,Taken in round two or three of the NFL draft.
+c_rb_early_rookie,contribution (log-points),true,-0.011334,Early-drafted rookie RB,Running back taken early as a rookie.
+c_yrs_since_peak,contribution (log-points),true,0.009741,"",""
+c_last_was_career_best,contribution (log-points),true,0.017891,"",""
+c_ppg_mismatch,contribution (log-points),true,0.021177,PPG vs market-implied,Last year's PPR points/game minus what the market rank implies. Positive = outscored draft cost.
+raw_ppg_mismatch,"feature (IN MODEL, derived in fit_predict)",false,,"",""
+_dummy,internal / unused,false,,"",""
+adp_gap_ahead,candidate block 'adp_gap' (NOT in model),false,,"",""
+adp_gap_behind,candidate block 'adp_gap' (NOT in model),false,,"",""
+age,internal / unused,false,,"",""
+birthdate,internal / unused,false,,"",""
+career_best_ppg,candidate block 'trajectory' (NOT in model),false,,"",""
+coach_pass_oe,candidate block 'coach_scheme' (NOT in model),false,,"",""
+coach_pass_shift,candidate block 'coach_scheme' (NOT in model),false,,"",""
+draft_ovr,internal / unused,false,,"",""
+draft_round,internal / unused,false,,"",""
+draft_year,internal / unused,false,,"",""
+expqb_rush_wrte,candidate block 'qb_rush' (NOT in model),false,,"",""
+inj_recurrence_qb,candidate block 'inj_pos' (NOT in model),false,,"",""
+inj_weeks_listed_l2y_qb,candidate block 'inj_pos' (NOT in model),false,,"",""
+is_rk_draft,internal / unused,false,,"",""
+log_pts,internal / unused,false,,"",""
+ol_sack_rate_prior,candidate block 'ol_proxy' (NOT in model),false,,"",""
+ol_stuff_rate_prior,candidate block 'ol_proxy' (NOT in model),false,,"",""
+prev_games,internal / unused,false,,"",""
+prev_ppg,internal / unused,false,,"",""
+prev_td_share,internal / unused,false,,"",""
+prev_team,internal / unused,false,,"",""
+prop_mvp,candidate block 'props_dense' (NOT in model),false,,"",""
+prop_oroy,candidate block 'props' (NOT in model),false,,"",""
+prop_pass_yds,candidate block 'props' (NOT in model),false,,"",""
+prop_rec_yds,candidate block 'props_lean' (NOT in model),false,,"",""
+prop_rush_yds,candidate block 'props_lean' (NOT in model),false,,"",""
+qb_rush_ypg,candidate block 'qb_rush' (NOT in model),false,,"",""
+rookie,internal / unused,false,,"",""
+rookie_log_pick,internal / unused,false,,"",""
+rookie_x_vacated,candidate block 'landing_spot' (NOT in model),false,,"",""
+rz_ez_target_share,candidate block 'redzone' (NOT in model),false,,"",""
+rz_gl_carry_share,candidate block 'redzone' (NOT in model),false,,"",""
+rz_opp_pg,candidate block 'redzone' (NOT in model),false,,"",""
+rz_target_share,candidate block 'redzone' (NOT in model),false,,"",""
+rz_td_minus_expected,candidate block 'redzone' (NOT in model),false,,"",""
+season,internal / unused,false,,"",""
+snap_share,candidate block 'snaps' (NOT in model),false,,"",""
+snap_share_l4f4,candidate block 'snaps' (NOT in model),false,,"",""
+snap_share_max4,candidate block 'snaps' (NOT in model),false,,"",""
+sos_dvp,candidate block 'sos' (NOT in model),false,,"",""
+sos_dvp_first4,candidate block 'sos' (NOT in model),false,,"",""
+tgt_pts,internal / unused,false,,"",""
+vegas_wins_c,candidate block 'vegas' (NOT in model),false,,"",""
+vegas_wins_delta,candidate block 'vegas' (NOT in model),false,,"",""
+vs_adp_off,internal / unused,false,,"",""
+yrs_exp,candidate block 'trajectory' (NOT in model),false,,"",""

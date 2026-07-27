@@ -40,7 +40,6 @@ from bff.model import (
     to_vorp,
     tune,
 )
-from bff.vona import MATRIX_ROUNDS, per_pick_table, turn_matrix
 
 ROOT = Path(__file__).resolve().parent.parent
 PROC = ROOT / "data" / "processed"
@@ -204,6 +203,18 @@ def _val(dfin, season, metric):
     return round(float(r["value"][0]), 4) if r.height else None
 
 
+def _read_audit() -> dict:
+    """The methodology audit's cached numbers (index.html is an article about
+    them). Not derivable from preds/scores, so it has its own artifact."""
+    path = REPORTS / "methodology_audit.json"
+    if not path.exists():
+        raise SystemExit(
+            f"missing {path}\nThe front-page article is built from the "
+            "methodology audit. Generate it first:\n"
+            "  uv run python -m bff.methodology_audit")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def build_payload() -> dict:
     df = build_dataset()
     alpha, shrink, _ = tune(df)   # tune() returns (alpha, shrink, tuning_score)
@@ -245,15 +256,6 @@ def build_payload() -> dict:
     )
 
     players = _build_players(df, ranked, contrib)
-
-    # VONA draft overlay — computed from THIS payload's board (not the artifact)
-    # so the site's Draft page can never drift from its own Rankings page.
-    vona_board = ranked.select(
-        "gsis_id", "name", "position", "adp_rank",
-        pl.col("pred_vorp").alias("vorp"),
-    )
-    vona_matrix = turn_matrix(vona_board).to_dicts()
-    vona_table = per_pick_table(vona_board).to_dicts()
 
     _, _, coef_model, coef_order = fit_predict(df, SEASON, alpha, 1.0, return_contrib=True)
     coefs = dict(zip(coef_order, coef_model.coef_))
@@ -381,6 +383,7 @@ def build_payload() -> dict:
         "meta": {"season": SEASON, "format": "12-team PPR redraft",
                  "alpha": alpha, "shrink": shrink, "n_players": len(players),
                  "n_features": len(features)},
+        "audit": _read_audit(),
         "headline": headline,
         "anchor": {"tune": anchor_tune, "test": anchor_test,
                    "split": anchor_split},
@@ -391,9 +394,8 @@ def build_payload() -> dict:
         "seasons": seasons,
         "features": features,
         "players": players,
-        "vona": {"matrix": vona_matrix, "table": vona_table, "rounds": MATRIX_ROUNDS},
-        # DraftSIM (unlisted beta page) — same board as vona/rankings, so the
-        # simulator can never drift from the Rankings page. Presentation only.
+        # DraftSIM — same board as the Rankings page, so the simulator can
+        # never drift from it. Presentation only.
         "draftsim": {
             "players": ranked.sort("our_rank").select(
                 pl.col("gsis_id").alias("id"), "name",
@@ -535,28 +537,8 @@ tr.row.open{background:var(--hi)}
 .flabel{font-size:13px;text-align:right}
 .fblurb{font-size:12px;color:var(--faint);grid-column:1/-1;text-align:left;margin:1px 0 0 0}
 
-/* VONA draft page */
-.vona-mtx{min-width:640px;font-size:13px}
-.vona-mtx th:first-child,.vona-mtx td:first-child{text-align:right;font-family:var(--mono);color:var(--faint)}
-.vona-cell{white-space:nowrap;font-size:12.5px}
-.vona-cell b{font-family:var(--mono);font-size:11px;margin-right:4px}
+/* position tints (draftsim rec cards) */
 .pos-qb{background:#f1edf7}.pos-rb{background:#eaf2ec}.pos-wr{background:#e9f0f6}.pos-te{background:#f7f1e8}
-.vona-cell.pos-qb b{color:#5b3f86}.vona-cell.pos-rb b{color:var(--pos)}
-.vona-cell.pos-wr b{color:var(--link)}.vona-cell.pos-te b{color:#9a6a1c}
-.vona-picks{min-width:640px}
-.vona-picks td{vertical-align:top}
-.vona-picks .vname{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.vbar-t{height:5px;background:#ececec;margin:3px 0 1px}
-.vbar-f{height:5px;background:var(--muted)}
-.vp-rb .vbar-f{background:var(--pos)}
-.vp-wr .vbar-f{background:var(--link)}
-.vp-te .vbar-f{background:#9a6a1c}
-.vp-qb .vbar-f{background:#5b3f86}
-.vcost{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.vona-depth{margin:10px 0 4px}
-.vona-depth button{font-family:var(--mono);font-size:13px;background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 5px}
-.vona-depth button:hover{color:var(--text)}
-.vona-depth button.active{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 
 .foot{border-top:1px solid var(--rule);margin-top:36px;padding:14px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 
@@ -568,7 +550,7 @@ tr.row.open{background:var(--hi)}
 }
 """
 
-# Appended only on draftsim.html so the five shipped pages stay byte-identical.
+# Appended only on draftsim.html so the four other pages stay byte-identical.
 # One-screen dashboard: fixed-viewport grid on desktop (each panel scrolls
 # internally, no page scroll), sticky recs + flowing stack on mobile.
 CSS_DRAFTSIM = """
@@ -708,11 +690,6 @@ JS_INDEX = """
   const pstr=(v.p_one==null)?'n/a':v.p_one;
   document.getElementById('results-note').innerHTML='Model '+esc(v.verdict)+': mean '+f3(v.model)+' vs '+f3(v.baseline)+' (Delta '+sgn(v.delta,3)+'), one-sided sign-flip p = '+pstr+', n = '+v.n_seasons+'. Power floor '+v.power_floor+(v.power_floor>0.05?'; p-values descriptive only.':'.');
 
-  const s=D.secondary;
-  const sec=[['nDCG@100',s.ndcg100_vorp],['Top-24 hit rate',s.top24_hit_vorp],['Top-50 hit rate',s.top50_hit],['Raw-points Spearman',s.raw_spearman]];
-  document.getElementById('secondary').innerHTML='<table class="tbl"><tbody>'+
-    sec.map(c=>'<tr><td>'+c[0]+'</td><td class="num">'+f4(c[1])+'</td></tr>').join('')+'</tbody></table>';
-
   document.getElementById('method').innerHTML=D.method.map(m=>'<li><b>'+esc(m.step)+'.</b> '+esc(m.text)+'</li>').join('');
 })();
 """
@@ -805,53 +782,6 @@ JS_METHOD = """
 (function(){
   document.getElementById('method-steps').innerHTML=D.method.map(m=>'<li><b>'+esc(m.step)+'.</b> '+esc(m.text)+'</li>').join('');
   document.getElementById('limitations').innerHTML=D.limitations.map(x=>'<li>'+esc(x)+'</li>').join('');
-})();
-"""
-
-JS_VONA = """
-(function(){
-  const V=D.vona, R=V.rounds, POS=['QB','RB','WR','TE'];
-  const pc=p=>({QB:'pos-qb',RB:'pos-rb',WR:'pos-wr',TE:'pos-te'}[p]||'');
-  const bc=p=>({QB:'vp-qb',RB:'vp-rb',WR:'vp-wr',TE:'vp-te'}[p]||'');
-
-  // turn matrix
-  let mh='<tr><th>Slot</th>';
-  for(let r=1;r<=R;r++)mh+='<th>Round '+r+'</th>';
-  mh+='</tr>';
-  const mrows=V.matrix.map(row=>{
-    let tds='<td class="num">'+row.slot+'</td>';
-    for(let r=1;r<=R;r++){
-      const cell=row['round'+r]||'--';
-      const ix=cell.indexOf(': ');
-      if(ix<0){tds+='<td>&mdash;</td>';continue;}
-      const p=cell.slice(0,ix), nm=cell.slice(ix+2);
-      tds+='<td class="vona-cell '+pc(p)+'"><b>'+esc(p)+'</b> '+esc(nm)+'</td>';
-    }
-    return '<tr>'+tds+'</tr>';
-  }).join('');
-  document.getElementById('vona-matrix').innerHTML=
-    '<table class="data vona-mtx"><thead>'+mh+'</thead><tbody>'+mrows+'</tbody></table>';
-
-  // per-pick wait-cost table
-  const maxV=Math.max.apply(null,V.table.flatMap(r=>POS.map(p=>r['vona24_'+p]||0)))||1;
-  function cell(r,p){
-    const v=r['vona24_'+p]||0, nm=r['best_'+p]||'';
-    const w=Math.min(100,v/maxV*100);
-    return '<td class="'+bc(p)+'"><div class="vname">'+(nm?esc(nm):'&mdash;')+'</div>'+
-      '<div class="vbar-t"><div class="vbar-f" style="width:'+w.toFixed(0)+'%"></div></div>'+
-      '<div class="vcost">'+(v>0?v.toFixed(0):'')+'</div></td>';
-  }
-  function render(rng){
-    const rows=V.table.filter(r=>rng?r.pick<=rng:true);
-    let html='';
-    rows.forEach(r=>{html+='<tr><td class="num">'+r.pick+'</td>'+POS.map(p=>cell(r,p)).join('')+'</tr>';});
-    document.getElementById('vona-picks').innerHTML=html;
-  }
-  document.querySelectorAll('.vona-depth button').forEach(b=>b.addEventListener('click',()=>{
-    document.querySelectorAll('.vona-depth button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');render(+b.dataset.n||0);
-  }));
-  render(24);
 })();
 """
 
@@ -1158,7 +1088,7 @@ JS_DRAFTSIM = """
 # 3. PAGE RENDERERS
 # ---------------------------------------------------------------------------
 
-NAV = [("index.html", "Results"), ("rankings.html", "Rankings"),
+NAV = [("index.html", "Article"), ("rankings.html", "Rankings"),
        ("features.html", "Features"), ("methodology.html", "Methods"),
        ("draftsim.html", "Draft (beta)")]
 
@@ -1204,129 +1134,371 @@ def _page(title: str, active: str, body: str, data_slice: dict, page_js: str,
 
 
 def _anchor_table(b: dict) -> str:
-    """Booktabs table of ADP vs ECR baseline quality for one window."""
+    """Table of ADP vs ECR baseline quality for one window.
+
+    Uses `tbl` and the dpos/dneg delta colours, the two class names the CSS
+    actually defines. It previously emitted `booktabs` and `pos`/`neg`, neither
+    of which has a rule, so both anchor tables rendered unstyled with black
+    deltas."""
     rows = "".join(
         f'<tr><td class="num">{r["season"]}</td>'
         f'<td class="num">{r["adp"]:.4f}</td>'
         f'<td class="num">{r["ecr"]:.4f}</td>'
-        f'<td class="num {"pos" if r["delta"] > 0 else "neg"}">{r["delta"]:+.4f}</td>'
+        f'<td class="num {"dpos" if r["delta"] > 0 else "dneg"}">{r["delta"]:+.4f}</td>'
         f'<td>{"ECR" if r["delta"] > 0 else "ADP"}</td></tr>'
         for r in b["rows"]
     )
     return (
-        '<div class="tablewrap"><table class="booktabs">'
+        '<div class="tablewrap"><table class="tbl">'
         '<thead><tr><th>Season</th><th class="num">ADP</th><th class="num">ECR</th>'
         '<th class="num">ECR &minus; ADP</th><th>Better</th></tr></thead>'
         f'<tbody>{rows}</tbody>'
-        f'<tfoot><tr><td><b>mean</b></td>'
+        f'<tfoot><tr class="summary"><td><b>mean</b></td>'
         f'<td class="num">{b["adp_mean"]:.4f}</td>'
         f'<td class="num">{b["ecr_mean"]:.4f}</td>'
-        f'<td class="num {"pos" if b["mean"] > 0 else "neg"}">{b["mean"]:+.4f}</td>'
+        f'<td class="num {"dpos" if b["mean"] > 0 else "dneg"}">{b["mean"]:+.4f}</td>'
         f'<td>ECR {b["wins"]}/{b["n"]}</td></tr></tfoot>'
         '</table></div>'
     )
 
 
 def render_index(p: dict) -> str:
-    m = p["meta"]
+    """The front page is an ARTICLE about the methodology audit, not a results
+    dashboard. Every number is interpolated from the payload or from
+    reports/methodology_audit.json (see _read_audit); nothing is typed by hand,
+    so the page cannot drift from the artifacts."""
+    m, au = p["meta"], p["audit"]
     ve, va = p["headline"]["vs_ecr"], p["headline"]["vs_adp"]
     at, ax, sp = p["anchor"]["tune"], p["anchor"]["test"], p["anchor"]["split"]
-    tw = at["label"].split()[-1].replace("-", "&ndash;")
-    ecr_read = (
-        "That is a coin flip, and it should be read as matching the experts, not beating them."
-        if ve["wins"] * 2 <= ve["n_seasons"] else
-        "The ECR margin is thin; read it as matching the experts, likely a touch better."
-    )
+    rel, red, oos = au["reliability"], au["redundancy"], au["oos_residual"]
+    geo, bu, pw = au["geometry"], au["bust"], au["power"]
+    perm, cs, plv = au["permutation"], au["clip_sweep"], au["player_level"]["all"]
+    win = au["window"]
+    pe, pa = pw["vs_ecr"], pw["vs_adp"]
+    tightest = cs["rows"][-1]
+    fixed = cs["tightest_at_shipped_hyperparams"]
+    perm_means = ", ".join(f'{r["mean"]:.4f}' for r in perm["runs"])
+    sweep = " &rarr; ".join(f'{r["mean"]:.4f}' for r in cs["rows"])
+    clips = ", ".join(f'{r["clip"]:g}' for r in cs["rows"])
+    top24 = p["secondary"]["top24_hit_vorp"]
+
     body = (
         '<div class="wrap">'
         '<div class="titleblock">'
-        '<h1 class="title">betterffrank</h1>'
-        f'<p class="subtitle">{m["season"]} preseason rankings &middot; {m["format"]} &middot; walk-forward VORP evaluation</p>'
-        f'<p class="docmeta">ridge residual over an ECR anchor &middot; alpha = {int(m["alpha"])}, shrink = {m["shrink"]} '
-        f'&middot; {m["n_features"]} features &middot; {m["n_players"]} players '
-        '&middot; metric: Spearman(list, realized VORP)</p>'
+        '<h1 class="title">It&rsquo;s really hard to beat the ECR - 7/27</h1>'
+        f'<p class="subtitle">What I learned trying to out-rank FantasyPros with '
+        f'{win["n_features"]} features and {geo["n_rows"]:,} player-seasons: '
+        'the experts are already very good, and eight seasons is not enough to '
+        'prove otherwise.</p>'
+        f'<p class="docmeta">{m["format"]} &middot; test seasons '
+        f'{ve["span"].replace("-", "&ndash;")} &middot; graded on realized value '
+        'over replacement &middot; every number on this page reproduces from '
+        '<code>bff.methodology_audit</code></p>'
         '</div>'
 
-        '<section><h2 class="numbered">The idea</h2>'
-        '<p>These rankings start from the FantasyPros expert consensus and correct it. '
-        'The experts are good, so the model never builds a board from scratch; instead, a regression '
-        f'fit on past seasons learns the patterns in when the experts miss &mdash; age, last season&rsquo;s '
-        'production against draft price, injury history, vacated opportunity, rookie pedigree &mdash; and '
-        'nudges each player&rsquo;s projection up or down from the expert baseline. Projected points then '
-        'convert to <b>value over replacement</b> (VORP): points above the best player you could get off '
-        'waivers at that position. That conversion, not raw points, is what merges QB, RB, WR, and TE '
-        'into one draft board; raw points would just stack quarterbacks at the top.</p>'
-        '<p>Scoring is champion versus challenger. For each test season '
-        f'({ve["span"].replace("-", "&ndash;")}), three boards are fixed before Week 1 &mdash; this model, '
-        'the expert consensus (ECR), and the market (ADP) &mdash; and graded after the season by how well '
-        'their preseason order matched players&rsquo; realized value over replacement. Same grade, same '
-        'VORP conversion, and no board sees the season it predicts; the model&rsquo;s settings were frozen '
-        f'on {tw} before any test season was scored. The record: '
-        f'<b>beat ADP in {va["wins"]} of {va["n_seasons"]} seasons</b> '
-        f'(mean {va["model"]:.4f} vs {va["baseline"]:.4f}, one-sided p = {va["p_one"]:g}) and '
-        f'<b>won {ve["wins"]} of {ve["n_seasons"]} against ECR</b> '
-        f'(mean {ve["model"]:.4f} vs {ve["baseline"]:.4f}, p = {ve["p_one"]:g}). '
-        f'{ecr_read} '
-        'The experts themselves beat the market, which is why they are the harder benchmark &mdash; '
-        'see <a href="#anchor">how much of the ADP win is really the experts</a>.</p></section>'
+        '<section><p>I built a preseason draft-ranking model, backtested it '
+        'properly against the expert consensus, and it does not beat the expert '
+        'consensus. That part is mildly disappointing and completely ordinary. '
+        'What turned out to be interesting is <i>why</i>, and the fact that the '
+        'usual way of checking (backtest a few seasons, look at the average, '
+        'declare victory) cannot actually tell the difference between a real '
+        'edge and a lucky one. Below is the whole thing, including the '
+        'experiment that convinced me to stop.</p></section>'
 
-        '<section><h2 class="numbered">Results</h2>'
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">How the model works</h2>'
+        '<p>It does not build a board from scratch. It starts from the '
+        'FantasyPros expert consensus rank (ECR) and tries to correct it, '
+        'which is a much easier job than ranking 150 players from nothing.</p>'
+        '<p>Three steps. <b>One:</b> turn each player&rsquo;s expert rank into '
+        'expected points, using history (what does the 5th-ranked WR usually '
+        'score? the 30th?). <b>Two:</b> predict the <i>miss</i>. This is the '
+        'model proper, and the input is '
+        f'{win["n_features"]} things knowable in August: age and the shape of '
+        'the aging curve at each position, how much a player outscored or '
+        'undershot his draft price last year, games missed, injury history, '
+        'targets and carries vacated by teammates who left, rookie draft '
+        'capital, contract year, whether his quarterback changed, and so on. '
+        '<b>Three:</b> convert points into value over replacement, because raw '
+        'points lie across positions; the 10th-best QB outscores the 10th-best '
+        'TE but is worth less, since a decent QB is always available.</p>'
+        '<p>Step two is a <b>ridge regression</b>, and the choice matters for '
+        f'everything that follows. With {geo["p"]} inputs and only '
+        f'{geo["n_rows"]:,} training rows (really only {geo["n_players"]} '
+        'distinct players, since a player shows up in several seasons), an '
+        'ordinary regression would happily memorize noise: it would &ldquo;'
+        'discover&rdquo; that 27-year-old tight ends on new teams bust, because '
+        'three of them did. Ridge is the standard defence. It fits the '
+        'regression while paying a penalty for large coefficients, so every '
+        'effect gets pulled toward zero unless the data insists. One dial '
+        '(<code>alpha</code>) sets how hard it pulls. This model then adds a '
+        f'second dial: only {int(win["shrink"] * 100)}% of whatever correction '
+        'survives is actually applied to the expert baseline. Both dials are '
+        'chosen on an early block of seasons and then frozen before the test '
+        'seasons are ever scored.</p>'
+        f'<p class="note small">Where the dials landed is itself a result: '
+        f'<code>alpha = {int(win["alpha"])}</code> is the strongest setting on '
+        f'the grid and <code>shrink = {win["shrink"]}</code> the weakest. Of '
+        f'{geo["p"]} inputs, that leaves about '
+        f'{geo["effective_dof_x_shrink"]:g} inputs&rsquo; worth of real fitting. '
+        'The search is turning the model down as far as it is allowed to.</p>'
+        '</section>'
+
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">The scoreboard</h2>'
+        '<p>Champion versus challenger, one round per season. Three boards are '
+        'fixed before Week 1 (this model, the expert consensus, and the market&rsquo;s '
+        'average draft position), then graded after the season on how well the '
+        'preseason order matched what players actually returned in value over '
+        'replacement. Same grade for everyone, no board sees the season it '
+        'predicts.</p>'
         '<p class="cap"><b>Table 1.</b> Model vs FantasyPros ECR, per season. '
-        'Spearman of the ranked list against realized VORP; Delta = model &minus; ECR.</p>'
+        'Higher is better; 1.0 would be a perfect ordering, 0.0 a coin flip.</p>'
         '<div id="results"></div>'
-        '<p class="note small" id="results-note" style="margin-top:8px"></p></section>'
+        '<p class="note small" id="results-note" style="margin-top:8px"></p>'
+        f'<p style="margin-top:14px">So: <b>beat the market in {va["wins"]} of '
+        f'{va["n_seasons"]} seasons</b> ({va["model"]:.4f} vs {va["baseline"]:.4f}), '
+        f'and <b>{ve["wins"]} of {ve["n_seasons"]} against the experts</b> '
+        f'({ve["model"]:.4f} vs {ve["baseline"]:.4f}). Beating ADP is real. '
+        'Against ECR it is a coin flip, and the right word for a coin flip is '
+        '&ldquo;tied&rdquo;.</p>'
+        f'<p>For scale, in football terms: this board puts about '
+        f'{top24:.0%} of the eventual top-24 finishers in its own top 24. So does '
+        'the expert list. Preseason ranking is a genuinely hard forecasting '
+        'problem for everyone involved.</p></section>'
 
-        '<section id="anchor"><h2 class="numbered">Are the experts actually better than the market?</h2>'
-        '<p>The model is built on top of ECR, so it inherits whatever edge ECR has. '
-        'That makes one question worth asking directly, independent of the model: '
-        'graded on realized VORP, is the expert consensus a better preseason board than ADP? '
-        'The answer turns out to depend sharply on the era.</p>'
-
-        f'<p class="cap"><b>Table 2.</b> {at["label"]}. Baseline boards only &mdash; no model. '
-        'Both are scored through the identical VORP conversion.</p>'
+        # ------------------------------------------------------------------
+        '<section id="anchor"><h2 class="numbered">Are the experts actually '
+        'better than the market?</h2>'
+        '<p>The model is built on top of ECR, so it inherits whatever edge ECR '
+        'has. That makes one question worth asking on its own, with no model '
+        'involved: graded on realized value, is the expert consensus a better '
+        'preseason board than where people actually draft? The answer depends '
+        'sharply on the era.</p>'
+        f'<p class="cap"><b>Table 2.</b> {at["label"]}. Baseline boards only, '
+        'no model, both through the identical value conversion.</p>'
         + _anchor_table(at) +
-        f'<p class="note small" style="margin-top:8px">Over the tuning years the two are '
-        f'indistinguishable: ECR wins {at["wins"]} of {at["n"]} seasons and the mean gap is '
-        f'{at["mean"]:+.4f}, which is noise. One caveat on the earliest season, which is the '
-        'largest single ADP win in the table: its ECR snapshot is the last one the Wayback '
-        'Machine archived that preseason, roughly two weeks staler than the early-September '
-        'boards every other season uses. A staler board is a plausible reason for it to '
-        'underperform, so that row is weaker evidence than the others.</p>'
-
-        f'<p class="cap" style="margin-top:22px"><b>Table 3.</b> {ax["label"]}. Same computation.</p>'
+        f'<p class="note small" style="margin-top:8px">A dead heat. ECR wins '
+        f'{at["wins"]} of {at["n"]} seasons and the mean gap is {at["mean"]:+.4f}, '
+        'which is noise. One caveat on the earliest season, the largest single '
+        'ADP win in the table: its ECR snapshot is the last one the Wayback '
+        'Machine archived that preseason, roughly two weeks staler than the '
+        'early-September boards every other season uses. A staler board is a '
+        'plausible reason to underperform, so that row is weaker evidence than '
+        'the rest.</p>'
+        f'<p class="cap" style="margin-top:22px"><b>Table 3.</b> {ax["label"]}. '
+        'Same computation.</p>'
         + _anchor_table(ax) +
-        f'<p class="note small" style="margin-top:8px">Over the test years the experts pull clearly '
-        f'ahead: ECR wins {ax["wins"]} of {ax["n"]} seasons by a mean of {ax["mean"]:+.4f}, and the '
-        'gap widens as the years go on. Whether that reflects FantasyPros improving, the ADP sample '
-        'thinning, or both, is not something this data can settle.</p>'
+        f'<p class="note small" style="margin-top:8px">Here the experts pull '
+        f'clearly ahead: ECR wins {ax["wins"]} of {ax["n"]} seasons by a mean of '
+        f'{ax["mean"]:+.4f}, and the margin grows over time. Whether that is '
+        'FantasyPros getting better, the ADP sample thinning out, or both, this '
+        'data cannot settle.</p>'
+        '<p style="margin-top:18px"><b>What that implies about my model, and it '
+        f'is not flattering.</b> On the test seasons the model beats ADP by '
+        f'{sp["total"]:+.4f}. But ECR on its own, with no model attached, already '
+        f'beats ADP by {sp["from_anchor"]:+.4f} over those same seasons. The '
+        f'regression contributes the remaining {sp["from_model"]:+.4f}. So '
+        'roughly five sixths of my margin over the market is the expert list I '
+        'started from, not the corrections I added.</p>'
+        f'<p>It also resolves a puzzle. The model shows no edge at all on its own '
+        f'tuning seasons ({win["shipped_tune_mean"]:.4f} against ADP&rsquo;s '
+        f'{at["adp_mean"]:.4f}) yet {sp["total"]:+.4f} on test. Not a '
+        'contradiction: in the tuning years the expert anchor was worth nothing '
+        'over ADP, so a model standing on it had nothing inherited to win with. '
+        f'In the test years the anchor was worth {sp["from_anchor"]:+.4f} before '
+        'the model did anything at all. What changed between windows is not my '
+        'model; it is what my model is standing on.</p></section>'
 
-        '<p style="margin-top:18px"><b>What that implies about the model.</b> On the test set the '
-        f'model beats ADP by {sp["total"]:+.4f}. But ECR &mdash; on its own, with no model attached '
-        f'&mdash; already beats ADP by {sp["from_anchor"]:+.4f} over the same seasons. The ridge '
-        f'contributes the remaining {sp["from_model"]:+.4f}. So most of the margin over the market '
-        'is the expert list the model starts from, not the corrections it applies. It also explains '
-        'why the model shows no edge on its own tuning window: there the anchor is worth nothing '
-        'over ADP, so a model built on it has nothing inherited to win with.</p></section>'
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">Is a fantasy season just noise?</h2>'
+        '<p>The obvious excuse for a mediocre score is that the outcome is '
+        'random, so nobody could do better. I checked, and it is not true.</p>'
+        '<p>Split each season into odd and even weeks and rank the same players '
+        'twice. If seasons were mostly luck the two halves would disagree. They '
+        f'agree at {rel["r_half_mean"]:.2f}, which corrects to about '
+        f'{rel["r_full_mean"]:.2f} for a full season. In other words the thing '
+        'being graded is measured well, and the distance between a 0.52 and a '
+        'perfect board is real forecasting error, not scoring slop. There is '
+        'genuine headroom up there. Nobody, expert or model, is reaching '
+        f'it.</p><p class="note small">Reliability by position: '
+        + ", ".join(f'{k} {v:.2f}' for k, v in rel["by_position"].items())
+        + '. This is an upper bound, incidentally: a season-ending injury looks '
+        '&ldquo;consistent&rdquo; across both halves even though it was '
+        'unforecastable in August.</p></section>'
 
-        '<section><h2 class="numbered">Secondary metrics</h2>'
-        '<p class="cap"><b>Table 4.</b> Model, mean over the test seasons.</p>'
-        '<div id="secondary"></div>'
-        '<p class="note small" style="margin-top:8px">Raw-points Spearman is reported for completeness only; '
-        'it is not a decision metric (it rewards QB-stacking).</p></section>'
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">Why the experts are so hard to beat</h2>'
+        f'<p>Here is the number that reframed the project for me. Take my '
+        f'{win["n_features"]} features and use them to predict <i>the expert '
+        f'consensus itself</i> instead of the season outcome. They explain '
+        f'{red["features_to_anchor"]:.0%} of it.</p>'
+        '<p>Which makes sense once you say it out loud. ECR is roughly a hundred '
+        'analysts reading the same box scores, the same depth charts, the same '
+        'ages and the same beat reports I am feeding my regression. Age curves '
+        'and vacated targets and rookie draft capital are not secrets. So '
+        'two-thirds of my &ldquo;model&rdquo; is a reconstruction of work the '
+        'experts already did, and only the leftover third is even eligible to be '
+        'an edge.</p></section>'
 
-        '<section><h2 class="numbered">Metric and method</h2>'
-        '<p class="note">VORP = value over replacement (QB8 / RB30 / WR36 / TE8). '
-        'Predictions for season <i>t</i> use only seasons &lt; <i>t</i> outcomes plus season-<i>t</i> '
-        'preseason facts (ECR, ADP, rosters, draft): walk-forward, no leakage.</p>'
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">And there is nothing in the '
+        'leftovers</h2>'
+        '<p>That leftover third is exactly what the regression is trained on: '
+        'not &ldquo;how many points will he score&rdquo; but &ldquo;where are '
+        'the experts wrong&rdquo;. So I measured whether it gets that right on '
+        'seasons it had never seen, fold by fold.</p>'
+        f'<p>The correlation between the predicted miss and the actual miss is '
+        f'<b>{oos["r_mean"]:.3f}</b>. Not 0.3, not 0.15. About 0.07, and '
+        f'negative in {oos["n_folds_negative"]} of the {len(oos["folds"])} '
+        'seasons tested. Measured as variance explained it is essentially zero '
+        f'({oos["r2_oos_mean"]:+.4f}, i.e. very slightly worse than predicting '
+        'nothing). In sample it looks like it is working, explaining '
+        f'{red["features_to_residual_in_sample"]:.0%} of the miss; out of sample '
+        'that evaporates. Which is the whole reason to insist on out-of-sample '
+        'testing, and also why the tuning dials ended up pinned at &ldquo;trust '
+        'this as little as possible&rdquo;.</p></section>'
+
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">The experiment that convinced me: '
+        'scrambled data</h2>'
+        '<p>This is the one to remember if you take nothing else from the '
+        'post.</p>'
+        '<p>I took the training data and <b>shuffled the outcomes</b> within '
+        'each season, so that a player&rsquo;s features were attached to a '
+        'random other player&rsquo;s result. Every real relationship destroyed '
+        'on purpose. Then I ran the identical pipeline: same ridge, same dials, '
+        'same value conversion, same grading.</p>'
+        f'<p>Three scrambled runs scored <b>{perm_means}</b>. My real model '
+        f'scores <b>{perm["shipped_mean"]:.4f}</b>. Doing nothing at all, just '
+        f'ranking by the expert anchor with no regression, scores '
+        f'<b>{perm["null_mean"]:.4f}</b>.</p>'
+        f'<p>One of the scrambled runs beat my real model by '
+        f'{perm["best_over_shipped"]:+.4f}, which is larger than the entire edge '
+        f'over ECR I would otherwise be claiming ({pe["mean"]:+.4f}). Read that '
+        'as the measuring instrument rattling: pure noise fed through this '
+        'pipeline lands in the same neighbourhood as real signal, so the '
+        'neighbourhood is where the argument dies. Any &ldquo;improvement&rdquo; '
+        'smaller than that rattle is unprovable, and nearly every improvement '
+        'anyone reports in this hobby is smaller than that rattle.</p></section>'
+
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">Even a real edge would be '
+        'invisible</h2>'
+        f'<p>Suppose the model really is {pe["mean"]:+.4f} better than the '
+        'experts. Could this test see it? No. Season-to-season the gap bounces '
+        f'around with a spread of {pe["sd"]:.4f}, so with '
+        f'{pe["n"]} seasons the smallest edge detectable at conventional '
+        f'standards is about <b>{pe["mde_80"]:+.4f}</b>, three times the effect. '
+        f'To reliably confirm an edge this size I would need roughly '
+        f'<b>{pe["seasons_needed_80"]} seasons</b> of NFL history graded the same '
+        'way. I have eight, and I get one more per year.</p>'
+        f'<p>The same arithmetic undercuts my nicer-looking result. Beating ADP '
+        f'by {pa["mean"]:+.4f} in {pa["wins"]} of {pa["n"]} seasons gives a '
+        f'one-sided p-value of {pa["p_one"]:g}, which looks publishable, except '
+        f'that the smallest edge this design can detect is {pa["mde_80"]:+.4f}. '
+        'When a test clears the bar on an effect it was not powerful enough to '
+        'find, that is a lucky draw more than a demonstration.</p>'
+        '<p><b>And it poisoned my feature selection.</b> My rule for keeping a '
+        'new group of features was that it had to improve the validation score '
+        'by +0.0020. But changing a single setting moves that score by '
+        f'{fixed["paired_vs_shipped"]["se"]:.4f} to '
+        f'{tightest["paired_vs_shipped"]["se"]:.4f} run to run. The bar was '
+        'smaller than the wobble, which means every keep-or-drop call I made was '
+        'roughly a coin flip. Two of them can be checked, because I later scored '
+        'them on the test seasons: a player-trajectory block passed validation '
+        'at +0.0059 and delivered +0.0003, and a wider hyperparameter search '
+        'passed at +0.0068 and delivered &minus;0.0037. Two for two in the wrong '
+        'direction. That is what coin flips look like.</p></section>'
+
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">One thing I did find genuinely '
+        'wrong</h2>'
+        '<p>Not everything here is a null result. Auditing the loss function '
+        'turned up a real design flaw.</p>'
+        '<p>The model is <i>graded</i> on getting the order right, but it is '
+        '<i>fit</i> by minimizing squared error on points. Those are not the '
+        f'same target, and here is the damage: the {bu["share_under_50_pts"]:.1%} '
+        'of players who got hurt or busted (under 50 points on the season) '
+        f'account for <b>{bu["sq_error_share_of_under_50"]:.1%} of the total '
+        'error the regression is trying to reduce</b>. So the model spends '
+        'nearly three-quarters of its effort trying to predict which stars will '
+        'tear an ACL, which nobody can do, and a quarter on ordering the healthy '
+        'middle of the board, which is the actual job. There is a safety valve '
+        f'meant to contain this, capping any single player&rsquo;s error at '
+        f'{bu["clip"]:g} on the log scale, but it only ever triggers on '
+        f'{bu["share_clip_binds"]:.1%} of players; it is set so loose it does '
+        'nothing.</p>'
+        f'<p>Tightening that cap helps, and monotonically: {sweep} as the cap '
+        f'goes {clips}. The tightest setting is the first version of this model '
+        'that beats the experts, the market, and doing-nothing simultaneously on '
+        'the validation window. But I am not claiming it, because I just spent '
+        'this whole post explaining why numbers that size are not claimable: '
+        f'{tightest["paired_vs_shipped"]["wins"]} of '
+        f'{tightest["paired_vs_shipped"]["n"]} seasons improve, one season '
+        'supplies most of the gain, and holding the other dials fixed the cap '
+        f'alone is worth {fixed["paired_vs_shipped"]["mean"]:+.4f}. It is a good '
+        'hypothesis with a mechanism behind it. It is not a result.</p></section>'
+
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">So what actually helps your draft?</h2>'
+        '<p>Three things I would still defend, none of which are &ldquo;I have '
+        'better player opinions than the experts&rdquo;.</p>'
+        '<p><b>1. Convert to value over replacement, not points.</b> This is '
+        'where nearly all of the real movement on my board comes from, and it is '
+        'a modelling choice rather than a prediction. A tight end who scores 15 '
+        'fewer points than a quarterback can be worth much more, because the '
+        'quarterback you would otherwise stream is nearly as good and the tight '
+        'end you would otherwise stream is not. Getting the exchange rate right '
+        'between positions beats getting player 43 versus player 47 right.</p>'
+        '<p><b>2. Draft timing is a separate question from value.</b> Who is '
+        'worth the most and who you should take now are different, because '
+        'positions dry up at different speeds. That is where running-back '
+        'scarcity legitimately lives, and it is on the '
+        '<a href="draftsim.html">draft page</a> rather than in the rankings.</p>'
+        '<p><b>3. Treat any model board, including mine, as the expert '
+        'consensus with a tilt.</b> That is what it is, measurably. '
+        f'The <a href="rankings.html">{m["season"]} board</a> is public, every '
+        'player row shows exactly which features moved him and by how much, and '
+        'if a tilt looks stupid to you, it probably is; the evidence that it '
+        'knows better than you is not there.</p>'
+        f'<p>One more measurement worth stealing if you do this yourself. '
+        'Comparing two boards by their season-average correlation throws away '
+        'almost everything: a whole season of ~150 players collapses into one '
+        'number, and then you have eight numbers. Compare them <i>per player</i> '
+        'instead, asking how many ranks each board missed by. On my validation '
+        f'seasons that is {plv["err_model"]:.1f} ranks of average miss for the '
+        f'model against {plv["err_ecr"]:.1f} for the experts across '
+        f'{plv["n"]:,} player-seasons, with the difference pinned inside about a '
+        f'rank ([{plv["ci_lo"]:+.2f}, {plv["ci_hi"]:+.2f}]). Same conclusion, but '
+        'it can see effects the season-average version never will.</p></section>'
+
+        # ------------------------------------------------------------------
+        '<section><h2 class="numbered">Method, and what to distrust</h2>'
+        f'<p class="note">Value over replacement uses QB8 / RB30 / WR36 / TE8 '
+        f'(QB and TE streaming-aware). Predictions for season <i>t</i> use only '
+        'seasons before <i>t</i> plus season-<i>t</i> preseason facts: expert '
+        'ranks, draft position, rosters, the April draft. No leakage, and the '
+        'scrambled-data test above doubles as a check on that.</p>'
         '<ol class="method" id="method"></ol>'
-        '<p class="note small">Detail: <a href="methodology.html">methods</a>. '
-        'Board: <a href="rankings.html">rankings</a>. '
-        'Coefficients: <a href="features.html">features</a>.</p></section>'
+        f'<p class="note small">The honest caveats: I have looked at the test '
+        'seasons more than a pre-registered study would allow, so treat the '
+        'p-values as descriptive. The value conversion is fixed for 12-team '
+        'one-quarterback PPR and would move in other formats. Some rookies run '
+        'on partly empty opportunity features. And the residual cap discussed '
+        'above is still set where it was, not where the audit suggests.</p>'
+        '<p class="note small">Full detail: <a href="methodology.html">methods</a>. '
+        'Board: <a href="rankings.html">rankings</a>. Coefficients: '
+        '<a href="features.html">features</a>. Every figure on this page is '
+        'generated from the model artifacts by <code>bff.site</code> and '
+        '<code>bff.methodology_audit</code>; none of it is typed in by '
+        'hand.</p></section>'
         '</div>'
     )
     data = {"meta": p["meta"], "headline": p["headline"], "anchor": p["anchor"],
-            "secondary": p["secondary"], "seasons": p["seasons"], "method": p["method"]}
-    return _page("betterffrank — results", "index.html", body, data, JS_INDEX)
+            "seasons": p["seasons"], "method": p["method"]}
+    return _page("It&rsquo;s really hard to beat the ECR &mdash; betterffrank",
+                 "index.html", body, data, JS_INDEX)
 
 
 def render_rankings(p: dict) -> str:
@@ -1365,51 +1537,10 @@ def render_rankings(p: dict) -> str:
     return _page("betterffrank — rankings", "rankings.html", body, data, JS_RANKINGS)
 
 
-def render_vona(p: dict) -> str:
-    m = p["meta"]
-    body = (
-        '<div class="wrap">'
-        '<div class="titleblock"><h1 class="title">Draft</h1>'
-        f'<p class="subtitle">{m["season"]} &middot; {m["format"]} &middot; VONA &mdash; value lost by waiting</p>'
-        '<p class="docmeta">the board ranks season-long value; this page times '
-        'positions inside <i>your</i> draft &middot; scarcity, not value</p></div>'
-
-        '<section><p class="note">The <a href="rankings.html">rankings</a> answer '
-        '"who is worth the most this season" &mdash; and in full PPR that leans WR at the top. '
-        'VONA (Value Over Next Available) answers a different question: at each pick, how much '
-        'value do you lose at each position by waiting until your next turn? That is where '
-        'running-back scarcity actually lives &mdash; startable RB dries up faster than WR at '
-        'the top of a draft, so the timing guide leads RB early even though the value board does not. '
-        'Assumes opponents draft by ADP; a positional-timing guide, not a full simulator.</p></section>'
-
-        '<section><h2 class="numbered">Your draft, by seat</h2>'
-        '<p class="cap"><b>Table 1.</b> Greedy VONA pick for each of the 12 snake seats, rounds 1&ndash;'
-        f'{p["vona"]["rounds"]}. At every turn: take the position whose best-available player falls the most before your next pick.</p>'
-        '<div class="tablewrap"><div id="vona-matrix"></div></div></section>'
-
-        '<section><h2 class="numbered">Wait-cost by pick</h2>'
-        '<p class="cap"><b>Table 2.</b> Best available at each position and its VONA cost '
-        '(predicted VORP lost if you wait ~2 rounds / 24 picks). A per-position diagnostic &mdash; '
-        'Table 1 is the actual call, since it also weighs which position you can best backfill '
-        'at your next pick.</p>'
-        '<div class="vona-depth controls">through pick: '
-        '<button data-n="24" class="active">24</button><button data-n="48">48</button>'
-        '<button data-n="0">all</button></div>'
-        '<div class="tablewrap"><table class="data vona-picks"><thead><tr>'
-        '<th class="num">#</th><th>QB</th><th>RB</th><th>WR</th><th>TE</th></tr></thead>'
-        '<tbody id="vona-picks"></tbody></table></div>'
-        '<p class="note small" style="margin-top:8px">VONA is non-negative by construction '
-        '(waiting never gains value). Names are the best <i>remaining</i> player at that position '
-        'by our VORP, which can differ from ADP order.</p></section>'
-        '</div>'
-    )
-    data = {"meta": p["meta"], "vona": p["vona"]}
-    return _page("betterffrank — draft", "vona.html", body, data, JS_VONA)
-
-
 def render_draftsim(p: dict) -> str:
-    """Unlisted beta page (not in NAV): live draft simulator over the same
-    board as rankings/vona. Presentation only — never feeds anything scored."""
+    """The site's Draft page ("Draft (beta)" in NAV): live draft simulator
+    over the same board as rankings. Presentation only — never feeds anything
+    scored."""
     body = (
         '<div class="sim-app">'
 
@@ -1573,7 +1704,6 @@ def main() -> None:
     pages = {
         "index.html": render_index(payload),
         "rankings.html": render_rankings(payload),
-        "vona.html": render_vona(payload),
         "draftsim.html": render_draftsim(payload),
         "features.html": render_features(payload),
         "methodology.html": render_methodology(payload),

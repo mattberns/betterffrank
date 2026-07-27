@@ -28,7 +28,7 @@ import sys
 from bff.props_wayback import (MARKETS, PRESEASON_RE, find_captures, iter_rows,
                                audit_page)
 
-ROOT = Path("/home/bernstml19/source/betterffrank")
+ROOT = Path(__file__).resolve().parents[1]
 SCRATCH = ROOT / "reports"
 CACHE = ROOT / "data" / "raw" / "props" / "recon_cache"
 UA = {"User-Agent": "betterffrank-research/1.0"}

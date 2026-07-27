@@ -1,9 +1,9 @@
-"""Block-wise candidate-feature selection on the TUNE WINDOW ONLY (2012-2017).
+"""Block-wise candidate-feature selection on the TUNE WINDOW ONLY (2013-2017).
 
 Protocol (see CLAUDE.md): the 2018-2025 test set is NEVER consulted here.
 For each candidate block in bff.model.CANDIDATE_BLOCKS this script re-runs
 the full hyperparameter tune (frozen grid, spearman_vorp, walk-forward
-2012-2017) with FEATURES + block, and reports the tune-window mean against
+2013-2017) with FEATURES + block, and reports the tune-window mean against
 the baseline FEATURES-only tune. It also prints, for every candidate column,
 its max |Pearson r| against any existing feature (computed on tune-window
 rows only, feature-feature, no outcomes touched).

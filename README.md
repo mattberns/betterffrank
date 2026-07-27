@@ -184,6 +184,10 @@ uv run python -m bff.situation_features    # <- data/raw/{snaps,injuries,contrac
 # candidate-feature selection (tune window only; never the test set)
 uv run python -m bff.select_features
 
+# stepwise selection audit (tune window only): forward-backward search from
+# the empty feature set, with leave-one-fold-out overfit control
+uv run python -m bff.stepwise                    # -> reports/stepwise.json
+
 # model
 uv run python -m bff.model                       # -> data/processed/preds_model.parquet (2018-2025)
 uv run python -m bff.model --baselines           # -> preds_adp.parquet, preds_ecr.parquet
@@ -191,6 +195,9 @@ uv run python -m bff.model --season 2026         # -> preds_model_2026.parquet, 
 
 # draft overlay (VONA) — post-processes the 2026 board; not part of scoring
 uv run python -m bff.vona                        # -> reports/vona_2026.csv
+
+# audit dump: every model input, one row per player, names visible
+uv run python -m bff.audit                       # -> reports/audit_2026{,_columns}.csv
 
 # QB/TE streaming baseline derivation (tune window only; justifies REPL_RANKS QB8/TE8)
 uv run python -m bff.streaming                   # stdout only
@@ -203,6 +210,10 @@ uv run python -m bff.backtest data/processed/preds_ecr.parquet   --name ecr
 # significance
 uv run python -m bff.compare data/processed/preds_model.parquet data/processed/preds_adp.parquet
 uv run python -m bff.compare data/processed/preds_model.parquet data/processed/preds_ecr.parquet
+
+# methodology audit: can this experiment measure anything? (tune window +
+# published scores only, no test look). The site's front-page article reads it.
+uv run python -m bff.methodology_audit           # -> reports/methodology_audit.json
 
 # static site (GitHub Pages, /docs)
 uv run python -m bff.site                        # render from current artifacts
@@ -219,6 +230,9 @@ uv run python -m bff.site --refresh              # rerun model + backtests first
 | `reports/scores_model.csv`, `scores_adp.csv`, `scores_ecr.csv` | `uv run python -m bff.backtest <preds> --name <n>` |
 | `reports/rankings_2026.csv`, `reports/steals_2026.csv` | `uv run python -m bff.model --season 2026` |
 | `reports/vona_2026.csv` | `uv run python -m bff.vona` (draft-timing overlay; 150 picks) |
+| `reports/audit_2026.csv`, `audit_2026_columns.csv` | `uv run python -m bff.audit` (every feature value and per-player contribution behind the 2026 board, plus a column dictionary) |
+| `reports/methodology_audit.json` | `uv run python -m bff.methodology_audit` (nine diagnostics of the experiment itself: outcome reliability, redundancy against the expert anchor, out-of-sample residual signal, statistical power, permuted-target noise floor, loss/metric mismatch, per-player estimand). Source of every number in the front-page article |
+| `reports/stepwise.json` | `uv run python -m bff.stepwise` (stepwise-selection audit on the tune window; records that no selected set beats anchor-only out of selection) |
 | `reports/REPORT.md` | written by hand; every number maps to a command above |
 | `data/processed/season_props.parquet`, `props_features.parquet` | `uv run python -m bff.props` (preseason player-prop boards, 2012–2025; **data only, not an input to the model**) |
 
@@ -239,18 +253,21 @@ bff/                      the pipeline (run as python -m bff.<module>)
   props_wayback.py        one-time: preseason player-prop boards from Wayback sportsoddshistory
   props.py                curate those boards -> gsis-keyed tables (data only; not in the model)
   select_features.py      candidate-block selection harness (tune window only)
+  stepwise.py             stepwise-selection audit from the empty set (tune window only)
   vorp.py                 leakage-safe VORP curve library
   streaming.py            QB/TE streaming-baseline derivation (tune window; justifies QB8/TE8 replacement)
   backtest.py             evaluation harness (the metrics table)
   compare.py              paired sign-flip permutation test between two preds files
   model.py                THE model: dataset, tune, fit, VORP conversion, baselines, 2026 deliverables
   vona.py                 draft-strategy overlay (VONA): post-processes the 2026 board, not scored
+  audit.py                flat CSV dump of every model input per player (read-only audit view)
+  methodology_audit.py    diagnostics of the EXPERIMENT (power, noise floor, redundancy); feeds the site's article
   site.py                 static-site generator -> /docs (GitHub Pages)
 data/
   raw/                    source data (see Data and attribution)
   processed/              built parquets (committed so results reproduce)
 reports/                  REPORT.md (the only report), scores tables, 2026 rankings + steals
-docs/                     generated static site (bff.site)
+docs/                     generated static site (bff.site); index.html is the methodology article
 ```
 
 ## Data notes

@@ -46,6 +46,7 @@ Eval:      uv run python -m bff.backtest data/processed/preds_model.parquet --na
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -152,7 +153,7 @@ EXP_FEATURES = [
 # REPL_RANKS streaming change (QB8/TE8) redefined the metric BEFORE the ship
 # decision, so the promotion was rolled back and all four blocks re-derived
 # on the tune window under the new metric. See reports/REPORT.md §4.
-SCHEME_FEATURES = ["coach_pass_oe", "coach_pass_shift"]
+# (The coach_scheme columns live in CANDIDATE_BLOCKS below.)
 # 2026-07-24 zero-fetch round 2: trajectory SHIPPED as a lean 2-column block
 # (tune +0.0059, the strongest new block since the original expansion). The
 # other two trajectory candidates (yrs_exp r=0.80 vs age_c, career_best_ppg
@@ -161,6 +162,17 @@ SCHEME_FEATURES = ["coach_pass_oe", "coach_pass_shift"]
 # ship. `sos` rejected (tune -0.0068: schedule is real info but noise at the
 # season level, defenses regress). See reports/REPORT.md §4.
 TRAJ_FEATURES = ["yrs_since_peak", "last_was_career_best"]
+# 2026-07-25: position-conditional injury history. NOT found by a metric
+# sweep -- found by splitting the feature-vs-residual correlation table by
+# position, where inj_recurrence reads -0.388 against the market residual for
+# QBs (n=115, clears Bonferroni over all 62 QB columns) and ~0.00 pooled. One
+# shared coefficient was averaging a real QB effect into nothing. Worth only
+# +0.0003 of tune mean but +0.0035 under leave-one-fold-out, i.e. it buys
+# stability rather than level. Corroborated independently: the full-window
+# stepwise path picks inj_weeks_listed_l2y_qb FIRST out of 76 candidates.
+# SHIPPED BRIEFLY ON 2026-07-25 AND REVERTED after test look #13 -- see the
+# grid comment below for the joint result. The columns stay as the `inj_pos`
+# CANDIDATE_BLOCK; do not re-promote them without a new argument.
 FEATURES = (BASE_FEATURES + MARKET_FEATURES + CTX_FEATURES + INTERACTIONS
             + OPP_FEATURES + EXP_FEATURES + TRAJ_FEATURES)
 
@@ -197,6 +209,8 @@ CANDIDATE_BLOCKS: dict[str, list[str]] = {
               "prop_rec_yds"],
     "props_dense": ["prop_mvp", "prop_rush_yds", "prop_rec_yds"],
     "props_lean": ["prop_rush_yds", "prop_rec_yds"],
+    # 2026-07-25: position-conditional injury history, see build_dataset
+    "inj_pos": ["inj_recurrence_qb", "inj_weeks_listed_l2y_qb"],
 }
 
 
@@ -514,6 +528,18 @@ def build_dataset() -> pl.DataFrame:
          * (pl.col("vacated_target_share") + pl.col("vacated_carry_share")))
         .alias("rookie_x_vacated")
     )
+
+    # QB-interacted injury history (2026-07-25). Motivated a priori by the
+    # per-position residual table, NOT by a metric sweep: on the tune window
+    # inj_recurrence correlates -0.388 with the market residual for QBs
+    # (n=115, survives Bonferroni across all 62 QB columns) and ~0.00 pooled,
+    # so a single shared coefficient averages a real QB effect into nothing.
+    # The columns are candidates, not features; bff.select_features /
+    # bff.stepwise decide.
+    df = df.with_columns([
+        (pl.col(c) * (pl.col("position") == "QB").cast(pl.Float64)).alias(f"{c}_qb")
+        for c in ("inj_recurrence", "inj_weeks_listed_l2y")
+    ])
     return df
 
 
@@ -552,10 +578,12 @@ def fit_predict(df: pl.DataFrame, eval_season: int, ridge_alpha: float,
     With return_contrib=True also returns per-player ridge contributions
     (c_<feature> = shrink * scaled z-feature * coef, in log-points units),
     the fitted model, and feat_order.
+
+    features=[] is the NULL: anchor only, no ridge stage at all. Equivalent to
+    shrink=0 with any feature list, and it is what bff.stepwise gates against.
     """
     if features is None:
         features = FEATURES
-    assert "ppg_mismatch" in features
     train = df.filter(
         (pl.col("season") >= FIRST_TARGET) & (pl.col("season") < eval_season)
     )
@@ -569,6 +597,12 @@ def fit_predict(df: pl.DataFrame, eval_season: int, ridge_alpha: float,
     te_implied = implied_expectation(train, test)
     resid = train["log_pts"].to_numpy() - tr_implied
 
+    if not features:
+        # NULL: anchor only. No design matrix, no ridge, shrink is irrelevant.
+        preds = test.select("season", "gsis_id").with_columns(
+            pl.Series("score", te_implied))
+        return (preds, None, None, []) if return_contrib else preds
+
     sched_tr = np.where(train["season"].to_numpy() >= 2021, 17.0, 16.0)
     sched_te = np.where(test["season"].to_numpy() >= 2021, 17.0, 16.0)
     tr_mismatch = train["prev_ppg"].to_numpy() - np.expm1(tr_implied) / sched_tr
@@ -577,10 +611,17 @@ def fit_predict(df: pl.DataFrame, eval_season: int, ridge_alpha: float,
     te_mismatch *= test["has_prior"].to_numpy()
 
     feats = [f for f in features if f != "ppg_mismatch"]
-    # contract: ppg_mismatch is ALWAYS the last matrix column
-    Xtr = np.column_stack([train.select(feats).to_numpy(), tr_mismatch])
-    Xte = np.column_stack([test.select(feats).to_numpy(), te_mismatch])
-    feat_order = feats + ["ppg_mismatch"]
+    # contract: ppg_mismatch is ALWAYS the last matrix column. It is a derived
+    # column (built above, not present in df), so it is appended here rather
+    # than selected; bff.stepwise may leave it out of `features` entirely.
+    use_mismatch = "ppg_mismatch" in features
+    tr_parts = ([train.select(feats).to_numpy()] if feats else []) \
+        + ([tr_mismatch] if use_mismatch else [])
+    te_parts = ([test.select(feats).to_numpy()] if feats else []) \
+        + ([te_mismatch] if use_mismatch else [])
+    Xtr = np.column_stack(tr_parts)
+    Xte = np.column_stack(te_parts)
+    feat_order = feats + (["ppg_mismatch"] if use_mismatch else [])
 
     # StandardScaler's zero-variance fallback (scale_=1) is load-bearing:
     # vs_adp has zero train variance for eval season 2012 (it trains on 2011
@@ -606,9 +647,71 @@ def fit_predict(df: pl.DataFrame, eval_season: int, ridge_alpha: float,
     return preds, cdf, model, feat_order
 
 
+# Hyperparameter grid. FROZEN -- never expand. EXTENDED AND REVERTED on
+# 2026-07-25; read this before proposing the same change again.
+#
+# The old optimum sits ON the boundary at (alpha 300, shrink 0.3): maximum
+# alpha, minimum shrink. The tuner is asking for LESS MODEL than the grid can
+# express, which is real and is what the "pinned alpha" warning means. On the
+# tune window, mean spearman_vorp at alpha=300 by shrink runs .4325 (0.08)
+# .4329 (0.10) .4332 (0.15) .4358 (0.20) .4340 (0.22) .4308 (0.25) .4293 (0.30)
+# against a NULL (anchor only, no ridge) of .4306. The whole region 0.08-0.22
+# beats doing nothing and the frozen floor of 0.30 sits just past the cliff.
+# A broad plateau, not a spike.
+#
+# So the grid was extended to a strict superset, alpha x1000 and shrink down to
+# 0.10, jointly with the inj_pos block. Tune mean 0.4293 -> 0.4361, +0.0068,
+# beating the ECR baseline (0.4298) by +0.0064 on 4 of 5 folds -- the first
+# tune-window win over ECR the project has had.
+#
+# IT DID NOT TRANSFER. Test look #13 scored it once on 2018-2025: mean
+# spearman_vorp 0.5237 -> 0.5200, i.e. -0.0037. The edge over ECR went +0.0032
+# -> -0.0004 (4/8, p_one 0.543) and the edge over ADP went +0.0197 -> +0.0160,
+# losing its marginal significance (p_one 0.0469 -> 0.0820). Reverted.
+#
+# The lesson is NOT "the grid extension was wrong". It is that a +0.0068
+# tune-window gain, LOFO-validated and mechanistically argued, landed as
+# -0.0037 on test. The five-fold tune window has a standard error of ~0.0022
+# on its mean, so it cannot resolve effects of the size this project chases
+# (~0.003). Do not spend another look on a tune-window gain under ~0.01.
+ALPHA_GRID = (3.0, 10.0, 30.0, 100.0, 300.0)
+SHRINK_GRID = (0.3, 0.5, 0.7, 1.0)
+
+
+@lru_cache(maxsize=1)
+def scoring_context() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame,
+                               pl.DataFrame, dict]:
+    """(adp, ecr, actuals, hist, pools) for the tune window, loaded once.
+
+    Cached because bff.stepwise calls the tuner thousands of times and the
+    parquet reads plus pool_market_ranks dominate otherwise. Read-only.
+    """
+    adp = pl.read_parquet(PROC / "adp.parquet")
+    ecr = pl.read_parquet(PROC / "ecr.parquet")
+    actuals = pl.read_parquet(PROC / "actuals.parquet")
+    hist = pool_market_ranks(adp, ecr, actuals)
+    pools = {s: build_pool(s, adp, ecr)[0] for s in TUNE_SEASONS}
+    return adp, ecr, actuals, hist, pools
+
+
+def season_scores(df: pl.DataFrame, alpha: float, shrink: float,
+                  seasons: tuple[int, ...], features: list[str] | None = None
+                  ) -> list[float]:
+    """spearman_vorp per season through the canonical to_vorp -> eval_season
+    pipeline. `seasons` must be a subset of TUNE_SEASONS."""
+    adp, ecr, actuals, hist, pools = scoring_context()
+    out = []
+    for s in seasons:
+        preds = fit_predict(df, s, alpha, shrink, features=features)
+        vorp_preds = to_vorp(preds, s, adp, ecr, hist)
+        out.append(eval_season(pools[s], vorp_preds, actuals, s)["spearman_vorp"])
+    return out
+
+
 def tune(df: pl.DataFrame, features: list[str] | None = None,
-         quiet: bool = False) -> tuple[float, float, float]:
-    """Pick (ridge_alpha, shrink) on walk-forward validation seasons 2012-2017.
+         quiet: bool = False, seasons: tuple[int, ...] | None = None
+         ) -> tuple[float, float, float]:
+    """Pick (ridge_alpha, shrink) on walk-forward validation seasons 2013-2017.
 
     Frozen grid (never expanded, even if the winner lands on an edge; edge
     landings are noted in REPORT.md). Metric: spearman_vorp -- the same
@@ -617,28 +720,25 @@ def tune(df: pl.DataFrame, features: list[str] | None = None,
     <= 2017, strictly before the 2018-2025 test set. Leakage-safe:
     build_curve(hist, s) restricts to seasons < s. Deterministic; re-run
     every invocation, no stored params.
+
+    `seasons` restricts scoring to a SUBSET of TUNE_SEASONS. It exists for
+    bff.stepwise's nested leave-one-fold-out, which must select on four folds
+    and keep the fifth unseen. It may never name a test season -- asserted.
     """
-    adp = pl.read_parquet(PROC / "adp.parquet")
-    ecr = pl.read_parquet(PROC / "ecr.parquet")
-    actuals = pl.read_parquet(PROC / "actuals.parquet")
-    hist = pool_market_ranks(adp, ecr, actuals)
-    pools = {s: build_pool(s, adp, ecr)[0] for s in TUNE_SEASONS}
+    seasons = tuple(seasons) if seasons is not None else TUNE_SEASONS
+    assert set(seasons) <= set(TUNE_SEASONS), \
+        f"tune() scores tune folds only, got {seasons}"
 
     best, best_val = (10.0, 0.5), -np.inf
-    for alpha in (3.0, 10.0, 30.0, 100.0, 300.0):
-        for w in (0.3, 0.5, 0.7, 1.0):
-            vals = []
-            for s in TUNE_SEASONS:
-                preds = fit_predict(df, s, alpha, w, features=features)
-                vorp_preds = to_vorp(preds, s, adp, ecr, hist)
-                vals.append(eval_season(pools[s], vorp_preds, actuals, s)["spearman_vorp"])
-            m = float(np.mean(vals))
+    for alpha in ALPHA_GRID:
+        for w in SHRINK_GRID:
+            m = float(np.mean(season_scores(df, alpha, w, seasons, features)))
             if m > best_val:
                 best_val, best = m, (alpha, w)
     assert best_val > -np.inf
     if not quiet:
         print(f"tuned: alpha={best[0]}, shrink={best[1]}, "
-              f"{TUNE_SEASONS[0]}-{TUNE_SEASONS[-1]} mean spearman_vorp={best_val:.4f}")
+              f"{seasons[0]}-{seasons[-1]} mean spearman_vorp={best_val:.4f}")
     return best[0], best[1], best_val
 
 
