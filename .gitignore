@@ -22,6 +22,10 @@ data/raw/db_fpecr_wayback.parquet
 data/raw/wayback_ppr/
 data/raw/adp/fantasypros_2025_adp.csv
 data/raw/FantasyPros_2026_Draft_ALL_Rankings.csv
+# FantasyPros ADP scrape cache (bff/fp_adp.py). auth_state.json is a live
+# SESSION CREDENTIAL — never commit it. The derived fp_adp_*.parquet IS
+# committed, same rule as ecr.parquet.
+data/raw/fp_adp/
 
 # Large nflverse raw pulls — reproducible via fetch commands in module
 # docstrings (bff/redzone_features.py, bff/situation_features.py)
@@ -35,3 +39,4 @@ data/raw/vegas/
 # + parsed parquet). The derived data/processed/season_props.parquet IS
 # committed, so the curation step reproduces without re-fetching.
 data/raw/props/
+data/raw/fp_ecr/

@@ -459,6 +459,66 @@ oroy, comeback, pass_yds, pass_td, rush_yds, rush_td, rec_yds, rec_td — as
 - `norm_name` here is a FOURTH variant (adp/ecr/crosswalk have their own) and
   also strips parentheticals ("Josh Allen (BUF)"). Do not unify them.
 
+## Half-PPR ADP (built 2026-08-31, NOT wired into anything)
+
+The scored pipeline is FULL PPR end to end: `pts_ppr` targets from nflverse
+`fantasy_points_ppr`, FFC `/adp/ppr` 12-team boards, FantasyPros PPR ECR.
+`bff/adp_half.py` adds the half-PPR market board alongside it —
+`data/raw/adp_half/half_<season>.json` (FFC API v1 shape, identical to
+`ppr_<season>.json`) → `data/processed/adp_half.parquet`. It is a parallel
+dataset, read by nothing.
+
+- **Coverage is 2018-2026 and that is the publisher's ENTIRE history, not a
+  fetch gap.** The API answers "No ADP data found." for 2010-2017 and FFC's own
+  season selector on `/adp/half-ppr` lists exactly 2018-2026 — FFC did not run
+  half-PPR mock drafts before 2018. Wayback is no help (the pages did not exist
+  either, and `web.archive.org` was unreachable from this environment on
+  2026-08-31, unlike when the PPR/ECR/props scrapes were built — assume nothing
+  about its availability).
+- **So half-PPR cannot anchor this model without a new protocol.** It covers
+  the TEST window 2018-2025 plus 2026 and ZERO of the tune window 2013-2017:
+  nothing can be tuned on it, folds before 2019 have no half-PPR training rows,
+  and any decision taken with it would be test-set selection. Swapping it in
+  would also require moving the TARGETS to `pts_half` (already computed in
+  `bff/actuals.py`, currently dead output) and re-deriving the VORP curve and
+  `REPL_RANKS` — streamable QB/TE and the WR-first board shape are PPR
+  conclusions, not universal ones.
+- Half-PPR boards are shallower than their PPR twins (fewer drafts underneath)
+  and **2022 and 2025 fall below the 150-deep scored pool** — 2022 is 117 skill
+  players stopping at ADP 157.9, and its PPR twin is truncated too (146). This
+  is source-side pruning like the 2012 PPR board, but with NO recovery route
+  while Wayback is down; `report` warns, it does not assert.
+- **That pruning punches HOLES AT THE TOP of the board, not just a short
+  tail — depth and max_adp do not certify a half board.** Against the PPR top
+  120 the half board is missing 9 players in 2022, 5 in 2025, 2 in 2026 and
+  zero in every other season, and the 2022 set includes **Austin Ekeler at PPR
+  ADP rank 3** plus Joe Burrow at 48. `bff.adp_half --compare` prints them.
+  Consequence for any consumer that backfills half from PPR: record which
+  board each rank came from instead of substituting silently — a filled rank
+  is a different measurement, and at the player level the two boards are not
+  interchangeable.
+- The 2026 board is a rolling window, so the cached JSON is the pinned
+  artifact — `main` fetches only seasons with no cached file. Careful with 2026
+  format comparisons: the PPR 2026 board is a 2026-07-15..22 draft window and
+  the half-PPR fetch landed on 2026-08-26..31, so player-level differences
+  there confound format with date. `check_preseason` asserts every window
+  CLOSES before that season's Week 1 kickoff (min lead 1d, max 9d).
+- Identity resolution reuses `bff.adp.join_gsis` unchanged; 99.5% of the top
+  150 matches and the misses are EXACTLY the PPR board's six "Mike Williams"
+  rows. Any other unmatched top-150 name is a new bug.
+- Descriptive finding from `--compare` (read-only, nothing selected on it):
+  half vs PPR rank Spearman on the shared top 150 runs 0.99 in 2018-2021 and
+  decays to 0.95-0.97 in 2022-2026, i.e. the two boards are near-duplicates.
+  The systematic part is small and in the expected direction — mean signed
+  (ppr_rank − half_rank) is TE −2.3 (tight ends go earlier in PPR, as
+  receptions should imply), RB +1.3 / QB +1.5 (earlier in half-PPR), WR +0.0.
+  The large individual splits (mean |d| 3.5 → 8.9, max 69) sit almost entirely
+  in the thin late boards — 11 of the 12 biggest are 2022/2024/2025, the
+  seasons with 718-1107 drafts underneath — so read the tail as sample noise
+  in the half-PPR board, not as a format effect. Do not build a "format
+  disagreement" feature off it without first showing the disagreement is
+  bigger than the board's own draft-sample noise.
+
 ## Leakage rules
 
 - Walk-forward: predictions for season t use only seasons < t
@@ -528,6 +588,11 @@ uv run python -m bff.schedule_trajectory_features  # <- sched (games.csv) + traj
 uv run python -m bff.props_wayback         # -> data/raw/props/season_props.parquet
 uv run python -m bff.props                 # -> data/processed/{season_props,props_features}.parquet
 
+# HALF-PPR ADP boards (FFC API, 2018-2026 = the publisher's whole history).
+# Fetch is one-time per season and cached; reruns are offline and byte-stable.
+# NOT WIRED INTO THE MODEL and cannot be -- see "Half-PPR ADP" below.
+uv run python -m bff.adp_half [--compare]  # -> data/raw/adp_half/, data/processed/adp_half.parquet
+
 # QB/TE streaming baseline derivation (tune window ONLY; justifies REPL_RANKS QB8/TE8)
 uv run python -m bff.streaming
 
@@ -590,6 +655,7 @@ uv run python -m bff.site --refresh    # rerun model + backtests, then render
 | `bff.stepwise` | `reports/stepwise.json` (5 LOFO runs + full-window run, selection counts, majority set, held-out curve, null/shipped/majority evals). Tune window only — never a test look |
 | `bff.props_wayback` | `data/raw/props/season_props.parquet` (5234 quotes, 2012-2025; 5233 after curation dedupe) + cached HTML (git-ignored) |
 | `bff.props` | `data/processed/season_props.parquet` (long, 5233 rows) and `props_features.parquet` (wide, 2697 rows keyed season × gsis_id) |
+| `bff.adp_half` | `data/raw/adp_half/half_<season>.json` (2018-2026, one per season, fetched once then never re-fetched) and `data/processed/adp_half.parquet` (1514 rows, same columns as `adp.parquet`) + prints the preseason-window check, per-season depth/gap profile against each PPR twin, and gsis match rate. `--compare` adds a read-only half-vs-PPR rank divergence report. Feeds nothing; never a test look |
 | `bff.backtest <preds> --name <n>` | `reports/scores_<n>.csv` |
 | `bff.compare A B` | stdout only (per-season deltas + exact sign-flip p-values) |
 

@@ -1,0 +1,14 @@
+# ESPN session cookies + the Chrome profile that holds the login. Never commit.
+.auth/
+
+# Cached raw ESPN payloads (re-fetchable with `--refresh`), plus local venv.
+data/raw/
+.venv
+__pycache__/
+
+# Built dataset carries league members' real names. Delete this line if you
+# want the outputs committed.
+data/processed/
+
+# The rendered page embeds league members' real names, same as data/processed/.
+docs/
