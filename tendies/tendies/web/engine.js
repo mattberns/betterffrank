@@ -182,6 +182,30 @@ function openPositions(st, seat) {
   return out;
 }
 
+/* Positions the seat on the clock may legally DRAFT right now. Two rules:
+ * the position cap (openPositions), and the endgame squeeze — once the seat's
+ * remaining picks are all owed to unfilled DEDICATED starting slots, a pick
+ * that fills none of them would leave a slot that can never be filled, so
+ * only deficit positions stay legal. Flex is deliberately not mandatory (see
+ * lineupSpec), so it counts as free space, never as a deficit. Falls back to
+ * openPositions when no deficit position has players left on the board. */
+function legalPositions(st, seat) {
+  const open = openPositions(st, seat);
+  let left = 0;                       // picks this seat still has, incl. this one
+  for (let i = st.picks.length; i < st.seats.length; i++) {
+    if (st.seats[i] - 1 === seat) left++;
+  }
+  let deficit = 0;
+  const short = new Uint8Array(st.board.positions.length);
+  for (let p = 0; p < st.board.positions.length; p++) {
+    const need = (st.league.starters[st.board.positions[p]] || 0) - st.counts[seat][p];
+    if (need > 0) { deficit += need; short[p] = 1; }
+  }
+  if (left - 1 >= deficit) return open;
+  const forced = open.filter((p) => short[p]);
+  return forced.length ? forced : open;
+}
+
 function choiceSet(st, seat, model, kappa) {
   kappa = kappa === undefined ? 1.0 : kappa;
   const cs = {};
@@ -1485,15 +1509,27 @@ function botPick(model, st, opts) {
   if (s < 0) return null;
   const r = jointProbs(model, st, s, st.managers[s], opts.autoWeight || 0, opts.kappa);
   if (!r.pids.length) return null;
+  // the same endgame rule the page enforces on a human: once every remaining
+  // pick is owed to an unfilled dedicated slot, positions filling none of
+  // them are struck and the rest renormalised (fitted managers almost always
+  // do this on their own; the mask closes the sampled tail that would not)
+  let probs = r.probs;
+  const legal = legalPositions(st, s);
+  if (legal.length < r.positions.length) {
+    const ok = new Uint8Array(st.board.positions.length);
+    for (const p of legal) ok[p] = 1;
+    const masked = r.probs.map((q, i) => (ok[st.board.pos[r.pids[i]]] ? q : 0));
+    if (masked.some((q) => q > 0)) probs = masked;
+  }
   if (!opts.sample) {          // argmax — same rule mockdraft.mjs plays drafts by
     let best = 0;
-    for (let i = 1; i < r.probs.length; i++) if (r.probs[i] > r.probs[best]) best = i;
+    for (let i = 1; i < probs.length; i++) if (probs[i] > probs[best]) best = i;
     return r.pids[best];
   }
   let total = 0;
-  for (const q of r.probs) total += q;
+  for (const q of probs) total += q;
   if (total <= 0) return r.pids[0];
-  const j = samplePick(opts.rnd, r.probs.map((q) => q / total));
+  const j = samplePick(opts.rnd, probs.map((q) => q / total));
   return r.pids[j];
 }
 
@@ -1528,7 +1564,7 @@ function fastForward(model, st, opts) {
 const API = {
   POS_FEATURES, PLR_FEATURES, BOARD_FIELDS, assertContract, assertBoard,
   makeBoard, newState, snakeSeats,
-  pickNo, seatOnClock, nextPickFor, horizon, available, openPositions, choiceSet,
+  pickNo, seatOnClock, nextPickFor, horizon, available, openPositions, legalPositions, choiceSet,
   advance, undo, forkState, positionFeatures, playerFeatures, positionProbs,
   jointProbs, scoreState, playerUtilities, simulate, mulberry32, hash32, stateSeed,
   botPick, fastForward,

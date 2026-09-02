@@ -67,6 +67,24 @@ for (const pid of ff4) {
   seen.add(pid);
 }
 
+// 4b. the endgame squeeze: every seat ends with every dedicated slot filled
+// (botPick masks to legalPositions once remaining picks are all owed to
+// unfilled starters, so an incomplete lineup here means the mask failed)
+for (let s = 0; s < league.teams; s++) {
+  for (let p = 0; p < M.positions.length; p++) {
+    const need = league.starters[M.positions[p]] || 0;
+    if (s4.counts[s][p] < need) {
+      problems.push(`seat ${s} finished with ${s4.counts[s][p]} ${M.positions[p]}, needs ${need}`);
+    }
+  }
+}
+
+// 4c. legalPositions only restricts under pressure: a fresh draft is free
+const sLegal = fresh();
+if (!same(E.legalPositions(sLegal, 0), E.openPositions(sLegal, 0))) {
+  problems.push('legalPositions restricts a fresh draft');
+}
+
 // 5. stopping where you already stand is a no-op
 const s5 = fresh();
 const ff5 = E.fastForward(M, s5, { stopSeat: E.seatOnClock(s5) });

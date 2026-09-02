@@ -64,6 +64,10 @@ itself, so you can see why a receiver now is fine when the back is coming at
 your next turn. Once a pick can no longer improve the lineup it is labelled and
 scored as a bench pick instead (insurance plus market edge, never as lineup
 points). State persists in localStorage, so a reload mid-draft costs nothing.
+The board only offers what the seat on the clock can legally roster: position
+caps always, and at the endgame — once every remaining pick is owed to an
+unfilled starting slot — only the positions that fill one (a banner says so;
+simulated picks obey the same rule).
 
 The header bar can also **skip ahead**: *sim to my pick* has the model make
 every other seat's pick until you are on the clock, and the pick box (overall

@@ -29,8 +29,8 @@ CSS = """
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:13px/1.45 var(--sans)}
 h1{font-size:15px;margin:0;letter-spacing:.02em}
-.wrap{display:grid;grid-template-columns:256px 1fr 340px;grid-template-rows:auto 1fr;
-  gap:10px;padding:10px;height:100vh}
+.wrap{display:grid;grid-template-columns:256px minmax(0,1fr) 340px 300px;
+  grid-template-rows:auto 1fr;gap:10px;padding:10px;height:100vh}
 .bar{grid-column:1/-1;display:flex;align-items:center;gap:12px;background:var(--panel);
   border:1px solid var(--rule);border-radius:6px;padding:8px 12px}
 .bar .sp{flex:1}
@@ -67,15 +67,21 @@ b.safe{color:var(--safe)}b.risky{color:var(--risky)}b.gone{color:var(--gone)}
 tr.onclock{background:#f0f6f3}
 tr.mine td:nth-child(2){font-weight:700}
 .you{background:var(--accent);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px}
-#roster ul{margin:0;padding:6px 10px;list-style:none}
-#roster li{padding:2px 0}
+/* the roster panel: the lineup slot by slot, bench under the starters */
+#roster table{table-layout:fixed}
+#roster td{padding:3px 6px 3px 10px}
+#roster .slab{font-family:var(--mono);color:var(--dim);font-size:10px;width:46px}
+#roster .val{width:40px;font-size:11px}
+#roster .rn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#roster tr.hole td{color:var(--dim)}
+#roster tr.hole:hover{background:none}
 
 /* sim / skip-ahead controls and provenance badges */
 #simto{width:110px}
 input.bad{border-color:var(--gone)}
 button:disabled{opacity:.45;cursor:default;border-color:var(--rule)}
-#roster li.sim{color:var(--dim)}
-#roster li.sim::after{content:"sim";font-size:9px;font-weight:600;letter-spacing:.04em;
+#roster .rnm.sim{color:var(--dim)}
+#roster .rnm.sim::after{content:"sim";font-size:9px;font-weight:600;letter-spacing:.04em;
   color:var(--faint);border:1px solid var(--rule);border-radius:3px;padding:0 3px;margin-left:5px}
 .card{border-bottom:1px solid var(--rule);padding:7px 10px}
 .card-hd{font-weight:600;font-size:12px;margin-bottom:4px}
@@ -105,7 +111,7 @@ button:disabled{opacity:.45;cursor:default;border-color:var(--rule)}
 .planline{padding:5px 10px;border-bottom:1px solid var(--rule);font-family:var(--mono)}
 .planline .proj,.rec-bd .proj{color:var(--faint)}
 .warn{background:#f7ece0;color:#7a4f10;border-bottom:1px solid var(--rule)}
-#panels.computing{opacity:.55}
+.simdep.computing{opacity:.55}
 #filters button{padding:2px 7px;font-size:11px}
 #filters button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .tools{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid var(--rule);
@@ -137,8 +143,7 @@ tr:hover .fit{color:var(--dim);border-color:var(--rule-strong)}
 .fit:hover{color:var(--accent);border-color:var(--accent)}
 .onm[data-pid]{cursor:pointer}
 .onm[data-pid]:hover{text-decoration:underline dotted;text-underline-offset:2px}
-#roster li[data-pid]{cursor:pointer}
-#roster li[data-pid]:hover{background:#f2efe9}
+#roster tr[data-pid]{cursor:pointer}
 
 /* "safe to wait on" */
 .wsec{border-bottom:1px solid var(--rule);padding:6px 10px}
@@ -210,11 +215,8 @@ def render(payload: dict, web: Path, out: Path) -> Path:
     <div class="panel" style="flex:0 0 auto">
       <h2>League &mdash; drag a number to fix the draft order</h2><div id="league"></div>
     </div>
-    <div class="panel" style="flex:0 0 auto">
+    <div class="panel" style="flex:1">
       <h2>Your roster</h2><div id="roster"></div>
-    </div>
-    <div class="panel">
-      <h2>Safe to wait on</h2><div id="wait"></div>
     </div>
   </div>
 
@@ -232,12 +234,16 @@ def render(payload: dict, web: Path, out: Path) -> Path:
     <div id="board"></div>
   </div>
 
-  <div class="col" id="panels">
-    <div class="panel">
-      <h2>Upcoming picks &mdash; most likely 3 each</h2><div id="upcoming"></div>
+  <div class="panel simdep">
+    <h2>Take now</h2><div id="recommend"></div>
+  </div>
+
+  <div class="col simdep">
+    <div class="panel" style="flex:2">
+      <h2>Safe to wait on</h2><div id="wait"></div>
     </div>
-    <div class="panel">
-      <h2>Take now</h2><div id="recommend"></div>
+    <div class="panel" style="flex:1">
+      <h2>Upcoming picks &mdash; most likely 3 each</h2><div id="upcoming"></div>
     </div>
   </div>
 

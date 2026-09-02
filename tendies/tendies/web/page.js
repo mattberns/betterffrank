@@ -171,6 +171,16 @@
   /** Which roster this player is a question about: his owner if he is drafted,
    *  otherwise whoever is on the clock. Not your seat — you are usually not the
    *  one picking. */
+  /** Positions the seat on the clock may draft right now (cap + endgame
+   *  squeeze, per E.legalPositions), as a Set of names; null when no one is on
+   *  the clock. Every draft path checks this: the board filter, draft(), and
+   *  the player card's button. */
+  function legalNow() {
+    const s = E.seatOnClock(st);
+    if (s < 0) return null;
+    return new Set(E.legalPositions(st, s).map(posName));
+  }
+
   function subjectSeat(pid) {
     for (let s = 0; s < ui.teams; s++) if (st.rosters[s].indexOf(pid) >= 0) return s;
     const on = E.seatOnClock(st);
@@ -179,6 +189,12 @@
 
   /* --------------------------------------------------------------- render */
 
+  // every panel whose content depends on the simulation (Take now, Safe to
+  // wait on, Upcoming) dims together while the sim recomputes
+  function setComputing(on) {
+    document.querySelectorAll('.simdep').forEach((p) => p.classList.toggle('computing', on));
+  }
+
   function render() {
     closeInspect();
     renderStatus();
@@ -186,13 +202,13 @@
     renderLeague();
     renderRoster();
     renderBoard();
-    el('panels').classList.add('computing');
+    setComputing(true);
     if (idleHandle) { clearTimeout(idleHandle); idleHandle = null; }
     requestAnimationFrame(() => {
       runSim(FAST[0], FAST[1]); simFine = false;
       renderBoard();          // the survival columns depend on the sim
       renderPanels();
-      el('panels').classList.remove('computing');
+      setComputing(false);
       idleHandle = setTimeout(() => {
         runSim(FINE[0], FINE[1]); simFine = true; renderBoard(); renderPanels();
       }, 350);
@@ -251,12 +267,35 @@
     el('league').innerHTML = `<table><tbody>${rows.join('')}</tbody></table>${note}`;
   }
 
+  /* Slot by slot, not a flat list: the same greedy assignment every EV number
+   * on the page is computed from (E.lineupSlots), so the panel and the model
+   * never disagree about who starts. Whoever the assignment leaves over is the
+   * bench. Slots are reordered for DISPLAY only — flex between TE and DST/K —
+   * the engine's own order (and the sums tests assert) is untouched. */
   function renderRoster() {
     const r = st.rosters[ui.seat] || [];
-    const items = r.map((pid) =>
-      `<li data-pid="${pid}"${simmedPids.has(pid) ? ' class="sim"' : ''}>${
-        tag(board.pos[pid])} ${esc(board.name[pid])}</li>`).join('');
-    el('roster').innerHTML = `<ul>${items || '<li class="dim">empty</li>'}</ul>`;
+    const slots = E.lineupSlots(board, spec, r, null);
+    const ord = (s) => (s.pos < 0 ? 4.5
+      : ({ QB: 0, RB: 1, WR: 2, TE: 3, DST: 5, K: 6 })[posName(s.pos)] ?? 7);
+    const shown = slots.slice().sort((a, b) => ord(a) - ord(b));
+    const assigned = new Set(shown.filter((s) => s.pid >= 0).map((s) => s.pid));
+    const row = (lab, pid, value) => {
+      const nm = pid < 0 ? '<span class="dim">&mdash;</span>'
+        : `${tag(board.pos[pid])} <span class="rnm${
+            simmedPids.has(pid) ? ' sim' : ''}">${esc(board.name[pid])}</span>`;
+      return `<tr${pid >= 0 ? ` data-pid="${pid}"` : ' class="hole"'}>
+        <td class="slab">${lab}</td><td class="rn">${nm}</td>
+        <td class="num val dim">${value === null ? '' : value.toFixed(0)}</td></tr>`;
+    };
+    const rows = shown.map((s) => row(s.label, s.pid, s.value));
+    // bench capacity = picks the draft gives you beyond the starting slots;
+    // unfilled bench rows show as empty, same as an unfilled starter
+    const bench = r.filter((pid) => !assigned.has(pid));
+    const benchN = Math.max(bench.length, ui.rounds - shown.length);
+    for (let i = 0; i < benchN; i++) {
+      rows.push(i < bench.length ? row('BN', bench[i], board.vorp[bench[i]]) : row('BN', -1, null));
+    }
+    el('roster').innerHTML = `<table>${rows.join('')}</table>`;
   }
 
   /* ------------------------------------------------------------ the board */
@@ -312,9 +351,21 @@
   ];
 
   function renderBoard() {
+    // only what the seat on the clock can legally roster is on offer
+    const seat = E.seatOnClock(st);
+    const legal = legalNow();
+    const openN = seat < 0 ? 0 : E.openPositions(st, seat).length;
+    if (legal && filterPos !== 'ALL' && !legal.has(filterPos)) {
+      filterPos = 'ALL';   // the active filter's position just became illegal
+    }
+    [...el('filters').children].forEach((c) => {
+      c.classList.toggle('on', c.dataset.pos === filterPos);
+      c.disabled = !!legal && c.dataset.pos !== 'ALL' && !legal.has(c.dataset.pos);
+    });
     const avail = [];
     for (let pid = 0; pid < board.n; pid++) {
       if (st.taken[pid]) continue;
+      if (legal && !legal.has(posName(board.pos[pid]))) continue;
       if (filterPos !== 'ALL' && posName(board.pos[pid]) !== filterPos) continue;
       if (query && board.name[pid].toLowerCase().indexOf(query) < 0) continue;
       avail.push(pid);
@@ -354,7 +405,11 @@
         on ? `<span class="arw">${up ? '&#9650;' : '&#9660;'}</span>` : ''}</th>`;
     }).join('');
 
-    el('board').innerHTML = `<table><thead><tr>${head}</tr></thead>
+    const forced = legal && legal.size < openN
+      ? `<div class="warn pad small">Every remaining pick is owed to an open starting slot —
+         ${esc(label(ui.managers[seat]))} can only draft ${[...legal].join(' &middot; ')}.</div>`
+      : '';
+    el('board').innerHTML = forced + `<table><thead><tr>${head}</tr></thead>
       <tbody>${rows.join('')}</tbody></table>` +
       (avail.length > shown.length
         ? `<div class="pad dim small">${avail.length - shown.length} more — search or filter</div>` : '');
@@ -635,6 +690,20 @@
     }
 
     const onClock = E.seatOnClock(st);
+    let draftHtml = '';
+    if (!taken && onClock >= 0) {
+      const legal = legalNow();
+      if (!legal || legal.has(posName(p))) {
+        draftHtml = `<div class="ilrow">
+        <button class="idraft" data-pid="${pid}">draft ${esc(board.name[pid])}</button>
+        <span class="dim small">to ${esc(label(ui.managers[onClock]))}</span></div>`;
+      } else {
+        const capped = E.openPositions(st, onClock).indexOf(p) < 0;
+        draftHtml = `<div class="warn pad small">${esc(label(ui.managers[onClock]))} cannot draft
+        a ${posName(p)} right now: ${capped ? 'the position is at its roster cap'
+          : 'every remaining pick is owed to an open starting slot'}.</div>`;
+      }
+    }
     const mine = seat === ui.seat;
     const who = mine ? 'Your' : esc(label(ui.managers[seat])) + '&rsquo;s';
     const pn = sv(sm, pid), p2n = sv2(sm, pid);
@@ -662,9 +731,7 @@
       <div class="ilrow">lineup <b>${after.toFixed(1)}</b>
         <span class="dim">from ${before.toFixed(1)}</span></div>
       ${evHtml}${planHtml}
-      ${taken || onClock < 0 ? '' : `<div class="ilrow">
-        <button class="idraft" data-pid="${pid}">draft ${esc(board.name[pid])}</button>
-        <span class="dim small">to ${esc(label(ui.managers[onClock]))}</span></div>`}
+      ${draftHtml}
       <div class="ilrow dim small">An empty slot is priced at what you would actually field
         there, not at zero — the best player who goes undrafted, off the 2021-25 flow. At QB
         and TE that price is already zero: their VORP is measured against streaming to begin
@@ -680,6 +747,8 @@
 
   function draft(pid) {
     if (st.taken[pid]) return;
+    const legal = legalNow();
+    if (legal && !legal.has(posName(board.pos[pid]))) return;
     ui.picks.push(pid); ui.simmed.push(0); save(); rebuild(); render();
   }
 

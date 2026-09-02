@@ -161,6 +161,67 @@ def stream_total(hist: pl.DataFrame, season: int, pos: str, n_owned: int,
     return total
 
 
+def option_value(hist: pl.DataFrame, season: int, pos: str, n_owned: int,
+                 floor: float, drop_top: int = SHIPPED_DROP_TOP) -> list[tuple]:
+    """(slot, his own total, roster-him-AND-stream, what the model prices) per
+    drafted slot — the measurement behind a REJECTED change. Read the block
+    comment in `main` before reviving it.
+
+    `lineupValueWith` prices an occupied slot at `max(his season total, the
+    streaming floor)`, and that is not the same quantity as the season total of
+    WEEKLY maxima. Roster a tight end and you do not stop streaming: each week
+    you start whichever of him and the best free tight end looks better. So the
+    model should be understating an occupied streamable slot by the option value
+    of holding both, and at a slot below the floor it is understating it by the
+    whole thing — a tight end worth less than streaming prices identically to an
+    EMPTY slot, which is why no such tight end can ever earn a pick.
+
+    The policy here is the same no-hindsight rule `stream_total` uses: start
+    whoever has the better PRIOR-weeks form, bank his actual points. His bye and
+    inactive weeks are streamed. Rostering him also removes him from everyone
+    else's free pool, which is why `free` excludes him.
+    """
+    h = hist.filter((pl.col("season") == season) & (pl.col("position") == pos))
+    rank = dict(zip(h["gsis_id"].to_list(), h["pos_rank"].to_list()))
+    owned = [g for g, r in rank.items() if r <= n_owned]
+    wk = weekly(season, pos)
+    out = []
+    for slot in range(1, n_owned + 1):
+        mine = [g for g, r in rank.items() if r == slot]
+        if not mine:
+            continue
+        me = mine[0]
+        free = wk.filter(~pl.col("gsis_id").is_in(owned) & (pl.col("gsis_id") != me))
+        if drop_top:
+            claimed = (free.group_by("gsis_id").agg(pl.col("pts").sum())
+                       .sort("pts", descending=True)["gsis_id"].to_list()[:drop_top])
+            free = free.filter(~pl.col("gsis_id").is_in(claimed))
+        mypts = {int(r["week"]): float(r["pts"])
+                 for r in wk.filter(pl.col("gsis_id") == me).iter_rows(named=True)}
+        both = 0.0
+        for w in sorted(free["week"].unique().to_list()):
+            cur = free.filter(pl.col("week") == w)
+            if cur.height == 0:
+                continue
+            prior = (free.filter(pl.col("week") < w).group_by("gsis_id")
+                     .agg(pl.col("pts").mean().alias("form")))
+            cand = (cur.join(prior, on="gsis_id", how="left")
+                    .with_columns(pl.col("gsis_id")
+                                  .replace_strict(rank, default=10**6).alias("pr"))
+                    .sort(["form", "pr"], descending=[True, False], nulls_last=True))
+            spts, sform = float(cand["pts"][0]), cand["form"][0]
+            m = mypts.get(w)
+            if m is None:
+                both += spts                       # his bye or a scratch: stream it
+                continue
+            pri = [mypts[x] for x in mypts if x < w]
+            mf = float(np.mean(pri)) if pri else None
+            both += m if (mf is not None and (sform is None or mf > float(sform))) else spts
+        alone = sum(mypts.values())
+        out.append((slot, alone, both, max(alone, floor)))
+    return out
+
+
 def curve_slot(curve: np.ndarray, value: float) -> int:
     """The first curve slot worth no more than `value` — i.e. the replacement
     rank whose subtracted curve value equals this free option.
@@ -277,6 +338,54 @@ def main(league_id: int | None = None) -> None:
         print(f"  best single undrafted {pos} is {pos}{free_slot[pos]:.1f} "
               f"({vorp_mod.curve_at(curve[pos], round(free_slot[pos])):.0f} pts) — streaming "
               f"beats it, which is why {pos} takes the streaming arm")
+
+    # ---------------------------------------------------------------------
+    # A REJECTED change, kept because the reasoning for it is good and someone
+    # will have it again. `lineupValueWith` prices an occupied slot at
+    # `max(his total, the floor)`, which is not the season total of WEEKLY
+    # maxima — you roster a tight end AND keep streaming. So a tight end below
+    # the streaming floor prices identically to an EMPTY tight end slot, and no
+    # such tight end can ever earn a pick however good he looks. That is a real
+    # structural gap and it is why the draft page will not take Travis Kelce in
+    # round 12 with an empty TE slot.
+    #
+    # It does not survive measurement. Pooled over every drafted slot and every
+    # season, restricted to the region where `max()` actually flattens him (his
+    # own total at or below the floor), the gain is TE +1.6 +/- 3.8 (t 0.42) and
+    # QB +5.7 +/- 6.1 (t 0.94), and the per-season signs alternate hard (TE:
+    # -1 -29 +29 +46 -29 +36 -32 +1). Across ALL drafted slots it is NEGATIVE
+    # (TE -5.1 +/- 2.8), because the form rule benches a stud on two hot weeks
+    # from the waiver pool where a real manager would not. A single slot in
+    # isolation reads +4 to +9 and that is what makes this look shippable; it is
+    # one draw from a noisy surface.
+    #
+    # So no constant is added to the lineup objective. The number would have to
+    # be ~6 points to change a decision, and 6 is 1.6 SE from zero here.
+    #
+    # Note what this does NOT settle: the floor's own uncertainty is 35 points
+    # of curve (the n_owned sweep above spans TE4-TE15), so a test with an SE of
+    # 3.8 cannot tell you whether TE6 is the right replacement rank. That
+    # question is still open and it is still the lever that decides whether
+    # mid-round tight ends are draftable at all.
+    print(f"\nOPTION VALUE OF ROSTERING A BODY (rejected — see the comment in "
+          f"streaming.main), {seasons[0]}-{seasons[-1]}")
+    print("  model prices an occupied slot at max(his total, floor); this is what "
+          "rostering him AND streaming actually banks")
+    for pos in sorted(vorp_mod.STREAMABLE):
+        floor = vorp_mod.curve_at(curve[pos], vorp_mod.REPL_RANKS[pos])
+        rows = [r for s in seasons
+                for r in option_value(hist, s, pos, n_owned[pos], floor)]
+        allg = np.array([r[2] - r[3] for r in rows])
+        flat = np.array([r[2] - r[3] for r in rows if r[1] <= floor])
+        def stat(a):
+            return (a.mean(), a.std(ddof=1) / np.sqrt(len(a)), len(a)) if len(a) > 1 else (0.0, 0.0, len(a))
+        ma, sa, na = stat(allg)
+        mf, sf, nf = stat(flat)
+        print(f"  {pos}  floor {floor:.1f} pts ({pos}{vorp_mod.REPL_RANKS[pos]})"
+              f"   all drafted slots n={na:3d} {ma:+6.2f} +/- {sa:.2f}"
+              f"   at/below floor n={nf:3d} {mf:+6.2f} +/- {sf:.2f}"
+              f"  t {0.0 if sf == 0 else mf / sf:.2f}")
+    print("  -> not distinguishable from zero; nothing is added to the objective.")
 
     print("\nSHIPPED (vorp.REPL_RANKS): " + ", ".join(
         f"{p}={vorp_mod.REPL_RANKS[p]}" for p in vorp_mod.CURVE_POSITIONS))

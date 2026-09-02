@@ -770,6 +770,63 @@ model: there is no per-player distribution in this data, only an isotonic mean
 curve, so it is insurance value plus the expert-versus-market gap, labelled as
 such and never presented as lineup points.
 
+### Why the page will not draft a tight end, and the fix that failed
+
+Raised 2026-09-02 from a real board: round 12, an **empty TE slot**, Kelce,
+Kincaid, Goedert and Likely all still available, and the panel recommending a
+dart-throw running back. Two mechanisms stack, and the first is a genuine gap in
+the objective.
+
+**An occupied slot is priced `max(his season total, the floor).`** Every
+available tight end was VORP −10.2 against an empty-slot floor of 0.0, so
+`max(−10.2, 0) = 0`: rostering Travis Kelce priced *identically to leaving the
+slot empty*. Not slightly better — identically. There is no gradient at all, so
+no tight end below the streaming line can ever earn a pick, and Kelce, Goedert,
+Likely and Hunter Henry are one number.
+
+**And that line is the streaming total.** `REPL_RANKS[TE] = 6` is 118.8 points;
+the best draftable tight end is worth ~108. So by construction every tight end
+left on the board is below replacement.
+
+The first mechanism looks straightforwardly wrong, because `max` of season
+totals is not the season total of WEEKLY maxima — roster a tight end and you do
+not stop streaming, you start whichever of him and the best free tight end looks
+better that week. Holding both should be worth strictly more than either. So a
+per-position option-value constant was derived, measured with the same
+no-hindsight policy `stream_total` uses (prior-weeks form only, `drop_top=1`),
+and **it did not survive.** Pooled over every drafted slot and season, in the
+region where `max()` actually flattens the player (his own total at or below the
+floor):
+
+| | n | gain | t | per season |
+| --- | --- | --- | --- | --- |
+| TE | 64 | **+1.61 ± 3.80** | 0.42 | −1 −29 +29 +46 −29 +36 −32 +1 |
+| QB | 42 | **+5.70 ± 6.07** | 0.94 | −1 +46 +79 −71 +2 −9 +5 +2 |
+
+Across *all* drafted slots the gain is **negative** (TE −5.10 ± 2.84), because
+the form rule benches a stud on two hot weeks from the waiver pool where a real
+manager would not. A single slot in isolation reads +4 to +9 — TE13 reads +4.7,
+which is what made this look shippable — and that is one draw from a noisy
+surface. The constant would have to be ~6 points to change a decision, and 6 is
+1.6 SE from zero. Nothing was added to the objective; the derivation prints
+under `tendies streaming` so the null is reproducible rather than folklore.
+
+**What this does not settle**, and it is the part that matters: the floor's own
+uncertainty is **35 points of curve** — the `n_owned` sweep spans TE4 to TE15 —
+so a test with an SE of 3.8 cannot tell you whether TE6 is the right
+replacement rank. At `drop_top=2` replacement is TE15, every one of those tight
+ends is *positive*, and the panel wants one immediately. The parent repo reached
+this same fork and went the other way on purpose: its notes record the TE
+streaming sim as "central ~TE5-6 but optimistic for the thin TE pool" and it
+ships TE8. `tendies` took the sim's central value. That is a live judgment call
+about how often you win a waiver breakout, not a bug, and it is the lever that
+decides whether mid-round tight ends are draftable at all.
+
+Worth keeping in view: the panel is right that you cannot *miss out*. All five
+draftable tight ends sat on one curve block, and Jake Ferguson was 86% to
+survive fifteen picks, Juwan Johnson 94%, Hunter Henry 98%. The plan already
+read `#128 TE → #133 K → #148 DST`.
+
 ### The resolution floor
 
 Added 2026-09-02, after the panel was caught presenting a ranking the curve
