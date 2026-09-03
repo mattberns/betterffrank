@@ -202,6 +202,7 @@
     renderLeague();
     renderRoster();
     renderBoard();
+    if (gridOpen) renderGrid();   // stays open across a pick; it is the live view
     setComputing(true);
     if (idleHandle) { clearTimeout(idleHandle); idleHandle = null; }
     requestAnimationFrame(() => {
@@ -743,6 +744,128 @@
 
   function closeInspect() { el('inspect').hidden = true; el('inspect').innerHTML = ''; }
 
+  /* -------------------------------------------------------- the draft board */
+
+  /* The grid every draft room has on the wall: a column per team in draft
+   * order, a row per round, the pick in the cell. It answers the questions the
+   * player list cannot — who has been hoarding backs, whether the run you are
+   * worried about already happened, what the wrap looks like from your seat.
+   *
+   * It reads `st`, never `ui.picks`: rebuild() drops duplicate pids without
+   * advancing, so the two can be different lengths and only st.picks is aligned
+   * with st.seats. A cell is drawn from its PICK INDEX for the same reason —
+   * the seat order is whatever st.seats says, not an assumed snake, so a
+   * reordered league or a non-snake format draws correctly with no extra code.
+   *
+   * Cells open the player card (they never draft). Drafting out of turn is the
+   * one thing this view must not make easy: the cell you would click is a
+   * future pick belonging to someone else. */
+  let gridOpen = false;
+
+  /** overall pick number -> "3.05", the way a draft room says it */
+  function pickLabel(i) {
+    return (Math.floor(i / ui.teams) + 1) + '.' + String((i % ui.teams) + 1).padStart(2, '0');
+  }
+
+  function gridCell(i, s) {
+    const mine = s === ui.seat ? ' mycol' : '';
+    if (i === null) return `<td class="gc${mine}"></td>`;
+    const lab = pickLabel(i);
+    if (i >= st.picks.length) {
+      const now = i === st.picks.length;
+      return `<td class="gc${mine}${now ? ' now' : ''}">
+        <div class="gm"><span>${lab}</span></div>
+        ${now ? '<div class="gn dim">on the clock</div>' : ''}</td>`;
+    }
+    const pid = st.picks[i];
+    if (pid === null) {
+      return `<td class="gc off${mine}"><div class="gm"><span>${lab}</span></div>
+        <div class="gn">off board</div></td>`;
+    }
+    const p = board.pos[pid];
+    // Where the pick landed against the market: positive = he was still there
+    // this many slots past his ADP. The same quantity the EDGE column reports,
+    // measured against the pick actually spent instead of against ECR.
+    const d = (i + 1) - board.adpRank[pid];
+    const dCls = d >= 8 ? 'v' : d <= -8 ? 'r' : '';
+    return `<td class="gc g-${posCls(p)}${mine}${simmedPids.has(pid) ? ' simmed' : ''}"
+      data-pid="${pid}" title="pick ${i + 1} &middot; ADP ${board.adpRank[pid]} &middot; ECR ${
+        board.hasEcr[pid] ? board.ecr[pid] : '—'}">
+      <div class="gm"><span>${lab}</span><span class="sp"></span>
+        <span class="gd ${dCls}">${d > 0 ? '+' : ''}${d}</span></div>
+      <div class="gn">${esc(board.name[pid])}</div>
+      <div class="gm"><span>${posName(p)} &middot; ${esc(board.team[pid])}</span>
+        <span class="sp"></span><span>${board.vorp[pid].toFixed(0)}</span></div></td>`;
+  }
+
+  function renderGrid() {
+    const teams = ui.teams, rounds = ui.rounds;
+    const at = [];                       // at[round][seat] = overall pick index
+    for (let r = 0; r < rounds; r++) at.push(new Array(teams).fill(null));
+    for (let i = 0; i < st.seats.length; i++) {
+      const r = Math.floor(i / teams), s = st.seats[i] - 1;
+      if (r < rounds && s >= 0 && s < teams) at[r][s] = i;
+    }
+
+    const head = [];
+    for (let s = 0; s < teams; s++) {
+      const nm = esc(label(ui.managers[s]));
+      head.push(`<th class="${s === ui.seat ? 'mine' : ''}" title="${nm}">${nm}${
+        s === ui.seat ? ' <span class="you">YOU</span>' : ''}</th>`);
+    }
+
+    const rows = [];
+    for (let r = 0; r < rounds; r++) {
+      const i0 = r * teams;
+      // read the direction off the seat list rather than off r % 2, so the
+      // gutter still tells the truth if the format is ever not a snake
+      const dir = teams > 1 && st.seats[i0 + 1] !== undefined
+        ? (st.seats[i0] < st.seats[i0 + 1] ? '&rarr;' : '&larr;') : '';
+      const tds = [];
+      for (let s = 0; s < teams; s++) tds.push(gridCell(at[r][s], s));
+      rows.push(`<tr><td class="rlab">${r + 1}<div class="dirn">${dir}</div></td>
+        ${tds.join('')}</tr>`);
+    }
+
+    // Per column: what he has taken, and what his lineup is worth as it stands.
+    // The lineup number is E.lineupValue — the same one the player card and
+    // every EV on the page are built from, empty slots priced at what he would
+    // actually stream there rather than at zero.
+    const foot = [];
+    for (let s = 0; s < teams; s++) {
+      const counts = M.positions.map((nm, p) => [nm, st.counts[s][p]])
+        .filter(([, n]) => n > 0).map(([nm, n]) => `${n}${nm}`).join(' ');
+      const lv = E.lineupValue(board, spec, st.rosters[s] || []);
+      foot.push(`<td><span class="gcount">${counts || '&mdash;'}</span>
+        <span class="lv">${lv.toFixed(0)}</span></td>`);
+    }
+
+    const seat = E.seatOnClock(st);
+    const done = st.picks.length;
+    el('grid').innerHTML = `<div class="gbx">
+      <div class="ghd"><b>Draft board</b>
+        <span class="dim">${done} of ${teams * rounds} picks made${seat < 0 ? ''
+          : ' &middot; ' + esc(label(ui.managers[seat])) + ' on the clock at '
+            + pickLabel(done)}</span>
+        <span class="sp"></span><button class="ix">&times;</button></div>
+      <div class="gsc"><table class="gt">
+        <thead><tr><th class="rlab">rd</th>${head.join('')}</tr></thead>
+        <tbody>${rows.join('')}</tbody>
+        <tfoot><tr><td class="rlab"></td>${foot.join('')}</tr></tfoot>
+      </table></div>
+      <div class="gleg">
+        ${['QB', 'RB', 'WR', 'TE'].map((n) =>
+          `<span><span class="sw" style="background:var(--pos-${n.toLowerCase()})"></span>${n}</span>`).join('')}
+        <span><b class="safe">+n</b> / <b class="gone">&minus;n</b> = slots past
+          (or before) his ADP</span>
+        <span>bottom number = VORP &middot; footer = starting lineup as it stands</span>
+        <span>click a pick for the player card &middot; <b>esc</b> closes</span>
+      </div></div>`;
+  }
+
+  function openGrid() { gridOpen = true; el('grid').hidden = false; renderGrid(); }
+  function closeGrid() { gridOpen = false; el('grid').hidden = true; el('grid').innerHTML = ''; }
+
   /* ---------------------------------------------------------------- events */
 
   function draft(pid) {
@@ -876,8 +999,26 @@
     if (e.target.closest('.ibx') && !e.target.closest('.ix')) return;
     closeInspect();
   });
+  // a pick in the grid opens the card, exactly like a name in the side panels;
+  // nothing in this view drafts
+  el('grid').addEventListener('click', (e) => {
+    if (e.target.closest('.ix')) { closeGrid(); return; }
+    const td = e.target.closest('.gc[data-pid]');
+    if (td) { inspect(Number(td.dataset.pid)); return; }
+    if (!e.target.closest('.gbx')) closeGrid();
+  });
+  el('gridbtn').addEventListener('click', () => (gridOpen ? closeGrid() : openGrid()));
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeInspect();
+    // esc peels one layer: the card sits on top of the grid, so it goes first
+    if (e.key === 'Escape') {
+      if (!el('inspect').hidden) closeInspect();
+      else closeGrid();
+      return;
+    }
+    if (e.key !== 'b' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+    gridOpen ? closeGrid() : openGrid();
   });
 
   // undo stays strictly single-pick, even into a simmed tail (it just shrinks

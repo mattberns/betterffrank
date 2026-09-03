@@ -69,6 +69,15 @@ caps always, and at the endgame — once every remaining pick is owed to an
 unfilled starting slot — only the positions that fill one (a banner says so;
 simulated picks obey the same rule).
 
+**Board view** (`b`, or the button in the header bar) is the grid a draft room
+keeps on the wall: a column per team in draft order, a row per round, the pick
+in the cell, coloured by position. Each cell carries the pick as `3.05`, the
+player's VORP, and how far past his ADP he actually went — `+12` means he was
+still there twelve slots after the market price, `−9` that someone reached.
+Simulated picks keep their `sim` badge, the footer totals each team's positions
+and the starting lineup it would field today, and clicking a cell opens the same
+player card the rest of the page uses. Nothing in it drafts.
+
 The header bar can also **skip ahead**: *sim to my pick* has the model make
 every other seat's pick until you are on the clock, and the pick box (overall
 `37` or round.pick `3.05`) jumps to any later pick, simming through your own

@@ -179,6 +179,71 @@ tr:hover .fit{color:var(--dim);border-color:var(--rule-strong)}
 .idraft{background:var(--accent);color:#fff;border-color:var(--accent);
   font-weight:600;padding:5px 10px;margin-right:6px}
 .idraft:hover{filter:brightness(1.12)}
+
+/* the draft board: columns are teams, rows are rounds, cells are picks. An
+   overlay rather than a fifth panel — the four-panel row is already at the
+   width it needs, and this is a thing you glance at between picks, not a
+   thing you work in. Sits UNDER #inspect (z 40 vs 50) so a cell can open the
+   player card on top of it. */
+#grid{position:fixed;inset:0;background:rgba(26,26,25,.42);z-index:40;
+  display:flex;align-items:center;justify-content:center;padding:16px}
+#grid[hidden]{display:none}
+.gbx{background:var(--panel);border:1px solid var(--rule-strong);border-radius:8px;
+  width:min(1680px,100%);max-height:92vh;display:flex;flex-direction:column;
+  overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.ghd{display:flex;align-items:center;gap:8px;padding:9px 12px;
+  border-bottom:1px solid var(--rule);font-size:13px;flex:0 0 auto}
+.ghd .sp{flex:1}
+.ghd b{font-size:14px}
+.gsc{overflow:auto;min-height:0}
+/* fixed layout so every team column is equal; a min-width so a narrow window
+   scrolls the grid sideways instead of crushing ten names into nothing */
+table.gt{border-collapse:separate;border-spacing:0;table-layout:fixed;
+  width:100%;min-width:920px}
+.gt th,.gt td{border-bottom:1px solid var(--rule);border-right:1px solid var(--rule)}
+.gt thead th{position:sticky;top:0;z-index:2;background:var(--panel);text-align:left;
+  padding:5px 7px;font-size:11px;font-weight:600;border-bottom:1px solid var(--rule-strong)}
+.gt thead th .lv{float:right;font-family:var(--mono);font-size:10px;color:var(--faint);
+  font-weight:400}
+.gt th.mine{color:var(--accent)}
+/* the round gutter and the header corner both stick; the corner has to win */
+.gt .rlab{position:sticky;left:0;z-index:1;background:var(--panel);width:34px;
+  text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim);
+  border-right:1px solid var(--rule-strong);padding:2px}
+.gt thead .rlab{z-index:3}
+.gt .rlab .dirn{font-size:9px;color:var(--faint)}
+.gc{padding:3px 6px;height:46px;vertical-align:top;border-left:3px solid transparent}
+.gc .gm{display:flex;align-items:baseline;gap:4px;font-family:var(--mono);font-size:9px;
+  color:var(--faint);line-height:1.3}
+.gc .gm .sp{flex:1}
+.gc .gn{font-size:11.5px;font-weight:500;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc[data-pid]{cursor:pointer}
+.gc[data-pid]:hover{filter:brightness(.955)}
+.gc.mycol{background:#faf8f4}
+.g-qb{background:#f5effc;border-left-color:var(--pos-qb)}
+.g-rb{background:#ebf5f0;border-left-color:var(--pos-rb)}
+.g-wr{background:#ebf1f9;border-left-color:var(--pos-wr)}
+.g-te{background:#faf1e6;border-left-color:var(--pos-te)}
+.g-k{background:#f2f2f0;border-left-color:var(--pos-k)}
+.g-dst{background:#eeeeec;border-left-color:var(--pos-dst)}
+/* a simmed pick is not a pick that happened — same rule as the roster panel */
+.gc.simmed .gn{color:var(--dim);font-weight:400}
+.gc.simmed .gn::after{content:"sim";font-size:8px;font-weight:600;letter-spacing:.04em;
+  color:var(--faint);border:1px solid var(--rule-strong);border-radius:3px;
+  padding:0 3px;margin-left:5px;vertical-align:1px}
+.gc.now{background:#e7f1ec;border-left-color:var(--accent);
+  box-shadow:inset 0 0 0 2px var(--accent)}
+.gc.off .gn{color:var(--faint);font-style:italic;font-weight:400}
+.gc .gd.v{color:var(--safe)}.gc .gd.r{color:var(--gone)}
+.gt tfoot td{position:sticky;bottom:0;background:var(--panel);padding:4px 7px;
+  font-size:10px;color:var(--dim);border-top:1px solid var(--rule-strong)}
+.gt tfoot .gcount{font-family:var(--mono)}
+.gt tfoot .lv{float:right;font-family:var(--mono);color:var(--text)}
+.gleg{flex:0 0 auto;padding:6px 12px;border-top:1px solid var(--rule);
+  font-size:11px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
+.gleg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;
+  vertical-align:-1px;margin-right:3px}
 """
 
 
@@ -208,6 +273,7 @@ def render(payload: dict, web: Path, out: Path) -> Path:
     <button id="simundo" title="rewind the whole last sim jump">undo sim</button>
     <button id="undo">undo</button>
     <button id="offboard">off-board</button>
+    <button id="gridbtn" title="the whole draft: teams across, rounds down (b)">board view</button>
     <button id="reset">reset</button>
   </div>
 
@@ -249,6 +315,7 @@ def render(payload: dict, web: Path, out: Path) -> Path:
 
   <footer>{note}</footer>
 </div>
+<div id="grid" hidden></div>
 <div id="inspect" hidden></div>
 <script>window.TENDIES={blob};</script>
 <script>{engine}</script>
