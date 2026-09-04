@@ -770,7 +770,7 @@ model: there is no per-player distribution in this data, only an isotonic mean
 curve, so it is insurance value plus the expert-versus-market gap, labelled as
 such and never presented as lineup points.
 
-### Why the page will not draft a tight end, and the fix that failed
+### Why the page will not draft a tight end, and the fix that was measured wrong
 
 Raised 2026-09-02 from a real board: round 12, an **empty TE slot**, Kelce,
 Kincaid, Goedert and Likely all still available, and the panel recommending a
@@ -791,36 +791,83 @@ left on the board is below replacement.
 The first mechanism looks straightforwardly wrong, because `max` of season
 totals is not the season total of WEEKLY maxima — roster a tight end and you do
 not stop streaming, you start whichever of him and the best free tight end looks
-better that week. Holding both should be worth strictly more than either. So a
-per-position option-value constant was derived, measured with the same
-no-hindsight policy `stream_total` uses (prior-weeks form only, `drop_top=1`),
-and **it did not survive.** Pooled over every drafted slot and season, in the
-region where `max()` actually flattens the player (his own total at or below the
-floor):
+better that week. Holding both should be worth strictly more than either. A
+per-position option-value constant was derived on that reasoning, measured with
+the same no-hindsight policy `stream_total` uses, and it read TE +1.61 ± 3.80
+(t 0.42) and QB +5.70 ± 6.07 (t 0.94). It was rejected as noise.
 
-| | n | gain | t | per season |
-| --- | --- | --- | --- | --- |
-| TE | 64 | **+1.61 ± 3.80** | 0.42 | −1 −29 +29 +46 −29 +36 −32 +1 |
-| QB | 42 | **+5.70 ± 6.07** | 0.94 | −1 +46 +79 −71 +2 −9 +5 +2 |
+**That rejection was wrong, and it was wrong twice over (found 2026-09-03).**
 
-Across *all* drafted slots the gain is **negative** (TE −5.10 ± 2.84), because
-the form rule benches a stud on two hot weeks from the waiver pool where a real
-manager would not. A single slot in isolation reads +4 to +9 — TE13 reads +4.7,
-which is what made this look shippable — and that is one draw from a noisy
-surface. The constant would have to be ~6 points to change a decision, and 6 is
-1.6 SE from zero. Nothing was added to the objective; the derivation prints
-under `tendies streaming` so the null is reproducible rather than folklore.
+**The baseline was the wrong quantity.** The engine prices an occupied slot at
+`max(curve[slot], floor)`, which is an *expectation*. The test compared against
+`max(his REALIZED season total, floor)`. Since `E[max(X, c)] > max(E[X], c)` for
+any X with spread, the old baseline carried a Jensen gap — measured at **+13.0
+points over TE8-14 and +29.6 over QB8-14**, larger than the effect being looked
+for. Correcting the baseline alone moves TE9-12 from −6.2 to +7.7.
+
+**And it used eight seasons where thirteen were available.** The season list was
+read off `boards`, the half-PPR ADP window that starts in 2018 for a publisher
+reason. The measurement needs only a curve slot and a weekly score; those run
+from 2012 and 1999 respectively.
+
+**A third defect sat underneath both**, and it is the reason the numbers had been
+so unstable. The streaming policy violates a dominance identity: hold-and-stream
+must be worth at least hold-alone, because always starting your own man costs no
+information. It came in **below** hold-alone in 75 of 182 tight-end and 92 of 182
+quarterback player-seasons, worst −86 points. The bare prior-weeks mean benches
+the consensus TE1 in 10 of 13 seasons at −12.5 points a season. Every number
+built on it understates by an unknown amount. `SHRINK_WEEKS` mixes preseason
+prior into the form estimate as the repair, and `check_dominance` is now the gate.
+
+Corrected on all three counts, swept over the policy knob, on the block below
+each position's replacement rank:
+
+| shrink | QB dominance viol | QB block | t | TE dominance viol | TE block | t |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | 51% | +28.2 ± 4.9 | 2.80 | 41% | +10.0 ± 2.8 | 1.52 |
+| 1 | 36% | +31.1 ± 4.8 | 3.37 | 34% | +20.2 ± 2.8 | 3.40 |
+| 2 | 34% | +36.1 ± 5.0 | 3.83 | 29% | +19.6 ± 2.8 | 3.54 |
+| 4 | 26% | +32.4 ± 4.9 | 3.86 | 25% | +19.0 ± 3.2 | 3.04 |
+| 8 | 18% | +40.7 ± 4.9 | 4.93 | 20% | +17.6 ± 3.2 | 3.20 |
+
+The violation rate never flattens, so it does not *select* a shrink — an earlier
+draft of this claimed it did. What rescues the measurement is that both ends of
+the knob are defensible and agree. At shrink 0 the rule is a bare prior-weeks
+mean; as shrink grows, form collapses to the preseason prior and the policy
+converges on "start your guy, stream his bye", which is knob-free and is what a
+real manager does. **The TE column is flat at +17.6 to +20.2 across a factor of
+eight, and only the broken shrink-0 policy gives a non-significant answer.** So
+the effect is not an artefact of the knob; the knob only has to leave the setting
+that fails the identity.
+
+So the gap is real, it is worth roughly **+20 to +40 points** on a slot the
+engine currently gives no gradient at all, and it is larger at quarterback than
+at tight end — the reverse of where the attention had been going.
+
+**It still is not shipped**, for two reasons that are about scope rather than
+evidence. First, the correction belongs at RB and WR too: they have waiver access
+as well, and a correction applied only to QB/TE tilts the board back toward them,
+which is exactly the failure the 2026-09-01 replacement repair removed. Fix all
+four or none. Second, the point estimate inside +20 to +40 is a function of a
+waiver-behaviour constant this data cannot pin, and the DP would propagate it
+into every candidate's `ev`.
+
+What did NOT move is worth stating, because it was the obvious worry: **the
+shrunk policy leaves `REPL_RANKS` alone.** The streaming totals rise +6.2 (QB)
+and +5.5 (TE) and both stay on the same curve slot, QB7 and TE6. The floor is
+stable under the repair, so this is a question about how an occupied slot is
+priced, not about where replacement sits.
 
 **What this does not settle**, and it is the part that matters: the floor's own
 uncertainty is **35 points of curve** — the `n_owned` sweep spans TE4 to TE15 —
-so a test with an SE of 3.8 cannot tell you whether TE6 is the right
-replacement rank. At `drop_top=2` replacement is TE15, every one of those tight
-ends is *positive*, and the panel wants one immediately. The parent repo reached
-this same fork and went the other way on purpose: its notes record the TE
-streaming sim as "central ~TE5-6 but optimistic for the thin TE pool" and it
-ships TE8. `tendies` took the sim's central value. That is a live judgment call
-about how often you win a waiver breakout, not a bug, and it is the lever that
-decides whether mid-round tight ends are draftable at all.
+so none of the above tells you whether TE6 is the right replacement rank. At
+`drop_top=2` replacement is TE15, every one of those tight ends is *positive*,
+and the panel wants one immediately. The parent repo reached this same fork and
+went the other way on purpose: its notes record the TE streaming sim as "central
+~TE5-6 but optimistic for the thin TE pool" and it ships TE8. `tendies` took the
+sim's central value. That is a live judgment call about how often you win a
+waiver breakout, not a bug, and it is the lever that decides whether mid-round
+tight ends are draftable at all.
 
 Worth keeping in view: the panel is right that you cannot *miss out*. All five
 draftable tight ends sat on one curve block, and Jake Ferguson was 86% to
