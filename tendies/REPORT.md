@@ -551,9 +551,12 @@ now what you would actually field — the best player at that position who goes
 streamable position floored at zero (see "What replacement means", below). On
 the 2026 board that is QB 0.0, RB 0.0, WR +2.5, TE 0.0, and `lineupValue`
 becomes `Σ max(occupant, EMPTY_slot)`: a roster never scores below streaming,
-because in reality you would bench the player and stream. This also collapses the
+because in reality you would bench the player and stream. (Since 2026-09-04 an
+*occupied* QB or TE slot also earns `HOLD_GAIN`, 15 and 6 points, on top; see
+"Why the page will not draft a tight end".) This also collapses the
 cutoff machinery to one number per position — an empty slot is just a slot
-whose cutoff is EMPTY — and `tests/lineup.mjs` brute-forces both the cutoff
+whose cutoff is EMPTY, plus a `fillBonus` for the hold a new body would earn by
+occupying an open QB/TE slot — and `tests/lineup.mjs` brute-forces both the cutoff
 identity and the optimality of greedy slot assignment against every legal
 assignment.
 
@@ -770,109 +773,128 @@ model: there is no per-player distribution in this data, only an isotonic mean
 curve, so it is insurance value plus the expert-versus-market gap, labelled as
 such and never presented as lineup points.
 
-### Why the page will not draft a tight end, and the fix that was measured wrong
+### Why the page will not draft a tight end, and what holding one is actually worth
 
 Raised 2026-09-02 from a real board: round 12, an **empty TE slot**, Kelce,
 Kincaid, Goedert and Likely all still available, and the panel recommending a
 dart-throw running back. Two mechanisms stack, and the first is a genuine gap in
 the objective.
 
-**An occupied slot is priced `max(his season total, the floor).`** Every
-available tight end was VORP −10.2 against an empty-slot floor of 0.0, so
-`max(−10.2, 0) = 0`: rostering Travis Kelce priced *identically to leaving the
-slot empty*. Not slightly better — identically. There is no gradient at all, so
-no tight end below the streaming line can ever earn a pick, and Kelce, Goedert,
-Likely and Hunter Henry are one number.
+**An occupied slot is priced `max(his VORP, the floor)`,** and at a streamable
+position the floor is 0. So every tight end below TE6 prices identically to NO
+tight end: the pick adds nothing to lineup value, the slot gets filled at the
+very end because it is mandatory, and the round-12 turn goes to whatever the
+insurance tie-break likes. On the 2026 board that is TE8 through TE13 at −10.2
+apiece, one PAVA block.
 
-**And that line is the streaming total.** `REPL_RANKS[TE] = 6` is 118.8 points;
-the best draftable tight end is worth ~108. So by construction every tight end
-left on the board is below replacement.
+**And the floor itself is a knob.** `drop_top=1` gives TE6; `drop_top=2` gives
+TE15, and at TE15 every one of those tight ends is positive and the panel wants
+one immediately. The `n_owned` sweep spans TE4 to TE15, 35 points of curve. The
+parent repo's notes record its TE streaming sim as "central ~TE5-6 but
+optimistic for the thin TE pool" and it ships TE8; `tendies` took the sim's
+central value. That is a judgment about how often you win a waiver breakout, and
+it is the lever that decides whether mid-round tight ends are draftable at all.
 
-The first mechanism looks straightforwardly wrong, because `max` of season
-totals is not the season total of WEEKLY maxima — roster a tight end and you do
-not stop streaming, you start whichever of him and the best free tight end looks
-better that week. Holding both should be worth strictly more than either. A
-per-position option-value constant was derived on that reasoning, measured with
-the same no-hindsight policy `stream_total` uses, and it read TE +1.61 ± 3.80
-(t 0.42) and QB +5.70 ± 6.07 (t 0.94). It was rejected as noise.
+**What holding a below-floor body is worth was measured three times, and the
+first two were wrong in opposite directions.**
 
-**That rejection was wrong, and it was wrong twice over (found 2026-09-03).**
+The first (09-02) compared hold-and-stream against `max(his REALIZED total,
+floor)` on players who finished at or below the floor — selecting on the
+outcome — and read TE +1.6 ± 3.8, "noise". The second (09-03) compared it
+against `max(curve[slot], floor)` over 2013-2025, read TE +19 / QB +32 for the
+block below the floor, and called it option value: roster a tight end and you
+keep streaming, so holding both should beat either. Decomposed, that number is
+three things stacked, and the one it claimed to be has the wrong sign:
 
-**The baseline was the wrong quantity.** The engine prices an occupied slot at
-`max(curve[slot], floor)`, which is an *expectation*. The test compared against
-`max(his REALIZED season total, floor)`. Since `E[max(X, c)] > max(E[X], c)` for
-any X with spread, the old baseline carried a Jensen gap — measured at **+13.0
-points over TE8-14 and +29.6 over QB8-14**, larger than the effect being looked
-for. Correcting the baseline alone moves TE9-12 from −6.2 to +7.7.
+| TE7-14, shrink 4, 13 seasons | pts |
+| --- | --- |
+| `both − max(curve[slot], floor)`, what was reported | **+19.0 ± 3.2** |
+| pure option: `both − max(alone, stream)` | **−2.6 ± 1.6** |
+| realized stream − `curve@TE6` floor | +9.2 ± 3.0 |
+| remainder: `E[max]` of two realized paths over `max[E]` | ≈ +12 |
 
-**And it used eight seasons where thirteen were available.** The season list was
-read off `boards`, the half-PPR ADP window that starts in 2018 for a publisher
-reason. The measurement needs only a curve slot and a weekly score; those run
-from 2012 and 1999 respectively.
+Form-switching between your man and the pool does not beat committing to the
+better of the two (the QB figure is −9.8). The stream-over-floor term is the
+shipped floor, derived on 2018-2025 at shrink 0, sitting below the realized
+streaming total on the widened window under the shrunk policy: a calibration
+residual, not a value of holding anyone. And the remainder is hindsight; nobody
+banks the season-level max of two paths they had to choose between weekly.
 
-**A third defect sat underneath both**, and it is the reason the numbers had been
-so unstable. The streaming policy violates a dominance identity: hold-and-stream
-must be worth at least hold-alone, because always starting your own man costs no
-information. It came in **below** hold-alone in 75 of 182 tight-end and 92 of 182
-quarterback player-seasons, worst −86 points. The bare prior-weeks mean benches
-the consensus TE1 in 10 of 13 seasons at −12.5 points a season. Every number
-built on it understates by an unknown amount. `SHRINK_WEEKS` mixes preseason
-prior into the form estimate as the repair, and `check_dominance` is now the gate.
+**The paired quantity survives.** `gain(k) = (hold slot k and stream around
+him) − (stream only)`: same season, same free pool, same weekly rule, the only
+difference being whether you own him. No curve enters it, so neither the
+walk-forward curve nor the floor's calibration can inflate it. Over 2013-2025,
+below each position's shipped floor, at every corner of the two policy knobs:
 
-Corrected on all three counts, swept over the policy knob, on the block below
-each position's replacement rank:
+| below the floor | drop 1 / shrink 0 | drop 1 / shrink 4 | drop 2 / shrink 0 | drop 2 / shrink 4 |
+| --- | --- | --- | --- | --- |
+| TE7-14 | +6.1 ± 1.8 (t 2.9) | +9.8 ± 2.8 (t 2.2) | +7.9 ± 2.0 (t 3.3) | +12.9 ± 3.1 (t 2.8) |
+| QB8-14 | +14.6 ± 4.0 (t 2.1) | +13.0 ± 4.7 (t 1.8) | +18.8 ± 4.2 (t 2.9) | +16.4 ± 5.3 (t 1.9) |
+| RB44-49 | +0.7 ± 1.2 | +1.8 ± 1.9 | +3.0 ± 1.8 | +5.7 ± 2.5 |
+| WR52-56 | +1.0 ± 0.8 | +2.2 ± 1.0 | +1.7 ± 0.9 | +2.7 ± 1.5 |
 
-| shrink | QB dominance viol | QB block | t | TE dominance viol | TE block | t |
-| --- | --- | --- | --- | --- | --- | --- |
-| 0 | 51% | +28.2 ± 4.9 | 2.80 | 41% | +10.0 ± 2.8 | 1.52 |
-| 1 | 36% | +31.1 ± 4.8 | 3.37 | 34% | +20.2 ± 2.8 | 3.40 |
-| 2 | 34% | +36.1 ± 5.0 | 3.83 | 29% | +19.6 ± 2.8 | 3.54 |
-| 4 | 26% | +32.4 ± 4.9 | 3.86 | 25% | +19.0 ± 3.2 | 3.04 |
-| 8 | 18% | +40.7 ± 4.9 | 4.93 | 20% | +17.6 ± 3.2 | 3.20 |
+The engine credited **0** in every cell until 2026-09-04 (the fix is below). So a
+tight end below the floor, held and
+streamed around, is worth **+6 to +13 points a season over punting**, about
+half a point a week, and a quarterback **+13 to +19**. It is flat across the
+below-floor slots: TE13-14 read +7 to +16 against TE9-12's +4 to +12, because
+the stream covers exactly the weeks a late tight end is bad. Above the floor the
+picture is knob-dependent (TE1-4 come in 7 under the engine's credit at shrink 0
+and 13 over it at shrink 4), so the below-floor block is the only finding.
 
-The violation rate never flattens, so it does not *select* a shrink — an earlier
-draft of this claimed it did. What rescues the measurement is that both ends of
-the knob are defensible and agree. At shrink 0 the rule is a bare prior-weeks
-mean; as shrink grows, form collapses to the preseason prior and the policy
-converges on "start your guy, stream his bye", which is knob-free and is what a
-real manager does. **The TE column is flat at +17.6 to +20.2 across a factor of
-eight, and only the broken shrink-0 policy gives a non-significant answer.** So
-the effect is not an artefact of the knob; the knob only has to leave the setting
-that fails the identity.
+**RB and WR dissolve the "fix all four or none" objection rather than
+satisfying it.** Their below-floor bodies read +1 to +6, but the baseline they
+are paired against, a ONE-SLOT form-stream of the undrafted pool, banks
+RB14-25 / WR27-40 equivalent points, far above the shipped RB43/WR51 floors.
+That is the demonstration, in numbers, of why RB and WR are not streamable: two
+or three backs start at once, and the weekly waiver hand is contested by nine
+rivals in a way `drop_top` (which removes season-total leaders) does not model,
+so a single-slot sim is not a replacement estimator there. RB/WR bench bodies
+earn through the engine's `insurance` term instead. The positions do not share
+a mechanism, so a streamable-only correction is not a tilt; it is the shape of
+the problem.
 
-So the gap is real, it is worth roughly **+20 to +40 points** on a slot the
-engine currently gives no gradient at all, and it is larger at quarterback than
-at tight end — the reverse of where the attention had been going.
+**Shipped 2026-09-04 as `vorp.HOLD_GAIN` (QB 15, TE 6).** The engine adds it
+to every *occupied* dedicated slot at a streamable position
+(`lineupValueWith`; the DP's slot gain and the panel's `now` carry it through
+`fillBonus`, so the cutoff identity stays exact and `tests/lineup.mjs` checks
+it with and without the term). Uniform across the position, so within-position
+order and the elite premium are untouched and only occupied-versus-empty moves,
+which is the one decision the measurement resolves. The values are the
+conservative corner of the sweep (drop_top 1, shrink 0, the setting
+`REPL_RANKS` is derived under), rounded to the point.
 
-**It still is not shipped**, for two reasons that are about scope rather than
-evidence. First, the correction belongs at RB and WR too: they have waiver access
-as well, and a correction applied only to QB/TE tilts the board back toward them,
-which is exactly the failure the 2026-09-01 replacement repair removed. Fix all
-four or none. Second, the point estimate inside +20 to +40 is a function of a
-waiver-behaviour constant this data cannot pin, and the DP would propagate it
-into every candidate's `ev`.
+Measured on the ten-seat mock before and after, live 2026 board and the 2025
+fixture: **not one pick moved on any of the twenty seats.** Every finished
+lineup is exactly +21.0 (both slots filled, 15 + 6); the margin over
+best-available-by-ADP is unchanged at +22.3 (2026) and +80.6 (2025); the margin
+over best-available-by-VORP widens from +34.7 to +55.7 only because that greedy
+baseline never fields a quarterback or tight end and so never earns the hold,
+so read the ADP margin. What changed is what the page says: the round-13 tight
+end now reads `now 6.0` instead of `0.0`, the round-13 quarterback that six
+2025 seats punt to reads `15.0`, and the plan schedules both with a value
+attached rather than as a tie-break. That is the predicted shape of the
+correction: on a TE block this flat and this deep (TE13-14 survive fifteen picks
+at 86-98%) the DP was right to defer the slot and wrong only about what the slot
+was worth. The two part ways on a live board whose round-10-12 alternatives are
+worth less than six points; there it will now take the tight end.
 
-What did NOT move is worth stating, because it was the obvious worry: **the
-shrunk policy leaves `REPL_RANKS` alone.** The streaming totals rise +6.2 (QB)
-and +5.5 (TE) and both stay on the same curve slot, QB7 and TE6. The floor is
-stable under the repair, so this is a question about how an occupied slot is
-priced, not about where replacement sits.
+**So: was the last-round tight end a mistake?** On this data, no. TE8 through
+TE14 are one 107-point block on the 2026 curve; held and streamed around, any of
+them is worth the same +7 to +16 over punting; the difference between a
+round-12 and a round-15 tight end is inside the noise. The cost that is real is
+behavioural: the measurement assumes you stream his bye and his bad weeks. Start
+a TE13-14 every week without streaming and he trails the stream by 6 to 16
+points a season at three of the four knob settings (`alone − stream`), about one
+point a week. That is the whole downside, and a round-12 tight end carries the
+same one.
 
-**What this does not settle**, and it is the part that matters: the floor's own
-uncertainty is **35 points of curve** — the `n_owned` sweep spans TE4 to TE15 —
-so none of the above tells you whether TE6 is the right replacement rank. At
-`drop_top=2` replacement is TE15, every one of those tight ends is *positive*,
-and the panel wants one immediately. The parent repo reached this same fork and
-went the other way on purpose: its notes record the TE streaming sim as "central
-~TE5-6 but optimistic for the thin TE pool" and it ships TE8. `tendies` took the
-sim's central value. That is a live judgment call about how often you win a
-waiver breakout, not a bug, and it is the lever that decides whether mid-round
-tight ends are draftable at all.
-
-Worth keeping in view: the panel is right that you cannot *miss out*. All five
-draftable tight ends sat on one curve block, and Jake Ferguson was 86% to
-survive fifteen picks, Juwan Johnson 94%, Hunter Henry 98%. The plan already
-read `#128 TE → #133 K → #148 DST`.
+What did NOT move, because it was the obvious worry: **`SHRINK_WEEKS` leaves
+`REPL_RANKS` alone.** The shrunk policy repairs a real defect in the bare
+prior-weeks mean (it benches the consensus TE1 in 10 of 13 seasons and fails the
+hold-and-stream ≥ hold-alone identity in 75/182 TE and 92/182 QB player-seasons),
+but the streaming totals rise only +6.2 (QB) and +5.5 (TE) and stay on QB7 and
+TE6. The floor is stable under the repair.
 
 ### The resolution floor
 
@@ -950,6 +972,10 @@ curve (a backup kicker is worth what the starter is worth) and 0 at a
 **streamable** position — `STREAMABLE` means the free in-season option *is*
 replacement level, so a pick spent on a backup quarterback buys what waivers
 would have given you. Elsewhere it is 1, and `insuranceCutoffs` does the rest.
+(The *first* body at a streamable position is a different question, and since
+2026-09-04 it has its own term: holding him and streaming around him beats the
+stream, which is `HOLD_GAIN` in `lineupValueWith`, not insurance. A second body
+still buys what waivers would give.)
 
 A related gate landed with it: **market edge counts only while a player beats
 his position's free end-of-draft floor.** `edge` is a difference of two curve

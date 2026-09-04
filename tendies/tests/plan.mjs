@@ -25,7 +25,11 @@ const league = {
 };
 const empty = new Float64Array([-29.1, -28.3, -19.6, -6.3, 0, 0]);
 const blind = new Uint8Array([0, 0, 0, 0, 1, 1]);   // K and D-ST carry no VORP curve
-const spec = E.lineupSpec(league, positions, empty, blind);
+// a hold bonus on the two streamable slots (the shipped shape, vorp.HOLD_GAIN),
+// so the DP's dedicated-slot gain `max(0, x - empty) + hold` is exercised
+// rather than being trivially the no-hold case
+const hold = new Float64Array([15, 0, 0, 6, 0, 0]);
+const spec = E.lineupSpec(league, positions, empty, blind, hold);
 const K = E.PLAN_K, nPos = positions.length;
 
 const rnd = E.mulberry32(99);
@@ -77,7 +81,7 @@ function bruteForce(st, seat, sim, turns) {
         const x = availAt(t, q, k);
         if (x > -Infinity) {
           const g = (c[q] - 1) < spec.starters[q]
-            ? Math.max(0, x - spec.empty[q])
+            ? Math.max(0, x - spec.empty[q]) + spec.hold[q]
             : (spec.flexOk[q] ? Math.max(0, x - spec.emptyFlex) : 0);
           go(t + 1, value + g);
         }

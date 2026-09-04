@@ -107,7 +107,8 @@
     }
     // the empty-slot floors are read off the board AS IT STANDS, so the spec is
     // rebuilt with the state rather than cached across picks
-    spec = E.lineupSpec(league, M.positions, E.emptyValues(M, st), E.blindMask(M, M.positions));
+    spec = E.lineupSpec(league, M.positions, E.emptyValues(M, st), E.blindMask(M, M.positions),
+                        E.holdValues(M, M.positions));
     planCache = null;
     seatSims.clear(); seatPlans.clear();
   }

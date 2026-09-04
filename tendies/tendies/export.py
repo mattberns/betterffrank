@@ -168,6 +168,12 @@ def model_payload(
         # The empty-slot floor is clamped at 0 for these, or the streaming
         # already inside their VORP gets charged a second time.
         "streamable": [p for p in POSITIONS if p in vorp_mod.STREAMABLE],
+        # Half-PPR points a season that ROSTERING a body at a streamable
+        # position is worth over punting it (vorp.HOLD_GAIN, derived by
+        # streaming.hold_gain). engine.js adds it to every occupied dedicated
+        # slot at the position in lineupValueWith; positions absent here get 0.
+        "holdGain": {p: float(vorp_mod.HOLD_GAIN[p]) for p in POSITIONS
+                     if p in vorp_mod.HOLD_GAIN},
         # Which expert series priced each season. Stamped into the artifact on
         # purpose: a terminal line nobody reads is what let the 2026-09-01
         # source switch through, and this shows up as a diff instead.

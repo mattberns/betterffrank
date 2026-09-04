@@ -506,12 +506,27 @@ function jointProbs(model, st, seat, manager, autoWeight, kappa) {
  * and pay the drafter for it. The max still lets the live board raise the
  * floor when the room genuinely punts a position.
  *
- *     lineupValue = SUM over slots of max(occupant, EMPTY_slot)
+ * An OCCUPIED streamable slot is worth more than the better of its occupant
+ * and the stream, because you keep streaming AROUND him — his bye, his
+ * inactive weeks, the weeks the pool's hot hand is clearly better. Measured
+ * (tendies/streaming.py `hold_gain`, 2013-2025, paired within season) that is
+ * TE +6 / QB +15 a season over punting even for a body BELOW the floor, flat
+ * across the below-floor slots; `max(occupant, floor)` alone credited it 0, so
+ * a tight end worth less than streaming priced identically to NO tight end and
+ * could never earn a pick on value (the page took its TE in round 13 as a
+ * tie-break, at "now 0.0"). `hold[p]` (model.holdGain, from vorp.HOLD_GAIN) is
+ * added once per occupied DEDICATED slot at the position: uniform within the
+ * position, so nothing reorders inside it and only occupied-vs-empty moves;
+ * zero at every other position and never on a flex slot.
  *
- * Two consequences. `cutoffs` collapses to ONE number per position — the old
+ *     lineupValue = SUM over slots of max(occupant, EMPTY_slot) + HOLD_slot·[occupied]
+ *
+ * Two consequences. `cutoffs` collapses to ONE threshold per position — the old
  * "is this slot empty" flag is gone, since an empty slot is just a slot whose
- * cutoff is EMPTY. And K/D-ST come out at exactly 0 (they carry no VORP curve
- * at all), so the plan handles them as a legality constraint, not a price.
+ * cutoff is EMPTY — plus `fillBonus`, the hold a new body would earn by
+ * occupying a still-open dedicated slot (0 wherever hold is 0). And K/D-ST come
+ * out at exactly 0 (they carry no VORP curve at all), so the plan handles them
+ * as a legality constraint, not a price.
  */
 
 const PROBE = 1e6;
@@ -566,12 +581,24 @@ function blindMask(model, positions) {
   return m;
 }
 
+/* Hold bonus per position, from the payload (vorp.HOLD_GAIN, derived by
+ * tendies/streaming.py). Zero for any position the payload does not name. */
+function holdValues(model, positions) {
+  const out = new Float64Array(positions.length);
+  const hg = (model && model.holdGain) || {};
+  for (let p = 0; p < positions.length; p++) out[p] = Number(hg[positions[p]]) || 0;
+  return out;
+}
+
 /* Everything about the lineup that does not depend on the roster: slot counts,
- * the empty-slot floors, and which positions the value objective is blind to. */
-function lineupSpec(league, positions, empty, blind) {
+ * the empty-slot floors, the per-position hold bonus (see lineupValueWith;
+ * zeros when omitted), and which positions the value objective is blind to. */
+function lineupSpec(league, positions, empty, blind, hold) {
   const nPos = positions.length;
   const starters = new Int32Array(nPos), flexOk = new Uint8Array(nPos);
   const cap = new Int32Array(nPos), mandatory = new Uint8Array(nPos);
+  const holdA = new Float64Array(nPos);
+  if (hold) for (let p = 0; p < nPos; p++) holdA[p] = hold[p] || 0;
   // The flex floor is the MAX of the floors it draws from, and that is not a
   // stylistic choice: an unfilled flex is streamed with the best of RB/WR/TE,
   // and greedy slot assignment is only optimal while the flex floor DOMINATES
@@ -599,7 +626,7 @@ function lineupSpec(league, positions, empty, blind) {
   }
   if (!isFinite(emptyFlex)) emptyFlex = 0;
   return {
-    nPos, positions, starters, flexOk, cap, empty, emptyFlex,
+    nPos, positions, starters, flexOk, cap, empty, emptyFlex, hold: holdA,
     flex: league.flex, mandatory, blind: blind || new Uint8Array(nPos),
   };
 }
@@ -619,7 +646,7 @@ function lineupValueWith(board, spec, roster, probe) {
     v.sort((a, b) => b - a);
     const need = spec.starters[p];
     for (let i = 0; i < need; i++) {
-      total += i < v.length ? Math.max(v[i], spec.empty[p]) : spec.empty[p];
+      total += i < v.length ? Math.max(v[i], spec.empty[p]) + spec.hold[p] : spec.empty[p];
     }
     if (spec.flexOk[p]) for (let i = need; i < v.length; i++) leftovers.push(v[i]);
   }
@@ -644,9 +671,9 @@ function lineupSlots(board, spec, roster, addPid) {
     have[board.pos[addPid]].push({ pid: addPid, v: board.vorp[addPid], probe: true });
   }
   const out = [], leftovers = [];
-  const slot = (pos, label, occ, floor) => ({
+  const slot = (pos, label, occ, floor, hold) => ({
     pos, label, pid: occ ? occ.pid : -1, probe: occ ? occ.probe : false,
-    value: occ ? Math.max(occ.v, floor) : floor, floor,
+    value: occ ? Math.max(occ.v, floor) + hold : floor, floor, hold,
   });
   for (let p = 0; p < nPos; p++) {
     const v = have[p];
@@ -654,14 +681,14 @@ function lineupSlots(board, spec, roster, addPid) {
     const need = spec.starters[p];
     for (let i = 0; i < need; i++) {
       out.push(slot(p, spec.positions[p] + (need > 1 ? i + 1 : ''),
-                    i < v.length ? v[i] : null, spec.empty[p]));
+                    i < v.length ? v[i] : null, spec.empty[p], spec.hold[p]));
     }
     if (spec.flexOk[p]) for (let i = need; i < v.length; i++) leftovers.push(v[i]);
   }
   leftovers.sort((a, b) => b.v - a.v);
   for (let i = 0; i < spec.flex; i++) {
     out.push(slot(-1, 'FLEX' + (spec.flex > 1 ? i + 1 : ''),
-                  i < leftovers.length ? leftovers[i] : null, spec.emptyFlex));
+                  i < leftovers.length ? leftovers[i] : null, spec.emptyFlex, 0));
   }
   return out;
 }
@@ -672,23 +699,38 @@ function marginal(board, spec, roster, pid) {
        - lineupValue(board, spec, roster);
 }
 
+/* The hold bonus a NEW player at each position would earn right now: `hold[p]`
+ * while a dedicated slot at p is still open (he occupies it), else 0 (he
+ * displaces someone who already earned it). Companion to `cutoffs`. */
+function fillBonus(board, spec, roster) {
+  const counts = new Int32Array(spec.nPos);
+  for (const pid of roster) counts[board.pos[pid]] += 1;
+  const out = new Float64Array(spec.nPos);
+  for (let p = 0; p < spec.nPos; p++) out[p] = counts[p] < spec.starters[p] ? spec.hold[p] : 0;
+  return out;
+}
+
 /* The VORP a new player at each position must beat to improve the lineup. One
- * probe per position is now enough: with the floors in place the identity is
- * uniformly `max(0, v - c)`, and an empty slot simply has `c = EMPTY[p]`. The
- * cutoff is routinely NEGATIVE (anyone below replacement has negative VORP and
- * late rosters are full of them), which is why this is a probe and not a
- * search over a positive range. */
+ * probe per position is enough: with the floors in place the identity is
+ * `max(0, v - c) + fill`, an empty slot simply has `c = EMPTY[p]`, and `fill`
+ * is `fillBonus` (0 wherever hold is 0, which is every position but QB/TE).
+ * The probe's delta carries that bonus, so it is taken back out here and `out`
+ * is the threshold alone. The cutoff is routinely NEGATIVE (anyone below
+ * replacement has negative VORP and late rosters are full of them), which is
+ * why this is a probe and not a search over a positive range. */
 function cutoffs(board, spec, roster) {
   const base = lineupValue(board, spec, roster);
+  const fill = fillBonus(board, spec, roster);
   const out = new Float64Array(spec.nPos);
   for (let p = 0; p < spec.nPos; p++) {
-    out[p] = PROBE - (lineupValueWith(board, spec, roster, { vorp: PROBE, pos: p }) - base);
+    out[p] = PROBE - (lineupValueWith(board, spec, roster, { vorp: PROBE, pos: p }) - base) + fill[p];
   }
   return out;
 }
 
-/** Lineup value added by a player of value `v` at position `p`. */
-function marginalAt(cut, v, p) { return Math.max(0, v - cut[p]); }
+/** Lineup value added by a player of value `v` at position `p`; `fill` is
+ *  `fillBonus` for the same roster (omit it only where every hold is 0). */
+function marginalAt(cut, v, p, fill) { return Math.max(0, v - cut[p]) + (fill ? fill[p] : 0); }
 
 /** Starting slots (dedicated + flex) still unfilled. */
 function openSlots(board, spec, roster) {
@@ -859,7 +901,7 @@ function planLayer(space, spec, base, cnt0, availAt) {
       const x = availAt(p, k);
       if (!(x > -Infinity)) continue;
       const g = space.cnt[i * nPos + p] < spec.starters[p]
-        ? Math.max(0, x - spec.empty[p])
+        ? Math.max(0, x - spec.empty[p]) + spec.hold[p]
         : (spec.flexOk[p] ? Math.max(0, x - spec.emptyFlex) : 0);
       const fj = base.f[j], vj = g + base.v[j];
       if (fj < bestF || (fj === bestF && vj > bestV)) { bestF = fj; bestV = vj; bestA = p; }
@@ -943,8 +985,9 @@ function planValueAt(pl, j) {
 function recommend(model, st, seat, sim, cands, spec) {
   const B = st.board, nPos = B.positions.length, roster = st.rosters[seat];
   spec = spec || lineupSpec(st.league, B.positions, emptyValues(model, st),
-                            blindMask(model, B.positions));
+                            blindMask(model, B.positions), holdValues(model, B.positions));
   const cut = cutoffs(B, spec, roster);
+  const fill = fillBonus(B, spec, roster);
   const pl = plan(model, st, seat, sim, spec);
   const at = (j) => planValueAt(pl, j);
   // Value of spending this turn on nobody. A candidate who cannot beat it adds
@@ -966,7 +1009,7 @@ function recommend(model, st, seat, sim, cands, spec) {
   const out = [];
   for (const pid of cands) {
     const p = B.pos[pid];
-    const now = marginalAt(cut, B.vorp[pid], p);
+    const now = marginalAt(cut, B.vorp[pid], p, fill);
     const step = pl.space.stepTo[pl.i0 * nPos + p];
     const j = step >= 0 ? step : pl.i0;          // capped position: a bench pick
     const a = at(j);
@@ -1239,7 +1282,10 @@ function insuranceCutoffs(board, spec, roster) {
  * depth. So the fallback when your quarterback is lost is available in-season
  * for nothing, and a draft pick spent on a backup buys you what waivers would
  * have given you. Insurance at a streamable position is ~0 by the same
- * definition that sets its replacement level.
+ * definition that sets its replacement level. (The FIRST body at the position
+ * is a different matter — holding him and streaming around him beats the
+ * stream, and that is `hold` in lineupValueWith, not insurance; a SECOND body
+ * still buys what waivers would give.)
  *
  * Leaving it at 1 is what the first version of this did, and it was measurably
  * wrong in exactly the way the report already complained about: at 1 the term
@@ -1569,7 +1615,7 @@ const API = {
   jointProbs, scoreState, playerUtilities, simulate, mulberry32, hash32, stateSeed,
   botPick, fastForward,
   logSumExp, softmax, lineupValue, lineupValueWith, lineupSlots, marginal,
-  marginalAt, cutoffs,
+  marginalAt, cutoffs, fillBonus, holdValues,
   lineupSpec, emptyValues, blindMask, goneBy, openSlots, myTurns, topKAvail,
   planSpace, planStateOf, plan, planPath, planValueAt, recommend, candidates,
   insuranceCutoffs, insuranceWeights, assignTiers, tiedScores,

@@ -164,7 +164,7 @@ for (;;) {
   if (s < 0) break;
   if (s !== SEAT) { E.advance(st, opponentPick(st, s)); continue; }
   const spec = E.lineupSpec(league, board.positions, E.emptyValues(M, st),
-                            E.blindMask(M, board.positions));
+                            E.blindMask(M, board.positions), E.holdValues(M, board.positions));
   const sim = E.simulate(M, st, SEAT, { nSims: 150 });
   const rec = E.recommend(M, st, SEAT, sim, E.candidates(st, SEAT), spec);
   out.states++;

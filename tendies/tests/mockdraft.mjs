@@ -76,7 +76,7 @@ function playSeat(seat, how) {
 }
 
 const spec = E.lineupSpec(league, P, E.emptyValues(M, E.newState(board, league, managers)),
-                          E.blindMask(M, P));
+                          E.blindMask(M, P), E.holdValues(M, P));
 
 const problems = [];
 const rows = [];

@@ -43,22 +43,37 @@ is the honest uncertainty in these two constants and it is not small — a reade
 who believes he wins the breakout should be running QB3/TE3, which would price
 quarterbacks and tight ends near zero all the way down the board.
 
-## The policy's OTHER defect, and why it does not move the constants
+## Holding a body below the floor, and what the engine misses
 
-The bare prior-weeks mean is a bad predictor in September and it benches a stud
-after two quiet games. Measured 2026-09-03 over 2013-2025, it drops the
-consensus TE1 in 10 of 13 seasons at a cost of 12.5 points a season, and it
-fails `check_dominance` — hold-and-stream lands BELOW hold-alone in 75 of 182
-tight-end and 92 of 182 quarterback player-seasons, worst -86 points. Always
-starting your own man is free, so a rule that cannot match it is discarding
-points, and any measurement built on it understates.
+`lineupValueWith` prices an occupied streamable slot at `max(his VORP, 0)`, so a
+tight end worth less than streaming prices identically to an EMPTY slot and no
+such tight end can earn a pick on value. `hold_gain` measures the PAIRED quantity
 
-`SHRINK_WEEKS` mixes preseason prior into the form estimate and roughly halves
-the violation rate. **It does not move REPL_RANKS**: the streaming totals rise
-+6.2 (QB) and +5.5 (TE) and both stay on the same curve slot, QB7 and TE6. So
-the shipped constants are stable under the repair, which is why `stream_total`
-still defaults to shrink=0 and the derivation above is unchanged. Where it
-matters is `option_value` — see the block comment in `main`.
+    gain(k) = (hold slot k AND stream around him) - (stream only)
+
+same season, same free pool, same weekly form rule, 2013-2025. Below the floor
+it reads TE +6 to +13 and QB +13 to +19 a season (t 2-3), flat across the
+below-floor slots and stable across drop_top 1/2 and shrink 0/4. The engine
+credited 0 until 2026-09-04; it now adds `vorp.HOLD_GAIN` (QB 15, TE 6 -- the
+drop_top=1 / shrink=0 corner, rounded) to every occupied streamable slot.
+RB44-49 / WR52-56 read +1 to +6 / +1 to +3, but against a one-slot
+stream of their free pool that banks RB14-25 / WR27-40 -- which is the proof
+that a single-slot streaming sim is NOT a replacement estimator at a
+multi-starter position, so the RB/WR line is a check and not a comparable.
+
+An earlier version of this measurement (2026-09-03) read +20 to +40 and called
+it option value. Decomposed, PURE option value -- hold+stream over the better
+of hold-alone or stream-alone -- is NEGATIVE (TE -2.6, QB -9.8); the rest was
+the realized stream sitting above `curve@REPL` on the widened window (+9.2 TE,
++19.3 QB) plus the hindsight max of two realized paths. Neither is a value of
+holding anyone. See the block comment in `main`.
+
+`SHRINK_WEEKS` mixes preseason prior into the form estimate. It repairs a real
+policy defect -- the bare prior-weeks mean benches the consensus TE1 in 10 of
+13 seasons and fails `check_dominance` in 75/182 TE and 92/182 QB
+player-seasons -- and **it does not move REPL_RANKS**: the streaming totals rise
++6.2 (QB) and +5.5 (TE) and stay on QB7 and TE6. So `stream_total` still
+defaults to shrink=0 and the derivation above is unchanged.
 
 ## What this changed, and what it did not
 
@@ -72,7 +87,7 @@ QB/TE floated to the top of a column that meant a different thing in each row.
 Prints, writes nothing, and is not imported by the fitted pipeline — the same
 status `bff/streaming.py` has in the parent repo.
 
-    uv run tendies streaming
+    uv run python -m tendies streaming
 """
 
 from __future__ import annotations
@@ -106,37 +121,19 @@ RESIDUAL_WARN = 5.0
 # quiet games. Measured 2026-09-03 over 2013-2025: it dropped the consensus TE1
 # in 10 of 13 seasons at a cost of 12.5 points a season, and violated
 # `check_dominance`'s identity in 75 of 182 tight-end and 92 of 182 quarterback
-# player-seasons. A policy that loses to "just start my guy" is not a fair
-# measure of what holding a player is worth, so every option-value number taken
-# from the unshrunk rule is contaminated DOWNWARD by an unknown amount.
+# player-seasons. The violation rate falls monotonically with shrink (QB
+# 51/36/34/26/18%, TE 41/34/29/25/20% at 0/1/2/4/8) and never flattens, so it
+# does not select a value; 4.0 is a midpoint, not an optimum.
 #
-# SHRINK_WEEKS is swept, not asserted, for the same reason `drop_top` is: it is a
-# claim about waiver behaviour that the data can bound but not pin. `main` prints
-# the whole grid. Nothing in the shipped pipeline reads either constant.
-#
-# THE VIOLATION RATE NEVER FLATTENS, so it does not select a value. Swept
-# 2026-09-03: QB 51/36/34/26/18% and TE 41/34/29/25/20% at shrink 0/1/2/4/8,
-# falling monotonically throughout. An earlier version of this comment claimed a
-# plateau; there is none in the swept range, and 4.0 is a midpoint, not an
-# optimum.
-#
-# What makes the measurement survive that anyway is that the KNOB'S ENDPOINTS ARE
-# BOTH DEFENSIBLE and the answer is the same at both. At shrink 0 the rule is the
-# bare prior-weeks mean. As shrink grows, form collapses to the preseason prior,
-# and since the rostered man is inside `n_owned` while the pool is outside, the
-# policy converges on "start your guy every week, stream his bye" -- which is
-# knob-free and is what a real manager does. So this interpolates between two
-# sensible policies rather than running off, and the option value is POSITIVE AND
-# SIGNIFICANT at every value except shrink 0, the one policy independently known
-# to be broken.
-#
-# TE is the striking case: +20.2 / +19.6 / +19.0 / +17.6 at shrink 1/2/4/8
-# (t 3.0-3.5) against +10.0 (t 1.52) at shrink 0. Flat across a factor of eight.
-# So the TE result is NOT an artefact of the knob -- the knob only has to leave
-# the broken setting. Do not repeat the concern that shrinkage manufactured it;
-# it was a reasonable worry and the sweep answers it.
+# It is swept, not asserted, for the same reason `drop_top` is: it is a claim
+# about waiver behaviour that the data can bound but not pin. Both endpoints are
+# defensible -- shrink 0 is the bare form rule, and as shrink grows the policy
+# converges on "start your guy every week, stream his bye" -- and `hold_gain`'s
+# below-floor answer is the same at both (see `main`). Nothing in the shipped
+# pipeline reads this constant.
 SHRINK_WEEKS = 4.0
-SHRINK_SWEEP = (0.0, 1.0, 2.0, 4.0, 8.0)
+# Slots per row in the by-slot gain table `main` prints.
+GAIN_BAND = 4
 
 
 def _weekly_path(season: int):
@@ -150,11 +147,11 @@ def _has_weekly(season: int) -> bool:
     return _weekly_path(season).exists()
 
 
-# The option-value sweep asks for the same (season, position) frame hundreds of
-# times -- 14 slots x 13 seasons x 2 shrink settings x 2 positions -- and each
-# call was re-reading a whole weekly parquet off disk. That is what killed the
-# 2026-09-03 run. Polars frames are treated as immutable everywhere here, so
-# handing out the same object is safe.
+# The hold-gain sweep asks for the same (season, position) frame repeatedly --
+# 13 seasons x several policy settings x 4 positions -- and each call was
+# re-reading a whole weekly parquet off disk. That is what killed the 2026-09-03
+# run. Polars frames are treated as immutable everywhere here, so handing out
+# the same object is safe.
 @lru_cache(maxsize=None)
 def weekly(season: int, pos: str) -> pl.DataFrame:
     """(gsis_id, week, pts) — half-PPR weekly scores at one position.
@@ -175,7 +172,7 @@ def weekly(season: int, pos: str) -> pl.DataFrame:
 
 
 def season_curve(hist: pl.DataFrame, season: int, pos: str):
-    """`vorp.build_curve` for one season, cached across the option-value sweep.
+    """`vorp.build_curve` for one season, cached across the hold-gain sweep.
 
     Keyed on the history's shape and season, not on the frame itself (polars
     frames are unhashable). Every caller in this module passes the one `hist`
@@ -259,14 +256,12 @@ def _form(pool: pl.DataFrame, week: int, rank: dict, curve=None,
 
 
 def _free_pool(hist: pl.DataFrame, season: int, pos: str, n_owned: int,
-               drop_top: int, exclude: str | None = None):
+               drop_top: int):
     """(free-pool weekly frame, within-position rank map) for one season."""
     h = hist.filter((pl.col("season") == season) & (pl.col("position") == pos))
     rank = dict(zip(h["gsis_id"].to_list(), h["pos_rank"].to_list()))
     owned = [g for g, r in rank.items() if r <= n_owned]
     free = weekly(season, pos).filter(~pl.col("gsis_id").is_in(owned))
-    if exclude is not None:
-        free = free.filter(pl.col("gsis_id") != exclude)
     if drop_top:
         claimed = (free.group_by("gsis_id").agg(pl.col("pts").sum())
                    .sort("pts", descending=True)["gsis_id"].to_list()[:drop_top])
@@ -297,76 +292,71 @@ def stream_total(hist: pl.DataFrame, season: int, pos: str, n_owned: int,
     return total
 
 
-def option_value(hist: pl.DataFrame, season: int, pos: str, n_owned: int,
-                 floor: float, drop_top: int = SHIPPED_DROP_TOP, curve=None,
-                 shrink: float = 0.0) -> list[tuple]:
-    """Per drafted slot: `(slot, his own total, roster-him-AND-stream,
-    what the ENGINE prices, what the OLD test priced)`.
+def hold_gain(hist: pl.DataFrame, season: int, pos: str, n_owned: int,
+              drop_top: int = SHIPPED_DROP_TOP, curve=None,
+              shrink: float = 0.0) -> list[tuple]:
+    """Per drafted slot: `(slot, his own total, hold-him-AND-stream, stream only)`.
 
-    `lineupValueWith` prices an occupied slot at `max(his value, the streaming
-    floor)`, and that is not the same quantity as the season total of WEEKLY
-    maxima. Roster a tight end and you do not stop streaming: each week you start
-    whichever of him and the best free tight end looks better. So the model
-    understates an occupied streamable slot by the option value of holding both,
-    and at a slot below the floor it understates it by the whole thing — a tight
-    end worth less than streaming prices identically to an EMPTY slot, which is
-    why no such tight end can ever earn a pick.
+    The difference of the last two is what rostering the player at `slot` is
+    worth over punting the position: same season, same free pool, same weekly
+    rule, the only change being whether you own him. No curve enters it, so
+    neither the walk-forward curve's bias on a given window nor the floor's
+    calibration can inflate it -- both of which sank the earlier version of this
+    measurement (see the block comment in `main`).
 
-    **The baseline is `max(curve[slot], floor)`, and getting that wrong is what
-    sank the first version of this measurement.** The engine prices a slot from
-    the CURVE, which is an expectation; the old test compared against
-    `max(his REALIZED total, floor)`. `E[max(X, c)] > max(E[X], c)` for any X
-    with spread, so the old baseline was inflated by that Jensen gap — measured
-    2026-09-03 at +13.0 points over TE8-14 and +29.6 over QB8-14, against effects
-    of +9 and +28. That is the whole reason the test read zero. The old
-    quantity is still returned as the fifth element so the two are comparable.
+    Policy, applied to the rostered player and the free pool alike: `shrink`
+    pseudo-weeks of preseason prior mixed into a prior-weeks mean, start whoever
+    grades higher, bank his actual points. His bye and inactive weeks are
+    streamed. At `shrink == 0` week 1 has no form and the ECR tiebreak decides,
+    which is the rule the shipped REPL_RANKS were derived under.
 
-    The policy is the no-hindsight rule `stream_total` uses, applied to the
-    rostered player and the free pool ALIKE: `shrink` pseudo-weeks of preseason
-    prior mixed into a prior-weeks mean, then start whoever grades higher and
-    bank his actual points. Applying it symmetrically matters — the unshrunk
-    rule benched the consensus TE1 in 10 of 13 seasons because his two quiet
-    Septembers outweighed nothing at all. His bye and inactive weeks are
-    streamed. Rostering him also removes him from everyone else's free pool,
-    which is why `free` excludes him.
+    The streaming leg is computed ONCE per season and shared by every slot:
+    `_free_pool` already excludes everyone inside `n_owned`, so the free pool
+    does not depend on which owned player is being valued. (The earlier code
+    passed `exclude=me` and rebuilt it per slot; that argument was a no-op and
+    the rebuild was most of the runtime.)
     """
     h = hist.filter((pl.col("season") == season) & (pl.col("position") == pos))
     rank = dict(zip(h["gsis_id"].to_list(), h["pos_rank"].to_list()))
-    wk = weekly(season, pos)
+    free, _ = _free_pool(hist, season, pos, n_owned, drop_top)
+    if free.height == 0:
+        return []
     shrunk = curve is not None and shrink > 0
-    out = []
-    for slot in range(1, n_owned + 1):
-        mine = [g for g, r in rank.items() if r == slot]
-        if not mine:
+    spts, sform = {}, {}
+    for w in sorted(free["week"].unique().to_list()):
+        cur = free.filter(pl.col("week") == w)
+        if cur.height == 0:
             continue
-        me = mine[0]
-        free, _ = _free_pool(hist, season, pos, n_owned, drop_top, exclude=me)
+        cand = (cur.join(_form(free, w, rank, curve, shrink), on="gsis_id", how="left")
+                .with_columns(pl.col("gsis_id").replace_strict(rank, default=10**6).alias("pr"))
+                .sort(["form", "pr"], descending=[True, False], nulls_last=True))
+        spts[w], sform[w] = float(cand["pts"][0]), cand["form"][0]
+    stream_only = float(sum(spts.values()))
+
+    wk = weekly(season, pos)
+    mine: dict[int, str] = {}
+    for g, r in rank.items():
+        if r <= n_owned:
+            mine.setdefault(int(r), g)
+    out = []
+    for slot in sorted(mine):
         mypts = {int(r["week"]): float(r["pts"])
-                 for r in wk.filter(pl.col("gsis_id") == me).iter_rows(named=True)}
+                 for r in wk.filter(pl.col("gsis_id") == mine[slot]).iter_rows(named=True)}
         my_p0 = vorp_mod.curve_at(curve, slot) / REG_WEEKS if shrunk else None
         both = 0.0
-        for w in sorted(free["week"].unique().to_list()):
-            cur = free.filter(pl.col("week") == w)
-            if cur.height == 0:
-                continue
-            cand = (cur.join(_form(free, w, rank, curve, shrink), on="gsis_id", how="left")
-                    .with_columns(pl.col("gsis_id")
-                                  .replace_strict(rank, default=10**6).alias("pr"))
-                    .sort(["form", "pr"], descending=[True, False], nulls_last=True))
-            spts, sform = float(cand["pts"][0]), cand["form"][0]
+        for w, s in spts.items():
             m = mypts.get(w)
             if m is None:
-                both += spts                       # his bye or a scratch: stream it
+                both += s                           # his bye or a scratch: stream it
                 continue
             pri = [mypts[x] for x in mypts if x < w]
             if shrunk:
                 mf = (float(np.sum(pri)) + my_p0 * shrink) / (len(pri) + shrink)
             else:
                 mf = float(np.mean(pri)) if pri else None
-            both += m if (mf is not None and (sform is None or mf > float(sform))) else spts
-        alone = sum(mypts.values())
-        priced = max(vorp_mod.curve_at(curve, slot), floor) if curve is not None else max(alone, floor)
-        out.append((slot, alone, both, priced, max(alone, floor)))
+            f = sform[w]
+            both += m if (mf is not None and (f is None or mf > float(f))) else s
+        out.append((slot, float(sum(mypts.values())), both, stream_only))
     return out
 
 
@@ -376,11 +366,11 @@ def check_dominance(rows: list[tuple]) -> tuple[int, int, float]:
     Always starting your own player is a policy available to the streamer at no
     information cost, so a streaming rule that cannot match it is losing points
     it did not have to lose. Ex-post regret makes the odd violation inevitable;
-    a rate near half the sample does not. This is the gate the option-value
-    number has to pass before it can mean anything, because a policy that
-    destroys value understates what holding a player is worth.
+    a rate near half the sample does not. A policy that loses to "just start my
+    guy" understates `hold_gain`, which is why the rate is printed next to it.
+    Takes `hold_gain` rows: `(slot, alone, both, stream_only)`.
     """
-    d = [both - alone for _, alone, both, _, _ in rows]
+    d = [both - alone for _, alone, both, _ in rows]
     return sum(x < -1e-6 for x in d), len(d), (min(d) if d else 0.0)
 
 
@@ -511,101 +501,127 @@ def main(league_id: int | None = None) -> None:
               f"beats it, which is why {pos} takes the streaming arm")
 
     # ---------------------------------------------------------------------
-    # OPTION VALUE OF ROSTERING A BODY AT A STREAMABLE SLOT. Still not shipped,
-    # but the reason changed on 2026-09-03 and the old reason was wrong.
+    # WHAT HOLDING A BODY BELOW THE FLOOR IS WORTH -- the derivation behind
+    # vorp.HOLD_GAIN. The measurement lives here so the number is reproducible
+    # and so nobody re-derives the two wrong versions of it.
     #
-    # The gap is real and structural. `lineupValueWith` prices an occupied slot
-    # at `max(his value, the floor)`, which is not the season total of WEEKLY
-    # maxima — you roster a tight end AND keep streaming. So a tight end below
-    # the streaming floor prices identically to an EMPTY tight end slot, and no
-    # such tight end can ever earn a pick however good he looks. That is why the
-    # draft page will not take Travis Kelce in round 12 with an empty TE slot.
+    # `lineupValueWith` prices an occupied slot at `max(his VORP, empty)`, and
+    # at a streamable position `empty` is 0, so a tight end below the floor
+    # prices identically to NO tight end and can never earn a pick on value.
+    # That is why the draft page will not take Kelce in round 12 with an empty
+    # TE slot. The question is what he is actually worth over punting.
     #
-    # The first measurement said the gap was worth nothing (TE +1.6 +/- 3.8,
-    # QB +5.7 +/- 6.1) and it was measuring the wrong difference TWICE:
+    # Two earlier answers were wrong in opposite directions:
+    #   - 2026-09-02: `both - max(his REALIZED total, floor)` on players who
+    #     finished at or below the floor -- selects on the outcome, read ~0.
+    #   - 2026-09-03: `both - max(curve[slot], floor)` on 2013-2025 -- read +20
+    #     to +40 and called it option value. Decomposed, PURE option value
+    #     (hold+stream over the better of hold-alone or stream-alone) is
+    #     NEGATIVE (TE -2.6, QB -9.8 below the floor at shrink 4); the +20-40
+    #     was the realized stream sitting above curve@REPL on the widened
+    #     window (+9.2 TE, +19.3 QB) plus E[max] of two realized paths, which
+    #     is hindsight nobody banks. Neither is a value of holding anyone.
     #
-    #   1. WRONG BASELINE. It compared against `max(his REALIZED total, floor)`
-    #      while the engine prices `max(curve[slot], floor)`. `E[max(X,c)] >
-    #      max(E[X],c)`, so the old baseline carried a Jensen gap of +13.0 points
-    #      at TE8-14 and +29.6 at QB8-14 — larger than the effect. Correcting it
-    #      alone flips TE9-12 from -6.2 to +7.7.
-    #   2. TOO FEW SEASONS. It read `boards`, the half-PPR ADP window (2018-),
-    #      for a quantity that needs only a curve slot and a weekly score. Those
-    #      run from 2012 and 1999. Eight seasons where thirteen were sitting
-    #      there. See `opt_seasons`.
+    # The quantity that survives is PAIRED: same season, same free pool, same
+    # weekly form rule, hold him or not. `hold_gain` returns it; below the
+    # shipped floor it reads (drop_top 1/2 x shrink 0/4, 13 seasons):
+    #     TE7-14   +6.1 / +9.8 / +7.9 / +12.9   (t 2.2-3.3)
+    #     QB8-14  +14.6 / +13.0 / +18.8 / +16.4  (t 1.8-2.9)
+    # flat across the below-floor slots -- a TE13-14 held and streamed around
+    # reads +7 to +16, TE9-12 +4 to +12 -- and the engine credited 0. Above the
+    # floor the comparison is knob-dependent (TE1-4: 7 under the credit at
+    # shrink 0, 13 over it at shrink 4), so only the below-floor block is a
+    # finding.
     #
-    # Corrected, on 13 seasons and swept over the policy knob, the flat block
-    # reads QB +28.2 -> +40.7 and TE +10.0 -> +17.6 across shrink 0 -> 8. Both
-    # are positive at every setting; both are significant at every setting except
-    # TE at shrink 0, which is the policy `check_dominance` rejects anyway. So
-    # the direction is settled and the magnitude is bracketed, roughly +20 to +40
-    # points on an occupied slot the engine currently prices at zero gradient.
+    # RB and WR are printed as a check, not a comparable. Their below-floor
+    # bodies read +1 to +6 (RB44-49) and +1 to +3 (WR52-56), but against a
+    # ONE-SLOT stream of the free pool that banks RB14-25 / WR27-40 -- far
+    # above the shipped RB43/WR51 floors. That is the demonstration that a
+    # single-slot streaming sim is not a replacement estimator at a
+    # multi-starter position (2-3 backs start at once, and the weekly waiver
+    # hand is contested by nine rivals, which drop_top -- season-total leaders
+    # only -- does not model). RB/WR bench bodies earn through `insurance` in
+    # engine.js instead. So the "fix all four or none" constraint from the
+    # 09-03 pass dissolves: the positions do not share a mechanism.
     #
-    # The unshrunk rule fails `check_dominance` hard: hold+stream comes in BELOW
-    # hold-alone in 75 of 182 tight-end and 92 of 182 quarterback player-seasons,
-    # worst -86 points. Always starting your own man costs no information, so a
-    # rule that cannot match it is throwing away points. The visible symptom is
-    # the top of the board: the bare prior-weeks mean benches the consensus TE1
-    # in 10 of 13 seasons at -12.5 points a season, which would DEMOTE Bowers if
-    # it were shipped as a curve. That is why shrink 0 is not the answer even
-    # though it is the most conservative-looking column.
-    #
-    # Two things to settle before any of this reaches the objective:
-    #   - The shrunk rule also moves `stream_total`, hence REPL_RANKS, hence the
-    #     board. It is deliberately NOT wired into the shipped derivation; the
-    #     sweep prints both so the cost of switching is visible first.
-    #   - RB and WR have waiver access too. A correction applied only to QB/TE
-    #     tilts the board back toward them, which is exactly the failure the
-    #     2026-09-01 replacement repair removed. Fix all four or none.
-    print(f"\nOPTION VALUE OF ROSTERING A BODY (not shipped — see the comment in "
-          f"streaming.main), {opt_seasons[0]}-{opt_seasons[-1]}, n={len(opt_seasons)} seasons")
-    print("  the engine prices an occupied slot at max(curve[slot], floor); this is "
-          "what rostering him AND streaming actually banks")
+    # SHIPPED 2026-09-04 as vorp.HOLD_GAIN = {QB: 15, TE: 6}: the drop_top=1 /
+    # shrink=0 corner (the setting REPL_RANKS is derived under), rounded.
+    # engine.js adds it to every OCCUPIED dedicated slot at the position
+    # (uniform, so within-position order and the elite premium are untouched;
+    # only occupied-vs-empty moves). Ten-seat mock before/after on the 2026
+    # board and the 2025 fixture: no pick moved on any seat, every lineup +21.0,
+    # margin over best-by-ADP unchanged (+22.3 / +80.6); the R13 TE/QB rows read
+    # now 6.0 / 15.0 instead of 0.0. As predicted: on a TE block this flat and
+    # deep (TE13-14 survive 15 picks at 86-98%) it changes what the slot is
+    # WORTH, not when the DP fills it -- until a board's round-10-12
+    # alternatives are worth under six points, where it will now take the TE.
+    print(f"\nHOLDING A BODY BELOW THE FLOOR (the derivation behind vorp.HOLD_GAIN — see "
+          f"the comment in streaming.main), {opt_seasons[0]}-{opt_seasons[-1]}, "
+          f"n={len(opt_seasons)} seasons")
+    print("  gain = (hold slot k AND stream around him) - (stream only), paired within "
+          "season; credit = max(0, curve[k] - floor), what the engine priced before "
+          "HOLD_GAIN")
 
     def stat(a):
         a = np.asarray(a, dtype=float)
-        return (a.mean(), a.std(ddof=1) / np.sqrt(len(a)), len(a)) if len(a) > 1 else (0.0, 0.0, len(a))
+        return ((a.mean(), a.std(ddof=1) / np.sqrt(len(a)), len(a)) if len(a) > 1
+                else ((a.mean() if len(a) else 0.0), 0.0, len(a)))
 
-    verdict: dict = {}
-    for pos in sorted(vorp_mod.STREAMABLE):
-        print(f"\n  {pos}  (floor {pos}{vorp_mod.REPL_RANKS[pos]})")
-        print(f"    {'shrink':>6s} | {'dominance viol':>14s} | {'ALL slots':>18s} | "
-              f"{'the flat block':>18s} | {'old baseline':>14s}")
-        for sk in SHRINK_SWEEP:
-            rows, per = [], []
+    def per_season(rows):
+        per: dict = {}
+        for r in rows:
+            per.setdefault(r[0], []).append(r[3] - r[4])
+        return [float(np.mean(v)) for v in per.values()]
+
+    settings = [(d, sk) for d in (SHIPPED_DROP_TOP, SHIPPED_DROP_TOP + 1)
+                for sk in (0.0, SHRINK_WEEKS)]
+    for pos in vorp_mod.CURVE_POSITIONS:
+        repl, cl = vorp_mod.REPL_RANKS[pos], curve[pos]
+        floor_live = vorp_mod.curve_at(cl, repl)
+        streamable = pos in vorp_mod.STREAMABLE
+        print(f"\n  {pos}  floor {pos}{repl} = {floor_live:.0f} pts on the {live} curve"
+              + ("" if streamable else "  (NOT streamable: a check, not a comparable)"))
+        for drop, sk in settings:
+            if not streamable and drop != SHIPPED_DROP_TOP:
+                continue
+            rows = []
             for s in opt_seasons:
                 cp = season_curve(hist, s, pos)
                 if cp is None:
                     continue
-                fl = vorp_mod.curve_at(cp, vorp_mod.REPL_RANKS[pos])
-                r = option_value(hist, s, pos, n_owned[pos], fl, SHIPPED_DROP_TOP, cp, sk)
-                rows += r
-                blk = [x[2] - x[3] for x in r if x[0] > vorp_mod.REPL_RANKS[pos]]
-                if blk:
-                    per.append(float(np.mean(blk)))
-            viol, n, worst = check_dominance(rows)
-            ma, sa, _ = stat([x[2] - x[3] for x in rows])
-            mb, sb, _ = stat([x[2] - x[3] for x in rows if x[0] > vorp_mod.REPL_RANKS[pos]])
-            mo, so, _ = stat([x[2] - x[4] for x in rows])
-            mp, sp, _ = stat(per)
-            t = 0.0 if sp == 0 else mp / sp
-            verdict.setdefault(pos, {})[sk] = (viol / max(1, n), mb, t)
-            print(f"    {sk:6.1f} | {viol:5d}/{n:<4d} {worst:6.0f} | {ma:+7.1f} +/- {sa:4.1f}"
-                  f"       | {mb:+7.1f} +/- {sb:4.1f}       | {mo:+6.1f} +/- {so:4.1f}")
-            print(f"           |  per season over the block: {mp:+6.1f} +/- {sp:4.1f}  "
-                  f"t {t:4.2f}  ({sum(x > 0 for x in per)}/{len(per)} seasons)")
-    print("\n  -> read DOWN each column, not across: the option value and the policy's "
-          "own\n     quality move together, so a shrink picked on the effect size would be "
-          "selection.")
-    for pos in sorted(vorp_mod.STREAMABLE):
-        v = verdict[pos]
-        lo, hi = v[SHRINK_SWEEP[0]], v[SHRINK_WEEKS]
-        print(f"     {pos}: violations {lo[0]:.0%} -> {hi[0]:.0%} over shrink "
-              f"{SHRINK_SWEEP[0]:.0f}-{SHRINK_WEEKS:.0f}; the block reads "
-              f"{lo[1]:+.1f} (t {lo[2]:.2f}) -> {hi[1]:+.1f} (t {hi[2]:.2f})")
-    print("     Nothing is added to the objective: the effect is real but its SIZE is a "
-          "function\n     of a policy constant this data cannot pin. See the block comment "
-          "above.")
+                rows += [(s,) + r for r in hold_gain(hist, s, pos, n_owned[pos], drop, cp, sk)]
+            so = [r[4] for r in rows if r[1] == 1]
+            ms = float(np.mean(so)) if so else 0.0
+            viol, n, worst = check_dominance([r[1:] for r in rows])
+            below = [r for r in rows if r[1] > repl]
+            mb, eb, _ = stat([r[3] - r[4] for r in below])
+            ps = per_season(below)
+            mp, ep, _ = stat(ps)
+            print(f"    drop_top={drop} shrink={sk:.0f}: stream only {ms:6.1f} pts = "
+                  f"{pos}{curve_slot(cl, ms):<3d} | hold+stream < hold alone {viol}/{n}, "
+                  f"worst {worst:.0f} | below floor {pos}{repl + 1}-{pos}{n_owned[pos]}: "
+                  f"gain {mb:+.1f} +/-{eb:.1f}, per-season t "
+                  f"{0.0 if ep == 0 else mp / ep:.2f} ({sum(x > 0 for x in ps)}/{len(ps)})")
+            if streamable and drop == SHIPPED_DROP_TOP:
+                print(f"      {'slots':>10s} | {'n':>3s} | {'gain':>15s} | {'credit':>6s} | "
+                      f"{'gain-credit':>11s} | {'alone-stream':>15s}")
+                lo = 1
+                while lo <= n_owned[pos]:
+                    hi = min(lo + GAIN_BAND - 1, n_owned[pos])
+                    rs = [r for r in rows if lo <= r[1] <= hi]
+                    if rs:
+                        mg, eg, nn = stat([r[3] - r[4] for r in rs])
+                        ma, ea, _ = stat([r[2] - r[4] for r in rs])
+                        cred = float(np.mean([
+                            max(0.0, vorp_mod.curve_at(cl, r[1]) - floor_live) for r in rs]))
+                        print(f"      {pos}{lo:>2d}-{pos}{hi:<4d} | {nn:3d} | {mg:+7.1f} +/-{eg:4.1f}"
+                              f" | {cred:6.1f} | {mg - cred:+8.1f}    | {ma:+7.1f} +/-{ea:4.1f}")
+                    lo = hi + 1
+    print("\n  -> a below-floor TE body is worth roughly +6-13 over punting and a QB body "
+          "+13-19; shipped as\n     vorp.HOLD_GAIN QB 15 / TE 6 (the drop_top=1 / shrink=0 "
+          "corner). RB/WR are paired against a\n     ONE-SLOT stream that banks RB14-25 / "
+          "WR27-40, which is why they are not streamable and why\n     their line is a "
+          "check, not a comparable.")
 
     print(f"\nWHAT THE SHRUNK RULE WOULD DO TO THE FLOOR (not applied; REPL_RANKS is "
           f"derived at shrink=0)")

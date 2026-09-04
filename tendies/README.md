@@ -253,6 +253,16 @@ check when a prominent player shows up unmatched.
   prices quarterbacks and tight ends near zero all the way down; assume you lose
   the top two and it is QB16/TE15. `tendies streaming` prints the whole sweep —
   read it before treating QB7/TE6 as settled.
+- **An occupied QB/TE slot earns `vorp.HOLD_GAIN` (QB 15, TE 6) on top of
+  `max(VORP, 0)`** (2026-09-04). Holding a body and streaming around him beats
+  streaming alone even when he is below the floor — measured paired within
+  season over 2013-2025 by `tendies streaming` (TE +6 to +13, QB +13 to +19) —
+  and without it a below-floor tight end priced identically to no tight end and
+  could never earn a pick on value. Uniform within the position, so nothing
+  reorders; on the ten-seat mock it moved no pick on either board and lifted
+  every finished lineup by exactly +21. RB/WR get none: their one-slot stream
+  baseline banks RB14-25 / WR27-40, which is the proof they are not streamable,
+  and a bench body there is priced by the insurance term instead.
 - Raw payloads are cached and never re-fetched without `--refresh`, so reruns
   are offline and reproducible.
 - `data/processed/` is git-ignored because the outputs carry league members'
@@ -267,7 +277,7 @@ check when a prominent player shows up unmatched.
 | `attrs.py` | the other player attributes managers have a taste for: age, last season's durability, and who drafted him last year |
 | `traits.py` | per-manager tendencies and their split-half reliability; the descriptive half of what the model fits |
 | `vorp.py` | 10-team half-PPR value curve, indexed by **ECR** (not ADP) on both sides — the curve's own slots as well as the lookup — and fitted isotonically rather than smooth-then-clamp. Ships a **standard error with every value**, so consumers can tell the resolved top of the board from the unresolved back of it |
-| `streaming.py` | where each position's replacement level comes from: a streaming simulation for QB/TE, the measured best-undrafted slot for RB/WR. Prints; the record behind `vorp.REPL_RANKS` |
+| `streaming.py` | where each position's replacement level comes from: a streaming simulation for QB/TE, the measured best-undrafted slot for RB/WR. Also measures what holding a below-floor QB/TE body is worth over punting (TE +6-13, QB +13-19 a season; shipped as `vorp.HOLD_GAIN` QB 15 / TE 6 — see REPORT, "Why the page will not draft a tight end"). Prints; the record behind `vorp.REPL_RANKS` and `vorp.HOLD_GAIN` |
 | `depletion.py` | how the board empties, measured: mean cumulative picks by position at each point of a draft. Prices an unfilled starting slot, and stands in for the simulation past the next two turns |
 | `league.py` | per-season rules read from ESPN — this league moved from 1 FLEX/7 bench to 2 FLEX/5 bench, and hardcoding today's settings silently corrupts older rows |
 | `replay.py` | the draft-state engine; one code path serves training, simulation and the live page |

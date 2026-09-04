@@ -9,7 +9,9 @@
  *    plan cheap enough to recompute on every click. (Before the empty-slot
  *    floors this needed a second case for empty slots and a second probe to
  *    detect them; with the floors an empty slot is just a slot whose cutoff is
- *    EMPTY, and the identity is uniform.)
+ *    EMPTY, and the identity is uniform.) With a hold bonus on a streamable
+ *    slot (vorp.HOLD_GAIN) it is `max(0, vorp - cutoff) + fillBonus`, and
+ *    every check below runs on a spec with and a spec without one.
  *
  * 2. ASSIGNMENT. Greedy slot-filling — best players into their dedicated
  *    slots, then FLEX from the leftovers — is OPTIMAL. It is, but only while
@@ -32,7 +34,12 @@ const league = {
 // Floors in the shape the real board produces: deep negatives for the skill
 // positions, exactly zero for the two with no VORP curve.
 const empty = new Float64Array([-29.1, -28.3, -19.6, -6.3, 0, 0]);
-const spec = E.lineupSpec(league, positions, empty, new Uint8Array([0, 0, 0, 0, 1, 1]));
+const blind = new Uint8Array([0, 0, 0, 0, 1, 1]);
+const spec = E.lineupSpec(league, positions, empty, blind);
+// the same league with the shipped-shape hold bonus on the two streamable slots
+// (vorp.HOLD_GAIN is QB 15 / TE 6); every identity below is checked on both
+const specHold = E.lineupSpec(league, positions, empty, blind,
+                              new Float64Array([15, 0, 0, 6, 0, 0]));
 
 const rnd = E.mulberry32(20482930);
 const rows = [];
@@ -48,12 +55,12 @@ const board = E.makeBoard(rows, positions);
 /* Exact best legal lineup, by search over slot assignments with memoisation on
  * (slot index, players used). Slow and obviously correct — the point is that it
  * makes no assumption about which player belongs in which slot. */
-function optimalLineup(roster) {
+function optimalLineup(roster, S = spec) {
   const slots = [];
-  for (let p = 0; p < spec.nPos; p++) {
-    for (let i = 0; i < spec.starters[p]; i++) slots.push({ pos: p, floor: spec.empty[p] });
+  for (let p = 0; p < S.nPos; p++) {
+    for (let i = 0; i < S.starters[p]; i++) slots.push({ pos: p, floor: S.empty[p], hold: S.hold[p] });
   }
-  for (let i = 0; i < spec.flex; i++) slots.push({ pos: -1, floor: spec.emptyFlex });
+  for (let i = 0; i < S.flex; i++) slots.push({ pos: -1, floor: S.emptyFlex, hold: 0 });
   const n = roster.length;
   const memo = new Map();
   const go = (si, used) => {
@@ -65,9 +72,10 @@ function optimalLineup(roster) {
     for (let i = 0; i < n; i++) {
       if (used & (1 << i)) continue;
       const p = board.pos[roster[i]];
-      const ok = slots[si].pos === -1 ? spec.flexOk[p] : slots[si].pos === p;
+      const ok = slots[si].pos === -1 ? S.flexOk[p] : slots[si].pos === p;
       if (!ok) continue;
-      const v = Math.max(board.vorp[roster[i]], slots[si].floor) + go(si + 1, used | (1 << i));
+      const v = Math.max(board.vorp[roster[i]], slots[si].floor) + slots[si].hold
+              + go(si + 1, used | (1 << i));
       if (v > best) best = v;
     }
     memo.set(key, best);
@@ -80,6 +88,7 @@ let checked = 0, worst = 0, worstCase = null;
 let assignChecked = 0, assignWorst = 0, assignCase = null;
 let slotChecked = 0, slotErr = 0;
 for (let trial = 0; trial < 4000; trial++) {
+  const S = trial % 2 ? specHold : spec;
   const size = Math.floor(rnd() * 12);
   const roster = [];
   const used = new Set();
@@ -91,31 +100,32 @@ for (let trial = 0; trial < 4000; trial++) {
     if (have >= league.limits[name]) continue;      // as the state machine does
     used.add(pid); roster.push(pid);
   }
-  const cut = E.cutoffs(board, spec, roster);
+  const cut = E.cutoffs(board, S, roster);
+  const fill = E.fillBonus(board, S, roster);
   for (let k = 0; k < 6; k++) {
     const pid = Math.floor(rnd() * board.n);
     if (used.has(pid)) continue;
     const p = board.pos[pid];
-    const err = Math.abs(E.marginal(board, spec, roster, pid)
-                       - E.marginalAt(cut, board.vorp[pid], p));
-    if (err > worst) { worst = err; worstCase = { roster: roster.slice(), pid }; }
+    const err = Math.abs(E.marginal(board, S, roster, pid)
+                       - E.marginalAt(cut, board.vorp[pid], p, fill));
+    if (err > worst) { worst = err; worstCase = { roster: roster.slice(), pid, hold: S === specHold }; }
     checked++;
     // The player card displays the slots; the panel quotes the total. They are
     // computed by two different functions, so they are asserted to agree —
     // otherwise the card can show a lineup that does not add up to its own EV.
-    const sum = E.lineupSlots(board, spec, roster, pid).reduce((a, s) => a + s.value, 0);
-    const want = E.lineupValueWith(board, spec, roster,
+    const sum = E.lineupSlots(board, S, roster, pid).reduce((a, s) => a + s.value, 0);
+    const want = E.lineupValueWith(board, S, roster,
                                    { vorp: board.vorp[pid], pos: p });
     slotErr = Math.max(slotErr, Math.abs(sum - want));
     slotChecked++;
   }
   {
-    const sum = E.lineupSlots(board, spec, roster).reduce((a, s) => a + s.value, 0);
-    slotErr = Math.max(slotErr, Math.abs(sum - E.lineupValue(board, spec, roster)));
+    const sum = E.lineupSlots(board, S, roster).reduce((a, s) => a + s.value, 0);
+    slotErr = Math.max(slotErr, Math.abs(sum - E.lineupValue(board, S, roster)));
     slotChecked++;
   }
   if (roster.length <= 11) {
-    const err = Math.abs(E.lineupValue(board, spec, roster) - optimalLineup(roster));
+    const err = Math.abs(E.lineupValue(board, S, roster) - optimalLineup(roster, S));
     if (err > assignWorst) { assignWorst = err; assignCase = roster.slice(); }
     assignChecked++;
   }
@@ -124,9 +134,12 @@ for (let trial = 0; trial < 4000; trial++) {
 // An empty dedicated slot must price at exactly its floor, which is the whole
 // point of the rewrite: filling it with a below-replacement player is worth
 // something, and leaving it open costs what streaming costs.
-const bare = E.cutoffs(board, spec, []);
 let floorErr = 0;
-for (let p = 0; p < spec.nPos; p++) floorErr = Math.max(floorErr, Math.abs(bare[p] - spec.empty[p]));
+for (const S of [spec, specHold]) {
+  // the threshold alone: the hold a body would earn on top rides in fillBonus
+  const bare = E.cutoffs(board, S, []);
+  for (let p = 0; p < S.nPos; p++) floorErr = Math.max(floorErr, Math.abs(bare[p] - S.empty[p]));
+}
 
 /* The precondition, proved rather than asserted: rebuild the same spec with the
  * flex floor set to the MIN of the three instead of the max — the plausible

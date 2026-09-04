@@ -125,6 +125,28 @@ STREAMABLE = frozenset({"QB", "TE"})
 # not to price a draft, and mixing the two definitions is the bug this replaced.
 REPL_RANKS = {"QB": 7, "RB": 43, "WR": 51, "TE": 6, "K": 1, "DST": 1}
 
+# What ROSTERING a body at a streamable position is worth over punting it, in
+# half-PPR points a season, on top of `max(VORP, 0)`. Read off `tendies
+# streaming` (`hold_gain`: hold him AND stream around him, minus stream only,
+# paired within season) at the same setting REPL_RANKS is derived under
+# (drop_top=1, shrink=0), pooled over the slots below each floor, 2013-2025:
+# QB8-14 +14.6 +/- 4.0 (t 2.1), TE7-14 +6.1 +/- 1.8 (t 2.9). Across the two
+# policy knobs the range is QB +13.0..+18.8 and TE +6.1..+12.9, so these are
+# the conservative corner, rounded to the point.
+#
+# engine.js adds it to every OCCUPIED dedicated slot at the position
+# (lineupValueWith), which leaves within-position order and the elite premium
+# untouched and moves only occupied-vs-empty: under `max(VORP, 0)` alone a
+# below-floor tight end priced identically to NO tight end, so no such tight end
+# could earn a pick on value and the page took its TE in round 13 as a
+# tie-break. Only streamable positions carry one. At RB/WR the same measurement
+# is not a comparable (their one-slot stream baseline banks RB14-25 / WR27-40,
+# which is the proof they are not streamable) and a bench body there is priced
+# by the engine's `insurance` term instead. See REPORT.md, "Why the page will
+# not draft a tight end".
+HOLD_GAIN = {"QB": 15.0, "TE": 6.0}
+assert set(HOLD_GAIN) <= STREAMABLE, "hold gain is a streamable-slot quantity"
+
 
 def slot_key(df: pl.DataFrame) -> pl.DataFrame:
     """Within-position ordering used to index the curve: EXPERT rank first,
