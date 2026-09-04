@@ -260,6 +260,46 @@ def test_fast_forward_is_deterministic_and_legal(payload_path):
 
 
 @pytest.mark.skipif(not NODE.exists(), reason="playwright node driver not installed")
+def test_page_renders_on_and_off_the_clock(payload_path):
+    """The page's DOM glue, loaded against a stub DOM and rendered for real.
+
+    page.js is an IIFE under 'use strict', so a free identifier is a RUNTIME
+    ReferenceError — `node --check` passes and the page loads fine. The first
+    render that reaches the bad line throws inside a requestAnimationFrame
+    callback, which the browser logs to a console nobody is reading mid-draft,
+    and the affected panels just stay blank. That is how `league` (a const
+    local to rebuild()) got read from buildRec() and silently emptied the
+    survival columns and all three sim-dependent panels on every pick that was
+    not the user's own.
+
+    A smoke test on purpose: it asserts a render cycle COMPLETES and each panel
+    produced content, on the clock and off it, that "Take now" retitles itself
+    to the user's own pick, that its P(avail) slider filters that panel and
+    only that panel, and that no explanatory text cell has crept back into it.
+    Whether the numbers are right is ties/plan/lineup/mockdraft's job.
+    """
+    out = _node("page.mjs", payload_path, 2)
+    assert out["ok"], out["fails"]
+    off = [s for s in out["states"] if s["at"].endswith("off clock")]
+    # Only the heading: the default threshold legitimately empties the LIST at
+    # the short side of the snake (nobody is under 50% over a four-pick gap),
+    # so a row count here would be flaky. That the panel rendered at all is
+    # page.mjs's own per-panel check, and `risk.all` covers the list.
+    assert off and all(s["hd"].startswith("Your pick") for s in off), out["states"]
+    on = [s for s in out["states"] if s["at"].endswith("on clock")]
+    assert on and all(s["hd"] == "Take now" for s in on), out["states"]
+    # The P(avail) threshold: it narrows the panel, it is off at the top of its
+    # range, and it leaves the BOARD alone — the filter belongs to one panel.
+    # A 50% cut that keeps most of the field means the membership condition
+    # regressed (`recommend` reports pAvail 0 for anyone the simulation does
+    # not watch, which reads as "certainly gone" for every deep player).
+    r = out["risk"]
+    assert r["k5"] <= r["k50"] < r["all"], r
+    assert r["k50"] < r["all"] / 2, r
+    assert r["boardAll"] == r["board50"] == r["board5"], r
+
+
+@pytest.mark.skipif(not NODE.exists(), reason="playwright node driver not installed")
 def test_rng_parity(tmp_path):
     """Identical RNG streams are what make simulation parity exact rather than
     statistical."""

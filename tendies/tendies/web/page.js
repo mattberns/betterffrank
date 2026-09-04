@@ -13,9 +13,11 @@
   // the plan DP; it is small on the interactive pass and grows when idle.
   const FAST = [600, 48], FINE = [2400, 200];
   const WAIT_P = 0.8;        // the panel's threshold
+  const RISK_OFF = 100;      // slider at the top of its range = no filter
   const WAIT_N = 14;         // rows per section before it says "+N more"
   // declared up here because load() validates against it, and load() runs first
-  const SORT_KEYS = ['adp', 'ecr', 'edge', 'name', 'pos', 'team', 'vorp', 'p', 'p2'];
+  const SORT_KEYS = ['adp', 'ecr', 'edge', 'name', 'pos', 'team', 'vorp',
+                     'boone', 'etr', 'p', 'p2'];
 
   const el = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
@@ -41,6 +43,10 @@
     picks: [],
     simmed: [],
     simSample: true,
+    // "Take now" keeps only candidates LESS likely than this to reach the turn
+    // after the one it is ranking, as a percentage; RISK_OFF (100) keeps every
+    // candidate. Persisted like `sort`.
+    risk: 50,
     sort: { key: 'adp', dir: 1 },
   });
 
@@ -49,6 +55,15 @@
   let simmedPids = new Set();   // pids on rosters via a sim jump, for badging
   let spec = null;
   let sim = null;
+  /* The context the "Take now" panel is built on: { st, sim, spec, skipped,
+   * pick, fwd }. Identical to (st, sim, spec) when you are on the clock, and a
+   * probe advanced to YOUR turn when you are not. See buildRec. */
+  let recCtx = null;
+  /* The ranked candidate list for `recCtx`, cached like `planCache`: it costs
+   * a plan DP over every simulated path, and the P(avail) threshold slider
+   * changes nothing it depends on. Without this, dragging the slider re-solved
+   * the DP on every step. Invalidated wherever recCtx is. */
+  let recAll = null;
   let simFine = false;
   let idleHandle = null;
   let planCache = null;
@@ -80,6 +95,9 @@
         });
       }
       d.simSample = raw.simSample !== false;
+      if (Number.isFinite(raw.risk)) {
+        d.risk = Math.min(RISK_OFF, Math.max(5, Math.round(raw.risk / 5) * 5));
+      }
       if (raw.sort && SORT_KEYS.indexOf(raw.sort.key) >= 0) {
         d.sort = { key: raw.sort.key, dir: raw.sort.dir < 0 ? -1 : 1 };
       }
@@ -110,6 +128,7 @@
     spec = E.lineupSpec(league, M.positions, E.emptyValues(M, st), E.blindMask(M, M.positions),
                         E.holdValues(M, M.positions));
     planCache = null;
+    recCtx = null; recAll = null;
     seatSims.clear(); seatPlans.clear();
   }
 
@@ -138,7 +157,58 @@
       nSims: n, planPaths: paths, autoOverride: autoOverride(),
     });
     sim.index = new Map(sim.pids.map((pid, i) => [pid, i]));
+    recCtx = buildRec(n, paths);
+    recAll = null;
     planCache = null;
+  }
+
+  /* What "Take now" is about: YOUR pick — which most of the time is not the
+   * pick on the clock.
+   *
+   * Built on the live state, that panel answered "what if this pick were
+   * yours", and it was wrong twice over. It led with players who will not be
+   * there when you actually pick (Jahmyr Gibbs first at P(avail) 23%), and it
+   * handed the plan ONE TURN TOO MANY: `myTurns` starts at `pickNo(st)`
+   * whoever owns it, so a nine-turn plan was priced as ten and every
+   * `then`/`EV` on screen was inflated.
+   *
+   * So when you are not on the clock the panel is built on a PROBE: the model
+   * plays every seat in between at its argmax — the same `fastForward` the
+   * "sim to my pick" button uses, seeded off the state, so it is deterministic
+   * and stable across renders — and the recommendation is computed at your
+   * turn on the board that path leaves. The probe gets its OWN lineup spec and
+   * survival simulation, because `emptyValues` reads the picks made so far and
+   * `horizon` has to measure from your turn to the one after it.
+   *
+   * It is one path, not a distribution, and the panel says so. The
+   * probabilistic read on the same board stays exactly where it was: the
+   * board's P(next) column and the "Safe to wait on" panel, both still
+   * measured from the live state.
+   */
+  function buildRec(n, paths) {
+    const onClock = E.seatOnClock(st) === ui.seat;
+    if (onClock) {
+      return { st, sim, spec, skipped: [], pick: E.pickNo(st), fwd: false };
+    }
+    const mine = E.nextPickFor(st, ui.seat, st.picks.length);
+    if (mine === null) return null;          // no turns left for this seat
+    const probe = E.forkState(st);
+    const skipped = E.fastForward(M, probe, {
+      stopSeat: ui.seat, autoWeight: autoWeightFor,
+    });
+    // `probe.league`, not `league`: that name is a const local to rebuild().
+    // Reading it here threw a ReferenceError on every off-clock render, which
+    // took out `runSim` and with it the survival columns and all three
+    // sim-dependent panels. The state carries its own league rules — and they
+    // are the EDITED ones (rebuild() overrides teams/rounds from `ui`), so
+    // this is the right object to read even once one is in scope.
+    const pspec = E.lineupSpec(probe.league, M.positions, E.emptyValues(M, probe),
+                               E.blindMask(M, M.positions), E.holdValues(M, M.positions));
+    const psim = E.simulate(M, probe, ui.seat, {
+      nSims: n, planPaths: paths, autoOverride: autoOverride(),
+    });
+    psim.index = new Map(psim.pids.map((pid, i) => [pid, i]));
+    return { st: probe, sim: psim, spec: pspec, skipped, pick: mine, fwd: true };
   }
 
   /** The plan DP for the current state, computed at most once per render. */
@@ -310,6 +380,15 @@
   const survOf = (pid) => sv(sim, pid);
   const surv2Of = (pid) => sv2(sim, pid);
   const edgeOf = (pid) => (board.hasEcr[pid] ? board.adpRank[pid] - board.ecr[pid] : null);
+  /* Boone's own gap against the market, read the same way EDGE is: positive =
+   * he ranks the player above his ADP. Null when Boone does not list him — his
+   * board is 303 deep and misses 82 of the 350 rows here, so a blank is a
+   * genuine "no opinion", not a zero. */
+  const booneOf = (pid) => (board.hasBoone[pid] ? board.boone[pid] : null);
+  const booneGapOf = (pid) => (board.hasBoone[pid] ? board.adpRank[pid] - board.boone[pid] : null);
+  // Take sorts above Avoid, and both above the unlisted majority.
+  const ETR_ORDER = { Take: 0, Avoid: 1 };
+  const etrKeyOf = (pid) => (board.etr[pid] in ETR_ORDER ? ETR_ORDER[board.etr[pid]] : 2);
 
   /* Each comparator is written in its NATURAL direction — smallest ADP first,
    * largest VORP first — and `dir` flips it. So the header arrow has to be read
@@ -322,6 +401,12 @@
     pos: (a, b) => board.pos[a] - board.pos[b],
     team: (a, b) => (board.team[a] < board.team[b] ? -1 : board.team[a] > board.team[b] ? 1 : 0),
     vorp: (a, b) => board.vorp[b] - board.vorp[a],
+    boone: (a, b) => (booneOf(a) === null ? 1e9 : booneOf(a))
+      - (booneOf(b) === null ? 1e9 : booneOf(b)),
+    // within a tier (all Takes, say), the earlier round he is a Take in ranks
+    // first; unlisted players keep ADP order via cmpFor's tiebreak
+    etr: (a, b) => (etrKeyOf(a) - etrKeyOf(b))
+      || ((board.etrRound[a] || 99) - (board.etrRound[b] || 99)),
     p: (a, b) => (survOf(b) === null ? -1 : survOf(b)) - (survOf(a) === null ? -1 : survOf(a)),
     p2: (a, b) => (surv2Of(b) === null ? -1 : surv2Of(b)) - (surv2Of(a) === null ? -1 : surv2Of(a)),
   };
@@ -346,6 +431,12 @@
     { key: 'pos', head: 'Pos', cls: '' },
     { key: 'team', head: 'Tm', cls: '' },
     { key: 'vorp', head: 'VORP', cls: 'num', title: 'value over replacement, priced off ECR' },
+    { key: 'boone', head: 'BOONE', cls: 'num',
+      title: 'Justin Boone\u2019s overall rank; coloured by his gap against ADP, '
+        + 'the same way EDGE reads. Blank = not in his top 303.' },
+    { key: 'etr', head: 'ETR', cls: '',
+      title: 'Establish The Run\u2019s take/avoid list and the round it applies to. '
+        + 'Only 35 players are on it; blank = no call either way.' },
     { key: 'p', head: 'P(next)', cls: 'num', title: 'P(still available at your next pick)' },
     { key: 'p2', head: 'P(+2)', cls: 'num',
       title: 'P(still available at the pick after that) — coarser, and optimistic: see the panel note' },
@@ -382,6 +473,10 @@
       // colour: green = experts rate him above his price.
       const gap = edgeOf(pid);
       const gapCls = gap === null ? '' : gap >= 8 ? 'safe' : gap <= -8 ? 'gone' : 'dim';
+      // Boone gets the same treatment on his own gap, on the same thresholds,
+      // so the two second opinions are read the same way.
+      const bRank = booneOf(pid), bGap = booneGapOf(pid);
+      const bCls = bGap === null ? '' : bGap >= 8 ? 'safe' : bGap <= -8 ? 'gone' : 'dim';
       return `<tr data-pid="${pid}">
         <td class="dim num">${board.adpRank[pid]}</td>
         <td class="num">${board.hasEcr[pid] ? board.ecr[pid] : '—'}</td>
@@ -391,6 +486,11 @@
         <td>${tag(board.pos[pid])}</td>
         <td class="dim">${esc(board.team[pid])}</td>
         <td class="num">${board.vorp[pid].toFixed(0)}</td>
+        <td class="num ${bCls}">${bRank === null ? '<span class="faint">&mdash;</span>' : bRank}</td>
+        <td class="etr">${board.etr[pid]
+          ? `<span class="${board.etr[pid] === 'Take' ? 'safe' : 'gone'}">${
+              board.etr[pid]}</span><span class="faint"> R${board.etrRound[pid]}</span>`
+          : '<span class="faint">&mdash;</span>'}</td>
         <td class="num surv ${p === null ? '' : survClass(p)}">${pct(p)}</td>
         <td class="num surv ${p2 === null ? '' : survClass(p2)}">${pct(p2)}</td>
         <td class="fitc"><button class="fit"
@@ -467,30 +567,81 @@
 
   function renderRecommend() {
     const seat = ui.seat;
-    if (!sim || !sim.pids.length) { el('recommend').innerHTML = ''; return; }
+    const hd = el('recommend-hd');
+    if (!recCtx) {
+      if (hd) hd.textContent = 'Your pick';
+      el('riskv').textContent = '—';
+      el('recommend').innerHTML = '<div class="dim pad">No turns left for this seat.</div>';
+      return;
+    }
+    const R = recCtx;
+    if (!R.sim || !R.sim.pids.length) {
+      el('riskv').textContent = '—';
+      el('recommend').innerHTML = '';
+      return;
+    }
     // The whole legal board, not a fixed slice of it. `candidates` used to cap
     // at 8 per position in ADP order, which silently removed the biggest
     // expert-vs-market edges from a list ranked by expert-vs-market edge.
-    const all = E.recommend(M, st, seat, sim, E.candidates(st, seat), spec);
-    const rec = all.slice(0, 8);
-    const onClock = E.seatOnClock(st) === seat;
+    //
+    // Every argument is R's, not the live state's: on your turn they are the
+    // same objects, and off it they are the probe's. Mixing the two -- the
+    // live sim against the probe's board, say -- would price availability at
+    // one turn and value at another.
+    if (!recAll) {
+      recAll = E.recommend(M, R.st, seat, R.sim, E.candidates(R.st, seat), R.spec);
+    }
+    const all = recAll;
+    if (hd) hd.textContent = R.fwd ? `Your pick \u2014 #${R.pick}` : 'Take now';
 
-    // Say which question is being answered. The old copy here read "Starters
-    // covered", which was not the condition the engine tests and was flatly
-    // false whenever the plan meant to fill an open slot at a later turn — the
-    // usual middle-round case. It told a manager with an empty WR2 that his
-    // starters were covered.
-    const head = all.bench
-      ? 'Nothing here improves the lineup you would <b>finish</b> with — every slot this pick '
-        + 'could fill, the plan below already fills as cheaply later. So this is a bench pick: '
-        + 'ranking by <b>insurance</b> (what he is worth if a starter at his position is lost) '
-        + 'plus <b>market edge</b> (where the experts have him above his ADP price). '
-        + 'Not lineup points.'
-      : (onClock
-        ? 'Value of the lineup you would <b>finish</b> with: what he adds now, plus the best plan '
-          + 'for every turn after this one.'
-        : 'Not your pick — showing value if it were.');
+    /* The threshold: keep only candidates LESS likely than `ui.risk` to reach
+     * the turn AFTER this one — the ones the pick is actually about, because
+     * anyone above the line can be had later for nothing. `pAvail` is measured
+     * in R's frame, so on the clock it is "survives to my next turn" and off it
+     * "survives from #98 to the turn after #98"; either way it is the horizon
+     * this list is deciding over.
+     *
+     * The properties `recommend` hangs on the array (`bench`, `plan`, `tied`)
+     * are read off `all`, never off the filtered copy — filtering returns a
+     * plain Array and drops them.
+     *
+     * RISK_OFF (100) is off rather than ">= 1.0": a player at exactly 100%
+     * should not be the one thing a full-right slider still hides.
+     *
+     * `pAvail` ALONE IS NOT THE TEST. `recommend` reads it off the simulation's
+     * index and falls back to 0 for anyone not in it — and the simulation
+     * watches only the top ~60 of the available board, because watching
+     * everyone makes its calibration meaningless. That 0 is harmless where it
+     * is used (`cost = now * (1 - pAvail)` degrades to `now`, which is the
+     * conservative direction and orders nothing) and exactly backwards here: a
+     * round-14 receiver nobody is waiting on came back as 0% to survive, so a
+     * "< 50%" filter kept 273 of 332 candidates and the panel never narrowed.
+     * Unwatched means deep means safe, so membership is the first condition. */
+    const riskOn = ui.risk < RISK_OFF;
+    const watched = (pid) => !!(R.sim.index && R.sim.index.has(pid));
+    const keep = riskOn
+      ? all.filter((r) => watched(r.pid) && r.pAvail < ui.risk / 100)
+      : all;
+    const rec = keep.slice(0, 8);
+    el('riskwrap').classList.toggle('off', !riskOn);
+    // The count is why there is no "nothing here" text cell: an empty list
+    // under `50% · 0` explains itself.
+    el('riskv').textContent = riskOn ? `${ui.risk}% \u00b7 ${keep.length}` : `all \u00b7 ${all.length}`;
 
+    /* NO PROSE IN THIS PANEL. It carried four explanatory blocks — what the
+     * columns mean, that the off-clock board is one simulated path, that the
+     * top N tie, and a K/DST warning — and between picks they were four things
+     * to scroll past to reach the list. Everything they said has somewhere
+     * better to be: the tie is already the `=` on a shared rank badge, the
+     * assumed path is the header's pick number plus the Upcoming picks panel,
+     * and the column definitions are in README. The panel is now the ranked
+     * rows, the plan, and the provenance footer.
+     *
+     * Removed with them: `No K/DST projected available — take one now`. The
+     * ordering still puts those candidates first (`need` beats everything in
+     * cmpTiered), so the signal survives as position in the list rather than
+     * as a banner.
+     */
     // The plan is the part a single recommendation hides: it is why a receiver
     // now is fine when the back is coming at your next turn, and why it is not.
     //
@@ -502,36 +653,7 @@
     const planHtml = plan.length
       ? `<div class="planline dim small">plan: ${plan.map((s) =>
           `<span class="${s.modelled ? '' : 'proj'}">#${s.turn} ${posName(s.pos)}</span>`)
-          .join(' → ')}${plan.some((s) => !s.modelled)
-          ? ' <span class="proj">(grey = projected from 2021-25 draft flow)</span>' : ''}</div>`
-      : '';
-
-    // When the curve cannot separate the top of the list, say so instead of
-    // letting the rank numbers imply an order that is not there.
-    //
-    // Measured over the ROWS ON SCREEN, not over the whole tier: `all.tieBand`
-    // spans every tied candidate, and its widest member is some deep
-    // quarterback carrying a +/-70 band that says nothing about the eight names
-    // shown. The claim in this sentence is "#1 cannot be shown better than the
-    // last one listed", so the number quoted is that pair's own band.
-    const topTier = rec.length ? rec.filter((r) => r.tier === rec[0].tier) : [];
-    const nTied = topTier.length;
-    const band = nTied > 1 ? topTier[nTied - 1].tieBand : 0;
-    const more = (all.tied || 0) - nTied;
-    const tieHtml = nTied > 1
-      ? `<div class="pad small tie-note">Top ${nTied} are a <b>tie</b>: the VORP curve cannot
-         show the first is better than the ${nTied === 2 ? 'second' : nTied + 'th'}
-         (${isFinite(band) ? '±' + band.toFixed(1) + ' pts at '
-             + (all.z || 1.96).toFixed(2) + ' SE'
-           : 'no standard errors in this payload'})${more > 0
-             ? `, and ${more} more below them` : ''}. Still ordered by the best estimate —
-         a tie is not indifference — but overruling it on <b>lose by waiting</b>, a bye
-         clash or a handcuff costs you nothing this list can measure.</div>`
-      : '';
-
-    const urgent = rec.length && rec[0].need > 0.5
-      ? `<div class="warn pad small">No ${rec[0].need >= 1.5 ? 'kicker or defense' : 'kicker/defense'}`
-        + ' is projected to be available at your remaining turns — take one now.</div>'
+          .join(' → ')}</div>`
       : '';
 
     // Rank badges follow the TIER, not the row: every member of a tie shows the
@@ -566,11 +688,10 @@
       </div>`;
     }).join('');
 
-    el('recommend').innerHTML =
-      `<div class="dim pad small">${head}</div>${urgent}${tieHtml}${planHtml}${body}` +
-      `<div class="dim pad small">${sim.nSims} simulations${simFine ? '' : ' (refining…)'}
-        &middot; +/-${(100 * 0.5 / Math.sqrt(sim.nSims)).toFixed(1)}pp at 50%
-        &middot; plan over ${sim.availPaths} paths</div>`;
+    el('recommend').innerHTML = `${planHtml}${body}` +
+      `<div class="dim pad small">${R.sim.nSims} simulations${simFine ? '' : ' (refining…)'}
+        &middot; +/-${(100 * 0.5 / Math.sqrt(R.sim.nSims)).toFixed(1)}pp at 50%
+        &middot; plan over ${R.sim.availPaths} paths</div>`;
   }
 
   /* Who you can afford to pass on. Same survival numbers as the board, read the
@@ -1081,6 +1202,14 @@
   });
   el('seat').addEventListener('change', (e) => {
     ui.seat = Number(e.target.value); save(); render();
+  });
+  // renderBoard only — the threshold is a view filter and changes no state the
+  // simulation depends on, so dragging it must not kick off a 2400-path resim.
+  el('risk').value = String(ui.risk);          // once; the tools row never re-renders
+  // renderRecommend only. The threshold is a view filter on a list that is
+  // already computed, so dragging it must not kick off a 2400-path resim.
+  el('risk').addEventListener('input', (e) => {
+    ui.risk = Number(e.target.value); save(); renderRecommend();
   });
 
   rebuild();

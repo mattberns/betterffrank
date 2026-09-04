@@ -51,6 +51,7 @@ uv run python -m tendies streaming        # derive each position's replacement l
 uv run python -m tendies model            # fit; prints coefficients
 uv run python -m tendies evaluate --b4 --ablate   # walk-forward vs baselines,
                                           # and what each manager channel buys
+uv run python -m tendies hints            # resolve boone/etr ids (writes data/raw/*.json)
 uv run python -m tendies site --season 2026   # -> docs/index.html
 uv run pytest tests/                      # incl. Python/JS parity
 ```
@@ -63,7 +64,58 @@ now plus the best plan for every turn after this one — and shows the plan
 itself, so you can see why a receiver now is fine when the back is coming at
 your next turn. Once a pick can no longer improve the lineup it is labelled and
 scored as a bench pick instead (insurance plus market edge, never as lineup
-points). State persists in localStorage, so a reload mid-draft costs nothing.
+points).
+
+**That panel is always about YOUR pick**, which most of the time is not the
+pick on the clock. Off the clock it retitles itself `Your pick — #43` and is
+computed on a probe: the model plays every seat in between at its argmax (the
+same `fastForward` behind the *sim to my pick* button, seeded off the state so
+it is deterministic) and the recommendation is priced at your turn on the board
+that path leaves. That is one modal path, not a distribution — a player the
+model hands to someone else drops off the list even where he had a real chance
+of reaching you, and the probabilistic read on the same question is the board's
+`P(next)` column and **Safe to wait on**. Until 2026-09-04 the panel instead
+priced today's board "as if this pick were yours", which led with players who
+would be gone (a first recommendation at `P(avail) 23%`) and, worse, silently
+gave the plan **one turn too many** — `myTurns` starts at the pick on the clock
+whoever owns it, so a 15-turn plan was priced as 16 and every `then` and `EV`
+on screen was a full round inflated (top EV 662.8 against the correct 570.3 at
+pick 1).
+
+**The panel carries no prose.** It is the slider, the ranked rows, the plan and
+a provenance footer; the four explanatory blocks it used to open with are gone,
+including the `No K/DST projected available — take one now` banner (the
+ordering still puts those first, so the signal survives as position in the
+list). A tie still reads as a shared rank badge with an `=`.
+
+**`P(avail)<` slider** — its own row under the panel title, so a drag is not
+fighting an `innerHTML` rebuild. It keeps only candidates *less* likely than
+the threshold to reach the turn after the one being ranked: the picks you
+stand to lose by waiting. Preset 50%, persisted, full right shows every
+candidate, and the label carries the kept count (`50% · 9`, `all · 248`) so an
+empty list explains itself without a text cell. It re-filters a cached list —
+dragging never re-solves the plan DP — and it touches nothing but this panel.
+
+Two things about the threshold worth knowing before you draft on it. It keeps a
+useful 7-14 candidates on the **long** side of the snake and **0** on the short
+side, because nobody is under 50% to survive a four-pick gap; if you want
+something at every turn, 75% keeps 4-6 throughout. And the filter has to test
+simulation membership before `pAvail`, not `pAvail` alone: `recommend` falls
+back to `pAvail = 0` for anyone outside the simulation's watched top ~60, which
+is harmless where it is used (`cost = now * (1 - pAvail)` degrades to `now`)
+and exactly backwards as a filter — the first cut read every round-14 receiver
+as 0% to survive and kept 273 of 332 candidates.
+
+The first cut of it also read `league` — a `const` local to `rebuild()` — from
+the new probe builder. `node --check` passes, the page loads, and the
+ReferenceError lands inside a `requestAnimationFrame` callback, so the only
+symptom is that the survival columns and all three sim-dependent panels come up
+blank on every pick that is not yours. `tests/page.mjs` exists because of that:
+it loads `page.js` against a stub DOM and drives real render cycles on and off
+the clock, asserting each panel produced content and that the panel retitles
+itself. It is a smoke test — it says nothing about whether the numbers are
+right, which is `ties`/`plan`/`lineup`/`mockdraft`'s job — and what it catches
+is a panel silently disappearing. State persists in localStorage, so a reload mid-draft costs nothing.
 The board only offers what the seat on the clock can legally roster: position
 caps always, and at the endgame — once every remaining pick is owed to an
 unfilled starting slot — only the positions that fill one (a banner says so;
@@ -126,6 +178,7 @@ Headless environments skip the browser entirely by exporting `ESPN_S2` and
 | `data/processed/draft_picks_<league>.parquet` / `.csv` | **the dataset** — one row per pick |
 | `data/processed/franchises_<league>.csv` | franchise ↔ managers ↔ team names ↔ seasons |
 | `data/processed/seasons_<league>.csv` | per-season league name, size, draft type and date |
+| `data/raw/boone.json`, `data/raw/etr.json` | third-party hint lists, with resolved player ids written back in place by `tendies hints` |
 
 One row per pick:
 
@@ -182,6 +235,50 @@ restate old boards under the player's CURRENT name, while ESPN's draft history
 keeps the name as drafted: every board calls the 2019-2021 Robby Anderson
 "Robbie Chosen". That is an `ALIASES` entry, and it is the first thing to
 check when a prominent player shows up unmatched.
+
+## Second opinions on the board (Boone, ETR)
+
+Two hand-keyed hint lists ride along on the board as a tiebreaker for the
+places where VORP, ADP and ECR all say the same thing:
+
+| column | source | on how many of the 350 board rows |
+| --- | --- | --- |
+| `BOONE` | Justin Boone's overall ranks, `data/raw/boone.json` (303 names) | 268 |
+| `ETR` | Establish The Run's take/avoid calls and the round each applies to, `data/raw/etr.json` | 35 |
+
+`BOONE` shows the rank and colours it on the gap against ADP, on the same ±8
+thresholds `EDGE` uses, so a green 12 beside an ADP of 30 reads the same way in
+both columns. `ETR` shows `Take R4` / `Avoid R2`. Both sort. A blank is a real
+"no opinion", not a zero: Boone's list is 303 deep and 82 board rows are not on
+it, ETR calls 35 players.
+
+**Ids are resolved once, not at render time.** These are name lists typed by
+hand — ETR writes "Ceedee Lamb", "Travis Ettiene", "Jeremiah Love"; Boone
+writes "JAC" for the defense the board calls "Jacksonville Jaguars DST" — so
+`tendies hints` matches each name against the board and writes `id` (the
+board's `gsis_id`, or `null` for the K and D/ST rows FantasyPros gives no id)
+and `key` (the board's own canonical name key) back into the JSON beside it.
+`cli.cmd_site` then LEFT-joins on `gsis_id` first and `key` second, the same
+ladder `board.link_picks` uses, and asserts the board's row count does not
+move. A rename on either side therefore turns up as an unresolved row in
+`tendies hints` — a number that has to change — rather than as a hint that
+quietly stops appearing. The 35 Boone names and 0 ETR names that resolve to
+nothing are printed in full; all 35 are at his rank 208 or worse and are
+genuinely absent from the FantasyPros board.
+
+`hints.py` deliberately has no initial-and-surname fallback pass, which
+`adp_match` has. It was tried: its one extra match was Boone's "Trevor
+Etienne" (CAR, not on the board) landing on Travis Etienne Jr. (NO). For a
+hint column a wrong player is worse than a blank one.
+
+**These columns are presentation only.** They are attached in `cmd_site`,
+downstream of `train`, and nothing in the choice model, the VORP curve or the
+simulation can see them — the same rule the parent repo applies to VONA. A
+hint list is one analyst's opinion with no walk-forward evidence behind it, and
+there is no honest way to tune on it: ETR's rows are 2026-only and Boone's
+ranks have no history in this repo at all. The season the two files describe is
+pinned in `hints.HINT_SEASON`, so a file swapped for next year's board cannot
+silently price this year's.
 
 ## Caveats
 

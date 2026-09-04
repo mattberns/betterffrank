@@ -55,7 +55,20 @@ tbody tr:hover{background:#f2efe9}
 .num{text-align:right;font-family:var(--mono)}
 .nm{font-weight:500}.rk{font-size:9px;font-weight:700;vertical-align:super;opacity:.65;letter-spacing:.5px}
 .dim{color:var(--dim)}
+.faint{color:var(--faint)}
 .small{font-size:11px}
+/* The gap columns (EDGE, BOONE) colour their cell green/red on the same
+   thresholds. This rule is what makes that visible: `.safe`/`.gone` only ever
+   had `.surv.safe` and `b.safe` behind them, so EDGE has been setting a class
+   with nothing attached to it. */
+td.num.safe{color:var(--safe)}
+td.num.gone{color:var(--gone)}
+/* second-opinion columns: Boone's rank and ETR's take/avoid. Deliberately
+   quieter than VORP -- they are there to break a tie the model calls even,
+   not to compete with it for attention. */
+td.etr{white-space:nowrap;font-size:11px}
+td.etr .safe{color:var(--safe);font-weight:600}
+td.etr .gone{color:var(--gone);font-weight:600}
 .pad{padding:8px 10px}
 .tag{display:inline-block;min-width:30px;text-align:center;font-size:10px;font-weight:600;
   padding:1px 4px;border-radius:3px;color:#fff}
@@ -118,6 +131,16 @@ button:disabled{opacity:.45;cursor:default;border-color:var(--rule)}
   align-items:center;flex-wrap:wrap}
 #search{flex:1;min-width:90px}
 footer{grid-column:1/-1;color:var(--faint);font-size:11px;padding:0 4px}
+
+/* the recommendation panel's "who am I about to lose" threshold. Its own row
+   under the title rather than a line of the rendered list, because a range
+   input inside innerHTML that is rebuilt on every `input` event cannot be
+   dragged. */
+#rectools{gap:0}
+#riskwrap{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+#risk{flex:1;min-width:80px;padding:0;border:0;background:none;cursor:pointer}
+#riskv{font-family:var(--mono);min-width:58px;text-align:right;color:var(--text)}
+#riskwrap.off #riskv{color:var(--faint);font-weight:400}
 
 /* sortable headers */
 th.sortable{cursor:pointer;user-select:none}
@@ -301,7 +324,13 @@ def render(payload: dict, web: Path, out: Path) -> Path:
   </div>
 
   <div class="panel simdep">
-    <h2>Take now</h2><div id="recommend"></div>
+    <h2 id="recommend-hd">Take now</h2>
+    <div class="tools" id="rectools">
+      <label class="small dim" id="riskwrap"
+        title="keep only players LESS likely than this to reach your following turn — the ones you stand to lose by waiting. Full right shows every candidate.">P(avail)&lt;<input
+        type="range" id="risk" min="5" max="100" step="5"><b id="riskv"></b></label>
+    </div>
+    <div id="recommend"></div>
   </div>
 
   <div class="col simdep">

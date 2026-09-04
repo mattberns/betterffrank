@@ -373,8 +373,33 @@ def cmd_evaluate(args) -> None:
     print(f"\nwrote {out / f'eval_{args.league_id}.csv'}")
 
 
+def cmd_hints(args) -> None:
+    """Re-resolve boone.json / etr.json against the current board.
+
+    Its own command because the resolution WRITES the raw files, and that must
+    be something you asked for rather than a side effect of rendering a page.
+    """
+    from . import dataset, hints
+    # NO --season override. `hints.HINT_SEASON` is a pin, and one the CLI can
+    # override is not a pin: resolving these files against another season's
+    # board rewrites their ids in place against the wrong players (tried
+    # against 2025 -- four ETR names silently became `null`).
+    season = hints.HINT_SEASON
+    # Boards only. The hint files name PLAYERS, so none of the league history,
+    # the replay or the fit is needed to resolve them, and `hints` stays a
+    # command you can run without ESPN cookies.
+    ecr, _ = dataset.load_ecr([season], on_undeclared=args.ecr_undeclared)
+    boards = dataset.build_boards([season], ecr=ecr)
+    board = boards.filter(pl.col("season") == season)
+    if board.is_empty():
+        raise SystemExit(f"no board for {season}")
+    hints.report(board, write=not args.dry_run)
+    if args.dry_run:
+        print("\n(--dry-run: nothing written)")
+
+
 def cmd_site(args) -> None:
-    from . import autopick, export, site, train as tr
+    from . import autopick, export, hints, site, train as tr
     from .config import DOCS, WEB
     boards, linked, cfgs, bb, ex = _assemble(args)
     season = args.season or max(boards["season"].unique().to_list())
@@ -425,7 +450,11 @@ def cmd_site(args) -> None:
               linked.filter(~pl.col("auto_pick")).group_by("franchise_id")
               .agg(n=pl.len()).iter_rows(named=True)}
 
-    board_df = boards.filter(pl.col("season") == season)
+    # Third-party hint columns, LEFT-joined onto the board here rather than in
+    # `dataset.build_boards`: they are presentation only, and this is the first
+    # point downstream of `train` where nothing can pick them up as a feature.
+    # See hints.py.
+    board_df = hints.attach(boards.filter(pl.col("season") == season), season=season)
     payload = {
         "meta": {
             "season": int(season), "league_id": args.league_id,
@@ -519,6 +548,11 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--ablate", action="store_true",
                    help="leave-one-out over each per-manager channel")
     p.set_defaults(func=cmd_evaluate)
+    p = sub.add_parser("hints",
+                       help="resolve boone/etr player ids against the board")
+    p.add_argument("--dry-run", action="store_true",
+                   help="report coverage without rewriting the raw JSON")
+    p.set_defaults(func=cmd_hints)
     p = sub.add_parser("site", help="render the draft-day page into docs/")
     p.add_argument("--season", type=int, default=None)
     p.set_defaults(func=cmd_site)

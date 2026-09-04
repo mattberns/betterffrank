@@ -28,7 +28,7 @@ from .train import (
     ASC_POSITIONS, MANAGER_EARLY, MANAGER_POS, PLAYER_CHANNELS, Fitted,
 )
 
-SCHEMA = 4
+SCHEMA = 5
 ROUND_TO = 9
 
 # How many standard errors two candidates' scores must differ by before the page
@@ -76,6 +76,13 @@ def board_payload(board_df: pl.DataFrame) -> list[dict]:
                 "age": _r(r.get("age") or 0.0),
                 "durability": _r(r.get("durability") or 0.0),
                 "prevOwner": r.get("prev_owner") or "",
+                # Third-party hints (hints.py), null where the analyst does not
+                # list him. Presentation only -- the engine never scores them;
+                # they are on the board so a human can break a VORP tie with
+                # something other than ADP and ECR.
+                "boone": None if r.get("boone_rank") is None else int(r["boone_rank"]),
+                "etrTake": r.get("etr_take") or None,
+                "etrRound": None if r.get("etr_round") is None else int(r["etr_round"]),
             }
         )
     return out

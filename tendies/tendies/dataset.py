@@ -276,7 +276,9 @@ def check_ecr(
 
 
 def _runs(seasons: list[int]) -> str:
-    """[2020,2021,2022,2026] -> '2020-2022,2026'."""
+    """[2020,2021,2022,2026] -> '2020-2022,2026'; [] -> 'none'."""
+    if not seasons:
+        return "none"      # a build of ONLY real-time seasons leaves the AVG side empty
     out, start, prev = [], seasons[0], seasons[0]
     for s in seasons[1:] + [None]:
         if s == prev + 1:

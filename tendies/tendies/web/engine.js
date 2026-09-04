@@ -83,6 +83,11 @@ function makeBoard(rows, positions) {
     rookie: new Uint8Array(n),
     age: new Float64Array(n), durability: new Float64Array(n),
     prevOwner: new Array(n),
+    // third-party hints (Python: hints.py). Presentation only -- nothing in
+    // this file scores them; they exist so the board can show a human a
+    // second opinion beside ADP and ECR.
+    boone: new Int32Array(n), hasBoone: new Uint8Array(n),
+    etr: new Array(n), etrRound: new Int16Array(n),
     byPos: [], slotOf: new Int32Array(n),
   };
   rows.forEach((r, i) => {
@@ -93,6 +98,8 @@ function makeBoard(rows, positions) {
     b.rookie[i] = r.rookie ? 1 : 0;
     b.age[i] = r.age || 0; b.durability[i] = r.durability || 0;
     b.prevOwner[i] = r.prevOwner || '';
+    b.boone[i] = r.boone == null ? 0 : r.boone; b.hasBoone[i] = r.boone == null ? 0 : 1;
+    b.etr[i] = r.etrTake || ''; b.etrRound[i] = r.etrRound == null ? 0 : r.etrRound;
     // priced at his MARKET slot instead of his expert slot; the gap is the
     // expert-vs-market edge in points (see vorp.attach_vorp)
     b.vorpAdp[i] = r.vorpAdp == null ? r.vorp : r.vorpAdp;
