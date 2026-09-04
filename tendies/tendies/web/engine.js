@@ -273,14 +273,14 @@ function runs(st, window) {
 
 /* ------------------------------------------------------------- features --- */
 
-function positionFeatures(st, seat, cs, model) {
+function positionFeatures(st, seat, cs, model, positions) {
   const B = st.board, L = st.league, P = B.positions;
   const pick = pickNo(st), h = horizon(st, seat), counts = st.counts[seat];
   const run5 = runs(st, 5), run10 = runs(st, 10);
   const roundsLeft = L.rounds - Math.floor((pick - 1) / L.teams);
   const rnd = Math.floor((pick - 1) / L.teams) + 1;
   const horizonRank = pick + h;
-  const positions = Object.keys(cs).map(Number).sort((a, b) => a - b);
+  if (!positions) positions = Object.keys(cs).map(Number).sort((a, b) => a - b);
   const X = [];
   for (const p of positions) {
     const cand = cs[p], name = P[p], best = cand[0];
@@ -370,42 +370,121 @@ function logSumExp(u) {
 
 function softmax(u) {
   let m = -Infinity;
-  for (const x of u) if (x > m) m = x;
-  const e = u.map((x) => Math.exp(x - m));
+  for (let i = 0; i < u.length; i++) if (u[i] > m) m = u[i];
+  const e = new Array(u.length);
   let s = 0;
-  for (const x of e) s += x;
-  return e.map((x) => x / s);
+  for (let i = 0; i < u.length; i++) { e[i] = Math.exp(u[i] - m); }
+  for (let i = 0; i < u.length; i++) s += e[i];
+  for (let i = 0; i < u.length; i++) e[i] = e[i] / s;
+  return e;
 }
 
 const U_ADP_COL = PLR_FEATURES.indexOf('u_adp');
 
-function playerUtilities(model, st, seat, p, cand, managerIdx) {
-  const M = model.player;
-  const raw = playerFeatures(st, seat, cand);
-  // Per-manager channels, in the payload's order so the floating-point sum
-  // matches Python's. Each is a coefficient on a standardised player feature;
-  // `reach` (on u_adp) is one of them, not a special case.
-  const chans = [];
-  if (managerIdx != null && M.channels) {
-    for (const ch of M.channels) {
-      const b = ch.beta[managerIdx];
-      if (b === undefined) continue;
+/* Per-model lookups that the scoring loop used to recompute with string
+ * indexOf on every simulated pick: channel -> feature column, and for each
+ * position index its slot in ascPositions / managerPos / managerEarlyPos.
+ * Cached on a WeakMap so the model object itself is never mutated. */
+const MODEL_CACHE = new WeakMap();
+function modelCache(model, positions) {
+  let c = MODEL_CACHE.get(model);
+  if (c && c.positions === positions) return c;
+  const nPos = positions.length, M = model.position;
+  const idx = (names) => {
+    const out = new Int32Array(nPos);
+    for (let p = 0; p < nPos; p++) out[p] = names ? names.indexOf(positions[p]) : -1;
+    return out;
+  };
+  const chanCols = [];
+  if (model.player.channels) {
+    for (const ch of model.player.channels) {
       const col = PLR_FEATURES.indexOf(ch.feature);
       if (col < 0) throw new Error('unknown channel feature: ' + ch.feature);
-      chans.push([col, b]);
+      chanCols.push(col);
     }
   }
-  const u = new Array(raw.length + 1);
-  for (let j = 0; j < raw.length; j++) {
-    const row = raw[j];
+  c = {
+    positions, chanCols,
+    asc: idx(M.ascPositions),
+    humanMp: idx(M.human.managerPos), humanMe: idx(M.human.managerEarlyPos),
+    autoMp: idx(M.auto.managerPos), autoMe: idx(M.auto.managerEarlyPos),
+    row: new Float64Array(PLR_FEATURES.length),
+  };
+  MODEL_CACHE.set(model, c);
+  return c;
+}
+
+/* Roster facts every candidate's player features read: built once per scored
+ * pick instead of once per position (playerFeatures rebuilt them 6x). */
+function rosterCtx(st, seat) {
+  const B = st.board, roster = st.rosters[seat];
+  const myByes = [], myTeams = new Set();
+  for (const q of roster) { if (B.bye[q] > 0) myByes.push(B.bye[q]); if (B.team[q]) myTeams.add(B.team[q]); }
+  return { me: st.managers[seat] || '', myByes, myTeams };
+}
+
+/* Per-manager channels, in the payload's order so the floating-point sum
+ * matches Python's. Each is a coefficient on a standardised player feature;
+ * `reach` (on u_adp) is one of them, not a special case. Built once per
+ * scored pick (not once per position) by scoreState. */
+function managerChans(model, cache, managerIdx) {
+  const M = model.player, chans = [];
+  if (managerIdx != null && M.channels) {
+    for (let c = 0; c < M.channels.length; c++) {
+      const b = M.channels[c].beta[managerIdx];
+      if (b === undefined) continue;
+      chans.push([cache.chanCols[c], b]);
+    }
+  }
+  return chans;
+}
+
+/* The same numbers playerFeatures + the old standardise-and-dot loop produced,
+ * computed candidate by candidate into ONE scratch row instead of an array of
+ * arrays. Every expression and the order of every addition are unchanged, so
+ * the result is bit-identical; only the allocations are gone. */
+function playerUtilities(model, st, seat, p, cand, managerIdx, ctx, chans, cache) {
+  const M = model.player, B = st.board;
+  cache = cache || modelCache(model, B.positions);
+  ctx = ctx || rosterCtx(st, seat);
+  chans = chans || managerChans(model, cache, managerIdx);
+  const row = cache.row, me = ctx.me, myByes = ctx.myByes, myTeams = ctx.myTeams;
+  const bestAdp = B.adpRank[cand[0]], bestPosRank = B.posRank[cand[0]], bestVorp = B.vorp[cand[0]];
+  const n = cand.length, nf = row.length;
+  const u = new Array(n + 1);
+  for (let j = 0; j < n; j++) {
+    const q = cand[j];
+    const adp = B.adpRank[q];
+    let lean = 0.0;
+    if (B.hasEcr[q]) lean = Math.log((B.ecr[q] + 10.0) / (adp + 10.0));
+    let clash = 0.0;
+    if (myByes.length && B.bye[q] > 0) {
+      let c = 0;
+      for (let b = 0; b < myByes.length; b++) if (myByes[b] === B.bye[q]) c++;
+      clash = Math.min(3.0, c);
+    }
+    row[0] = -Math.log((adp + 10.0) / (bestAdp + 10.0));
+    row[1] = (B.posRank[q] - bestPosRank) / 10.0;
+    row[2] = lean;
+    row[3] = B.hasEcr[q] ? 0.0 : 1.0;
+    row[4] = (B.vorp[q] - bestVorp) / 100.0;
+    row[5] = clash;
+    row[6] = (B.team[q] && myTeams.has(B.team[q])) ? 1.0 : 0.0;
+    row[7] = B.rookie[q] ? 1.0 : 0.0;
+    row[8] = B.age[q];
+    row[9] = (me && B.prevOwner[q] === me) ? 1.0 : 0.0;
+    row[10] = B.durability[q];
     let acc = 0;
-    for (let i = 0; i < row.length; i++) acc += ((row[i] - M.mean[i]) / M.sd[i]) * M.beta[i];
+    for (let i = 0; i < nf; i++) acc += ((row[i] - M.mean[i]) / M.sd[i]) * M.beta[i];
     const z = (row[U_ADP_COL] - M.mean[U_ADP_COL]) / M.sd[U_ADP_COL];
     acc += z * M.posAdp[p];
-    for (const [col, b] of chans) acc += b * ((row[col] - M.mean[col]) / M.sd[col]);
+    for (let c = 0; c < chans.length; c++) {
+      const col = chans[c][0];
+      acc += chans[c][1] * ((row[col] - M.mean[col]) / M.sd[col]);
+    }
     u[j] = acc;
   }
-  u[raw.length] = M.outside[p];
+  u[n] = M.outside[p];
   return u;
 }
 
@@ -414,35 +493,47 @@ function playerUtilities(model, st, seat, p, cand, managerIdx) {
  * Computing them twice (the obvious structure) doubled the simulation cost,
  * which is the difference between a usable page and a 4-second stall. */
 function scoreState(model, st, seat, manager, autoWeight, kappa) {
-  const cs = choiceSet(st, seat, model, kappa);
-  const positions = Object.keys(cs).map(Number).sort((a, b) => a - b);
+  kappa = kappa === undefined ? 1.0 : kappa;
+  const B = st.board, P = B.positions;
+  // openPositions walks p ascending, which is exactly the order
+  // Object.keys(cs).map(Number).sort() used to produce
+  const positions = openPositions(st, seat);
+  const cs = {};
+  for (let i = 0; i < positions.length; i++) {
+    const p = positions[i];
+    const k = Math.max(1, Math.round(model.window[P[p]] * kappa));
+    cs[p] = available(st, p, k);
+  }
   if (!positions.length) return { pids: [], probs: [], outside: 1.0, cs, positions: [] };
   const mi = (manager != null && model.managers[manager] !== undefined)
     ? model.managers[manager] : null;
+  const cache = modelCache(model, P);
+  const ctx = rosterCtx(st, seat);
+  const chans = managerChans(model, cache, mi);
 
-  const utils = [], iv = [];
-  for (const p of positions) {
-    const u = playerUtilities(model, st, seat, p, cs[p], mi);
-    utils.push(u);
-    iv.push(logSumExp(u));
+  const utils = new Array(positions.length), iv = new Float64Array(positions.length);
+  for (let i = 0; i < positions.length; i++) {
+    const u = playerUtilities(model, st, seat, positions[i], cs[positions[i]], mi, ctx, chans, cache);
+    utils[i] = u;
+    iv[i] = logSumExp(u);
   }
 
   const M = model.position;
-  const { X } = positionFeatures(st, seat, cs, model);
+  const { X } = positionFeatures(st, seat, cs, model, positions);
   const rnd = Math.floor((pickNo(st) - 1) / model.league.teams) + 1;
-  const posU = (side, useManager) => {
+  const posU = (side, useManager, mpIdx, meIdx) => {
     const u = new Array(positions.length);
     for (let i = 0; i < positions.length; i++) {
-      const name = st.board.positions[positions[i]];
+      const p = positions[i], Xi = X[i];
       let acc = 0;
-      for (let k = 0; k < X[i].length; k++) {
-        acc += ((X[i][k] - M.mean[k]) / M.sd[k]) * side.beta[k];
+      for (let k = 0; k < Xi.length; k++) {
+        acc += ((Xi[k] - M.mean[k]) / M.sd[k]) * side.beta[k];
       }
-      const ai = M.ascPositions.indexOf(name);
+      const ai = cache.asc[p];
       if (ai >= 0) acc += side.asc[ai];
       acc += side.lambda * iv[i];
       if (useManager && mi != null && side.managerAsc && side.managerAsc.length) {
-        const mp = side.managerPos.indexOf(name);
+        const mp = mpIdx[p];
         if (mp >= 0) {
           const idx = mi * side.managerPos.length + mp;
           if (idx < side.managerAsc.length) acc += side.managerAsc[idx];
@@ -450,7 +541,7 @@ function scoreState(model, st, seat, manager, autoWeight, kappa) {
       }
       if (useManager && mi != null && side.managerEarly && side.managerEarly.length
           && rnd <= model.earlyRounds) {
-        const me = side.managerEarlyPos.indexOf(name);
+        const me = meIdx[p];
         if (me >= 0) {
           const idx = mi * side.managerEarlyPos.length + me;
           if (idx < side.managerEarly.length) acc += side.managerEarly[idx];
@@ -461,10 +552,10 @@ function scoreState(model, st, seat, manager, autoWeight, kappa) {
     return u;
   };
 
-  let pp = softmax(posU(M.human, true));
+  let pp = softmax(posU(M.human, true, cache.humanMp, cache.humanMe));
   if (autoWeight > 0) {
-    const pa = softmax(posU(M.auto, false));
-    pp = pp.map((v, i) => (1 - autoWeight) * v + autoWeight * pa[i]);
+    const pa = softmax(posU(M.auto, false, cache.autoMp, cache.autoMe));
+    for (let i = 0; i < pp.length; i++) pp[i] = (1 - autoWeight) * pp[i] + autoWeight * pa[i];
   }
 
   const pids = [], probs = [];
@@ -1491,11 +1582,17 @@ function simulate(model, st, seat, opts) {
       autoState[s] = rnd() < pAuto;
     }
     const r = jointProbs(model, sim_st, s, mgr, autoState[s] ? 1 : 0, opts.kappa);
-    const total = r.probs.reduce((a, b) => a + b, 0) + r.outside;
+    const probs = r.probs, n = probs.length;
+    let total = 0;
+    for (let i = 0; i < n; i++) total = total + probs[i];
+    total = total + r.outside;
     if (total <= 0) return false;
-    const all = r.probs.map((x) => x / total).concat([r.outside / total]);
-    const j = samplePick(rnd, all);
-    advance(sim_st, j >= r.pids.length ? null : r.pids[j]);
+    // samplePick over [probs[i] / total ..., outside / total], inlined: the
+    // same quotients accumulated in the same order, without the two arrays
+    const u = rnd();
+    let acc = 0, j = n;
+    for (let i = 0; i < n; i++) { acc += probs[i] / total; if (u < acc) { j = i; break; } }
+    advance(sim_st, j >= n ? null : r.pids[j]);
     return true;
   };
 

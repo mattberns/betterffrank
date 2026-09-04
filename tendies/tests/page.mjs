@@ -219,6 +219,35 @@ for (const phrase of ['Not this pick', 'Assumes', 'finishing lineup', 'are a tie
                       'take one now', 'grey = projected']) {
   if (recHtml.includes(phrase)) fails.push(`#recommend still says "${phrase}"`);
 }
+
+/* 6. The card shows the four numbers it is supposed to and nothing it is not.
+ *    A card that quietly loses BOONE (the newest of them, and the one fed by a
+ *    join that can come back all-null) still renders and still looks fine. */
+for (const lb of ['vorp', 'ecr', 'boone', 'avail']) {
+  if (!recHtml.includes(`<span class="lb">${lb}</span>`)
+      && !recHtml.includes(`class="lb">${lb}<`)) {
+    fails.push(`the card has no ${lb.toUpperCase()} stat`);
+  }
+}
+for (const gone of ['ADP ', 'insurance', 'lose by waiting', '&middot; EV ', 'bench']) {
+  if (recHtml.includes(gone)) fails.push(`the card still shows "${gone.trim()}"`);
+}
+/* At least one card must show a real Boone rank rather than an em dash — the
+ * hint join is the part that can silently come back empty. Conditional on the
+ * PAYLOAD carrying any, because that decides whether there is anything to
+ * show: hints are attached in cli.cmd_site for the live board only, and the
+ * pytest fixture payload is built from the newest season with DRAFT PICKS
+ * (2025), whose board has no hint columns at all. Run this file against the
+ * payload inlined in docs/index.html to exercise the populated case. */
+const boardHasBoone = payload.board.some((r) => r.boone !== null && r.boone !== undefined);
+out.boone = { inPayload: boardHasBoone };
+if (boardHasBoone) {
+  const vals = [...recHtml.matchAll(/class="lb">boone<\/span><b>([^<]+)/g)].map((m) => m[1]);
+  out.boone.shown = vals.slice(0, 8);
+  if (!vals.some((v) => /^\d+$/.test(v))) {
+    fails.push(`no card shows a Boone rank: ${JSON.stringify(vals.slice(0, 8))}`);
+  }
+}
 for (const err of thrown) fails.push(`risk slider: threw ${err.message}`);
 thrown.length = 0;
 

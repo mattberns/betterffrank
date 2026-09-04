@@ -88,6 +88,18 @@ including the `No K/DST projected available — take one now` banner (the
 ordering still puts those first, so the signal survives as position in the
 list). A tie still reads as a shared rank badge with an `=`.
 
+**A card is rank, position, name, an ETR tag when there is one, and four
+labelled numbers**: `VORP` (with its ±SE), `ECR`, `BOONE`, `AVAIL`. The label
+sits above the value so the numbers line up as a row the eye runs across; the
+old card was two wrapped lines of `key value · key value` and nothing lined up
+with anything. Off it came ADP, `insurance`/`edge`, `now`/`then`/`EV`, `lose by
+waiting` and the `bench` marker — so **the ranking basis is no longer on
+screen**. The card shows market and expert facts plus availability, which are
+the same quantities whether the engine scored the pick as a starter or as a
+bench pick, and the ordering is what those two modes actually change. The
+player card behind `fit` still breaks out adds-now, the plan and the finishing
+lineup.
+
 **`P(avail)<` slider** — its own row under the panel title, so a drag is not
 fighting an `innerHTML` rebuild. It keeps only candidates *less* likely than
 the threshold to reach the turn after the one being ranked: the picks you
@@ -121,7 +133,9 @@ caps always, and at the endgame — once every remaining pick is owed to an
 unfilled starting slot — only the positions that fill one (a banner says so;
 simulated picks obey the same rule).
 
-**Board view** (`b`, or the button in the header bar) is the grid a draft room
+**Board view** (`Ctrl-B`, plain `b` outside the search box, or the button in
+the header bar; `Tab` closes it and any open card and jumps to the search box;
+`Ctrl-Z` or `Ctrl-U` undoes the last pick) is the grid a draft room
 keeps on the wall: a column per team in draft order, a row per round, the pick
 in the cell, coloured by position. Each cell carries the pick as `3.05`, the
 player's VORP, and how far past his ADP he actually went — `+12` means he was

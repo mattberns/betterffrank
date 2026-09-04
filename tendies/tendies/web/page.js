@@ -281,9 +281,13 @@
       renderBoard();          // the survival columns depend on the sim
       renderPanels();
       setComputing(false);
+      // The FINE pass blocks the page for most of a second (two simulations
+      // at 4x the budget), so it waits until you have stopped clicking: at
+      // 350ms a batch of picks entered quickly collided with the previous
+      // pick's refinement every time. Any new render() cancels it.
       idleHandle = setTimeout(() => {
         runSim(FINE[0], FINE[1]); simFine = true; renderBoard(); renderPanels();
-      }, 350);
+      }, 1500);
     });
   }
 
@@ -663,28 +667,44 @@
     for (const r of rec) if (!tiers.includes(r.tier)) tiers.push(r.tier);
     const tierSize = (t) => rec.filter((r) => r.tier === t).length;
 
+    /* One card: rank, position, name, an ETR tag when there is one, and four
+     * labelled numbers. Nothing else.
+     *
+     * What came off, and what it costs: ADP (the panel is already ordered by
+     * value against it, and BOONE/ECR are the second opinions worth reading),
+     * `insurance`/`edge`/`now`/`then`/`EV`, `lose by waiting`, and the `bench`
+     * marker. So the RANKING BASIS is no longer on screen — the row shows the
+     * market and expert facts plus availability, which are the same quantities
+     * whether the engine scored the pick as a starter or as a bench pick, and
+     * the ordering is what the two modes actually change. The player card
+     * (`fit`) still breaks out adds-now, the plan and the finishing lineup.
+     *
+     * `surv` on the availability number so `.surv.safe` applies: there is no
+     * bare `.safe` colour rule, which is the trap the EDGE column sat in. */
     const body = rec.map((r) => {
+      const pid = r.pid;
       const rank = tiers.indexOf(r.tier) + 1;
       const shared = tierSize(r.tier) > 1;
-      // per row, because a turn can genuinely offer both: someone who improves
-      // the lineup now, and below him the best of the players who cannot
-      const nums = r.bench
-        ? `<span class="proj">bench</span> &middot; insurance <b>${r.insurance.toFixed(1)}</b>
-           &middot; edge <b>${r.edge >= 0 ? '+' : ''}${r.edge.toFixed(1)}</b>`
-        : `now <b>${r.now.toFixed(1)}</b>
-           &middot; then <b>${r.later.toFixed(1)}</b>
-           &middot; EV <b>${r.ev.toFixed(1)}</b>`;
+      const se = isFinite(board.vorpSe[pid]) && board.vorpSe[pid] > 0
+        ? `<i>±${board.vorpSe[pid].toFixed(0)}</i>` : '';
+      const etr = board.etr[pid]
+        ? `<span class="etag ${board.etr[pid] === 'Take' ? 'safe' : 'gone'}">${
+            board.etr[pid]} R${board.etrRound[pid]}</span>`
+        : '';
+      const st = (label, value) =>
+        `<span class="st"><span class="lb">${label}</span><b>${value}</b></span>`;
       return `<div class="rec">
         <div class="rec-hd"><span class="rk${shared ? ' rk-tie' : ''}">${rank}${
-          shared ? '=' : ''}</span>${tag(board.pos[r.pid])}
-          <span class="onm" data-pid="${r.pid}">${esc(board.name[r.pid])}</span></div>
-        <div class="rec-bd dim">ADP ${board.adpRank[r.pid]} &middot; ECR ${
-          board.hasEcr[r.pid] ? board.ecr[r.pid] : '—'} &middot; VORP ${board.vorp[r.pid].toFixed(0)}${
-          isFinite(board.vorpSe[r.pid]) && board.vorpSe[r.pid] > 0
-            ? ' <span class="proj">±' + board.vorpSe[r.pid].toFixed(0) + '</span>' : ''}<br>
-          ${nums}
-          &middot; lose by waiting <b>${r.cost.toFixed(1)}</b>
-          &middot; P(avail) <b class="${survClass(r.pAvail)}">${Math.round(r.pAvail * 100)}%</b></div>
+          shared ? '=' : ''}</span>${tag(board.pos[pid])}
+          <span class="onm" data-pid="${pid}">${esc(board.name[pid])}</span>
+          <span class="sp"></span>${etr}</div>
+        <div class="stats">
+          ${st('vorp', board.vorp[pid].toFixed(0) + se)}
+          ${st('ecr', board.hasEcr[pid] ? board.ecr[pid] : '&mdash;')}
+          ${st('boone', board.hasBoone[pid] ? board.boone[pid] : '&mdash;')}
+          <span class="st"><span class="lb">avail</span><b class="surv ${
+            survClass(r.pAvail)}">${Math.round(r.pAvail * 100)}%</b></span>
+        </div>
       </div>`;
     }).join('');
 
@@ -981,7 +1001,8 @@
         <span><b class="safe">+n</b> / <b class="gone">&minus;n</b> = slots past
           (or before) his ADP</span>
         <span>bottom number = VORP &middot; footer = starting lineup as it stands</span>
-        <span>click a pick for the player card &middot; <b>esc</b> closes</span>
+        <span>click a pick for the player card &middot; <b>esc</b> or <b>Ctrl-B</b> closes
+          &middot; <b>Tab</b> back to search</span>
       </div></div>`;
   }
 
@@ -1131,7 +1152,35 @@
   });
   el('gridbtn').addEventListener('click', () => (gridOpen ? closeGrid() : openGrid()));
 
+  /* Hotkeys. Ctrl-B (Cmd-B on a Mac) toggles the draft board from anywhere,
+   * including inside the search box, where the plain `b` below would type.
+   * Tab is the reset key: close whatever is open -- card, then grid -- and put
+   * the cursor in the search box with its text selected, so the next
+   * keystrokes are a new search. That takes Tab away from focus traversal on
+   * purpose: during a live draft the only field worth tabbing to is the
+   * search box. Shift-Tab is left alone. Ctrl-U or Ctrl-Z (Cmd- on a Mac) is
+   * the undo button: one pick, same as clicking it, and it works from inside
+   * the search box. preventDefault suppresses the browser's own Ctrl-U (view
+   * source) where the browser allows a page to; Ctrl-Z is the alias for
+   * browsers that reserve Ctrl-U. */
   document.addEventListener('keydown', (e) => {
+    if ((e.key === 'u' || e.key === 'U' || e.key === 'z' || e.key === 'Z')
+        && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+      e.preventDefault();
+      undoPick();
+      return;
+    }
+    if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      closeInspect(); closeGrid();
+      const s = el('search'); s.focus(); s.select();
+      return;
+    }
+    if ((e.key === 'b' || e.key === 'B') && (e.ctrlKey || e.metaKey) && !e.altKey) {
+      e.preventDefault();                 // Firefox binds Ctrl-B to its bookmarks sidebar
+      gridOpen ? closeGrid() : openGrid();
+      return;
+    }
     // esc peels one layer: the card sits on top of the grid, so it goes first
     if (e.key === 'Escape') {
       if (!el('inspect').hidden) closeInspect();
@@ -1146,9 +1195,8 @@
   // undo stays strictly single-pick, even into a simmed tail (it just shrinks
   // the jump): it is the panic key during a live draft, and a mis-tap must
   // never silently rewind forty picks. "undo sim" is the wholesale rewind.
-  el('undo').addEventListener('click', () => {
-    ui.picks.pop(); ui.simmed.pop(); save(); rebuild(); render();
-  });
+  function undoPick() { ui.picks.pop(); ui.simmed.pop(); save(); rebuild(); render(); }
+  el('undo').addEventListener('click', undoPick);
   el('offboard').addEventListener('click', () => {
     ui.picks.push(null); ui.simmed.push(0); save(); rebuild(); render();
   });

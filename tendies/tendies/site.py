@@ -110,9 +110,25 @@ button:disabled{opacity:.45;cursor:default;border-color:var(--rule)}
 .mix{font-size:10px;margin-top:3px}
 .rec{border-bottom:1px solid var(--rule);padding:7px 10px}
 .rec-hd{display:flex;align-items:center;gap:6px}
-.rec-hd .rk{color:var(--faint);font-family:var(--mono);width:14px}
+.rec-hd .rk{color:var(--faint);font-family:var(--mono);width:14px;flex:0 0 auto}
 .rec-hd .rk-tie{width:18px}
-.rec-bd{font-size:11px;margin-top:2px;font-family:var(--mono)}
+.rec-hd .sp{flex:1}
+/* a long name shortens rather than pushing the ETR tag off the card */
+.rec-hd .onm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Four labelled numbers, and only four: VORP, ECR, Boone, availability. The
+   label sits above the value so the numbers line up as a row the eye can run
+   across -- the old card was two wrapped lines of `key value · key value` and
+   nothing lined up with anything. */
+.rec .stats{display:flex;gap:12px;margin-top:5px}
+.rec .st{display:flex;flex-direction:column;gap:1px;min-width:34px}
+.rec .st .lb{font-size:8.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--faint)}
+.rec .st b{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1.1}
+.rec .st b i{font-style:normal;font-size:9px;color:var(--faint);margin-left:2px}
+.rec .etag{font-size:9.5px;font-weight:700;letter-spacing:.03em;padding:0 4px;
+  border-radius:3px;white-space:nowrap;border:1px solid currentColor;flex:0 0 auto}
+.rec .etag.safe{color:var(--safe)}
+.rec .etag.gone{color:var(--gone)}
 /* A tie is not a ranking. Where the VORP curve cannot separate the top of the
    list the panel says so and shares one rank number across the tied rows, so
    the reader is never handed a 1-2-3 the data does not support. */
@@ -122,7 +138,7 @@ button:disabled{opacity:.45;cursor:default;border-color:var(--rule)}
    positional flow are greyed, so the page never presents the two as equally
    well known. */
 .planline{padding:5px 10px;border-bottom:1px solid var(--rule);font-family:var(--mono)}
-.planline .proj,.rec-bd .proj{color:var(--faint)}
+.planline .proj{color:var(--faint)}
 .warn{background:#f7ece0;color:#7a4f10;border-bottom:1px solid var(--rule)}
 .simdep.computing{opacity:.55}
 #filters button{padding:2px 7px;font-size:11px}
@@ -294,9 +310,9 @@ def render(payload: dict, web: Path, out: Path) -> Path:
     <button id="simgo">go</button>
     <label class="small dim"><input type="checkbox" id="simsample"> sampled</label>
     <button id="simundo" title="rewind the whole last sim jump">undo sim</button>
-    <button id="undo">undo</button>
+    <button id="undo" title="take back the last pick (Ctrl-Z or Ctrl-U)">undo</button>
     <button id="offboard">off-board</button>
-    <button id="gridbtn" title="the whole draft: teams across, rounds down (b)">board view</button>
+    <button id="gridbtn" title="the whole draft: teams across, rounds down (Ctrl-B)">board view</button>
     <button id="reset">reset</button>
   </div>
 
@@ -312,7 +328,7 @@ def render(payload: dict, web: Path, out: Path) -> Path:
   <div class="panel">
     <h2>Board &mdash; click a player to draft him; sort on any header; <em>fit</em> shows his roster fit</h2>
     <div class="tools">
-      <input id="search" placeholder="search, Enter drafts the top row" autocomplete="off">
+      <input id="search" placeholder="search (Tab jumps here), Enter drafts the top row" autocomplete="off">
       <span id="filters">
         <button data-pos="ALL" class="on">ALL</button><button data-pos="QB">QB</button>
         <button data-pos="RB">RB</button><button data-pos="WR">WR</button>

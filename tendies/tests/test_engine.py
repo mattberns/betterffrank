@@ -48,6 +48,34 @@ def fitted(built):
 
 
 @pytest.fixture(scope="session")
+def live_payload_path(built, fitted, tmp_path_factory):
+    """The payload the SITE ships: the newest BOARD season, with the Boone/ETR
+    hint columns joined on.
+
+    Separate from `payload_path` because the two differ in a way that matters
+    to exactly one test. `payload_path` is the newest season with DRAFT PICKS
+    (2025) — what the parity and mock-draft harnesses need, since they replay
+    real drafts — and its board carries no hint columns at all, so it cannot
+    show whether the recommendation card renders a Boone rank or an em dash.
+    """
+    from tendies import depletion, export, hints
+    boards, linked, cfgs, _, _ = built
+    f, chain = fitted
+    season = max(int(x) for x in boards["season"].unique().to_list())
+    cfg = cfgs.get(season) or cfgs[max(cfgs)]
+    board = hints.attach(boards.filter(pl.col("season") == season),
+                         season=season, verbose=False)
+    managers = sorted({r["franchise_id"] for r in
+                       linked.unique(subset=["franchise_id"]).iter_rows(named=True)})
+    flow, _ = depletion.flow_table(linked, cfg.teams, cfg.rounds)
+    return export.write(
+        tmp_path_factory.mktemp("live") / "payload.json", board, f, chain, cfg,
+        meta={"season": season, "managers": managers[:cfg.teams], "league_id": LEAGUE},
+        flow=flow,
+    )
+
+
+@pytest.fixture(scope="session")
 def payload_path(built, fitted, tmp_path_factory):
     """A full live payload — board, coefficients, and the positional flow
     table — written once for the node harnesses that need a real board."""
@@ -297,6 +325,22 @@ def test_page_renders_on_and_off_the_clock(payload_path):
     assert r["k5"] <= r["k50"] < r["all"], r
     assert r["k50"] < r["all"] / 2, r
     assert r["boardAll"] == r["board50"] == r["board5"], r
+
+
+@pytest.mark.skipif(not NODE.exists(), reason="playwright node driver not installed")
+def test_page_cards_show_the_hint_columns(live_payload_path):
+    """The same render, on the payload the site actually ships.
+
+    `payload_path`'s board is the newest season with draft picks and has no
+    hint columns, so it cannot tell a card that renders a Boone rank from one
+    that renders an em dash — and the hint join is the part of this that can
+    quietly come back empty (a renamed player, a re-fetched board, a
+    `tendies hints` that was never re-run).
+    """
+    out = _node("page.mjs", live_payload_path, 2)
+    assert out["ok"], out["fails"]
+    assert out["boone"]["inPayload"], "the live payload carries no Boone ranks"
+    assert any(v.isdigit() for v in out["boone"]["shown"]), out["boone"]
 
 
 @pytest.mark.skipif(not NODE.exists(), reason="playwright node driver not installed")
