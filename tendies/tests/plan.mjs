@@ -46,7 +46,7 @@ const board = E.makeBoard(rows, positions);
 // number the DP sees is one this file can reproduce exactly.
 const model = { positions, flow: null, noCurve: ['K', 'DST'] };
 
-function bruteForce(st, seat, sim, turns) {
+function bruteForce(st, seat, sim, turns, emb) {
   const T = turns.length;
   const tail = new Float64Array(nPos * K);
   E.topKAvail(st, null, K, tail, 0);
@@ -75,6 +75,7 @@ function bruteForce(st, seat, sim, turns) {
     go(t + 1, value);                                    // bench
     for (let q = 0; q < nPos; q++) {
       if (c[q] >= spec.cap[q]) continue;
+      if (E.embargoed(emb, st, q, turns[t])) continue;    // late-round embargo
       c[q] += 1;
       if (flexUsed(c) <= spec.flex) {
         const k = Math.max(0, c[q] - 1 - cnt0[q]);
@@ -93,7 +94,22 @@ function bruteForce(st, seat, sim, turns) {
   return { v: bestV, f: bestF };
 }
 
+/* Every trial is solved TWICE on the same state and the same availability:
+ * unconstrained, and under a late-round embargo on QB. The embargoed solve is
+ * the one worth having — the DP drops the position from a per-turn action set
+ * while the brute force drops it from the enumerated sequences, so an
+ * off-by-one in which TURN the rule covers (the plan indexes layers, the rule
+ * is stated in rounds) surfaces as a value mismatch instead of as a
+ * plausible-looking board. Round 4 of a 4x5 league bars turns 1-3 and clears
+ * at the last two.
+ *
+ * Solving the pair on one state is also what makes "the rule bit" checkable:
+ * a smaller action set can never be worth more, and on a board where the
+ * quarterback slot is worth filling early it must sometimes be worth less. A
+ * pass where the two never differ would mean the embargo reached nothing. */
+const EMB = { pos: positions.indexOf('QB'), round: 4 };
 let trials = 0, worstV = 0, badF = 0, cases = [];
+let embWorstV = 0, embBadF = 0, embLower = 0, embHigher = 0;
 for (let trial = 0; trial < 60; trial++) {
   const st = E.newState(board, league, ['', '', '', '']);
   // give the seat a partial roster by walking a few picks off the top
@@ -131,8 +147,33 @@ for (let trial = 0; trial < 60; trial++) {
   if (dv > worstV) worstV = dv;
   if (got.f !== want.f) { badF++; cases.push({ trial, got, want, turns }); }
   if (dv > 1e-9 && cases.length < 5) cases.push({ trial, got, want, turns });
+
+  const epl = E.plan(model, st, seat, sim, spec, EMB);
+  const ewant = bruteForce(st, seat, sim, turns, EMB);
+  const egot = { v: epl.v[epl.i0], f: epl.f[epl.i0] };
+  const edv = Math.abs(egot.v - ewant.v);
+  if (edv > embWorstV) embWorstV = edv;
+  if (egot.f !== ewant.f) { embBadF++; }
+  if ((edv > 1e-9 || egot.f !== ewant.f) && cases.length < 5) {
+    cases.push({ trial, embargo: true, got: egot, want: ewant, turns });
+  }
+  // the constrained optimum can never beat the free one, and on this board it
+  // has to lose sometimes or the rule reached nothing
+  if (egot.f > got.f || (egot.f === got.f && egot.v < got.v - 1e-9)) embLower++;
+  if (egot.f < got.f || (egot.f === got.f && egot.v > got.v + 1e-9)) embHigher++;
+  // the plan must never SCHEDULE the embargoed position inside the rule
+  for (const step of E.planPath(epl)) {
+    if (step.pos === EMB.pos && E.embargoed(EMB, st, EMB.pos, step.turn)) {
+      cases.push({ trial, embargo: true, scheduled: step, turns });
+      embBadF++;
+    }
+  }
   trials++;
 }
 
-const ok = trials > 30 && worstV < 1e-9 && badF === 0;
-process.stdout.write(JSON.stringify({ trials, worstV, badF, ok, cases: cases.slice(0, 5) }));
+const ok = trials > 30 && worstV < 1e-9 && badF === 0
+  && embWorstV < 1e-9 && embBadF === 0 && embHigher === 0 && embLower > 0;
+process.stdout.write(JSON.stringify({
+  trials, worstV, badF, ok, cases: cases.slice(0, 5),
+  embargo: { worstV: embWorstV, badF: embBadF, lower: embLower, higher: embHigher },
+}));

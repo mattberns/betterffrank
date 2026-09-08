@@ -222,11 +222,23 @@ def test_ties_are_reported_but_never_reordered(payload_path):
 def test_plan_matches_brute_force():
     """The plan DP packs the flex bound into state reachability and carries a
     lexicographic feasibility term. On a draft small enough to enumerate, every
-    action sequence is evaluated by hand and the DP must match exactly."""
+    action sequence is evaluated by hand and the DP must match exactly.
+
+    Run twice per state: unconstrained, then under a late-round QB embargo,
+    where the DP drops the position from a per-turn action set and the brute
+    force drops it from the enumerated sequences. The constrained optimum must
+    match, must never beat the free one, must lose sometimes (or the rule
+    reached nothing), and must never SCHEDULE a quarterback inside the rule.
+    """
     out = _node("plan.mjs")
     assert out["trials"] > 30
     assert out["worstV"] < 1e-9, f"value mismatch {out['worstV']:.3e}: {out['cases']}"
     assert out["badF"] == 0, f"feasibility mismatch: {out['cases']}"
+    emb = out["embargo"]
+    assert emb["worstV"] < 1e-9, f"embargoed value mismatch {emb['worstV']:.3e}: {out['cases']}"
+    assert emb["badF"] == 0, f"embargoed feasibility/schedule failure: {out['cases']}"
+    assert emb["higher"] == 0, "the embargoed plan beat the unconstrained one"
+    assert emb["lower"] > 0, "the embargo changed no plan — it reached nothing"
 
 
 @pytest.mark.skipif(not NODE.exists(), reason="playwright node driver not installed")
@@ -304,6 +316,9 @@ def test_page_renders_on_and_off_the_clock(payload_path):
     produced content, on the clock and off it, that "Take now" retitles itself
     to the user's own pick, that its P(avail) slider filters that panel and
     only that panel, and that no explanatory text cell has crept back into it.
+    It also drives the late-round-QB dropdown and the two survival-column
+    sorts, both of which are orderings rather than numbers — the kind of thing
+    that is wrong on screen while every engine test still passes.
     Whether the numbers are right is ties/plan/lineup/mockdraft's job.
     """
     out = _node("page.mjs", payload_path, 2)
@@ -325,6 +340,32 @@ def test_page_renders_on_and_off_the_clock(payload_path):
     assert r["k5"] <= r["k50"] < r["all"], r
     assert r["k50"] < r["all"] / 2, r
     assert r["boardAll"] == r["board50"] == r["board5"], r
+
+    # Late-round QB, checked where the unconstrained answer actually uses a
+    # quarterback (top of round 3, argmax picks): the rule empties the board
+    # and the candidate list for YOUR seat, moves the plan's quarterback past
+    # the round, keeps quarterbacks on the board while someone else is on the
+    # clock — otherwise their pick could not be recorded — and gives them all
+    # back when it is switched off.
+    q = out["lateQb"]
+    # page.mjs reports rather than asserts these: a quarterback being wanted
+    # here at all is a property of the BOARD, and it holds on this fixture.
+    assert all(q["testable"].values()), q
+    for k in ("on9", "on13"):
+        assert q[k]["board"] == 0 and q[k]["rec"] == 0, (k, q[k])
+    teams = json.loads(Path(payload_path).read_text())["model"]["league"]["teams"]
+    assert all((t - 1) // teams + 1 >= 9 for t in q["on9"]["plan"]), q["on9"]
+    assert all((t - 1) // teams + 1 >= 13 for t in q["on13"]["plan"]), q["on13"]
+    assert q["offClockBoard"] > 0, q
+    assert q["restored"] == q["off"]["board"], q
+
+    # The survival columns sort least-likely-to-last first, and a blank (a
+    # player outside the simulation's watched top ~60) sinks in BOTH
+    # directions — page.mjs fails the run on either, these pin the intent.
+    for key in ("sort_p", "sort_p2"):
+        asc, desc = out[key]["asc"], out[key]["desc"]
+        assert asc == sorted(asc) and asc[0] <= 10, (key, asc)
+        assert desc == sorted(desc, reverse=True), (key, desc)
 
 
 @pytest.mark.skipif(not NODE.exists(), reason="playwright node driver not installed")

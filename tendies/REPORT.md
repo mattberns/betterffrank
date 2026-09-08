@@ -896,6 +896,46 @@ hold-and-stream ≥ hold-alone identity in 75/182 TE and 92/182 QB player-season
 but the streaming totals rise only +6.2 (QB) and +5.5 (TE) and stay on QB7 and
 TE6. The floor is stable under the repair.
 
+### Late-round QB is a constraint, not a re-weighting
+
+The page has one strategy switch: a dropdown that bars **your seat** from taking
+a quarterback before a round you name (off, or 9 through 13). It is implemented
+as an *embargo* — a position removed from your action set at every turn the rule
+covers — and not as a penalty on quarterback value, which is the version that
+would have been easier and wrong. A penalty leaks into things that are not
+about your pick: the same VORP feeds the empty-slot floors, the survival
+simulation's choice sets and every other seat's plan, so discounting
+quarterbacks to keep yourself off them would quietly tell the model that the
+eleven managers around you also want them less. They do not. The market side is
+left exactly as it was, which is why `P(next)`, `P(+2)`, **Safe to wait on** and
+**Upcoming picks** do not move by a digit when the rule goes on, and why a
+quarterback who will not survive to round 9 still reads as gone rather than as
+someone you are choosing to pass on.
+
+Two places have to honour it or the recommendation contradicts itself: the
+candidate set at *this* turn, and the plan DP's action set at every *later*
+turn. Filtering only the candidates would price a receiver now against a plan
+that still means to take a quarterback at your next turn — the plan the rule
+forbids. So `planLayer` takes a per-turn barred position and `plan` asks the
+rule once per layer, because the embargo expires partway through the plan.
+
+That it re-solves rather than slides is the part worth showing. On the 2025
+fixture at the top of round 3 the unconstrained plan takes a quarterback at
+`#60`; under a round-9 rule the DP does not move him to the first legal turn
+(`#81`) but to `#120`, having re-optimised what the intervening turns are worth
+without him. `tests/plan.mjs` checks the constrained DP the same way it checks
+the free one — against brute-force enumeration over every legal action
+sequence, now with the embargoed sequences removed — and additionally that the
+constrained optimum never *beats* the free one, that it loses on some rosters
+(16 of 60 trials, or the rule reached nothing), and that no plan schedules a
+quarterback inside the rule.
+
+The one thing it does not do is stop you. Open a quarterback from Upcoming
+picks while on the clock and the draft button still works, with a note saying
+why he is not in your lists; the card's "rest of the draft" number is still
+computed under the embargo, so what you are reading is the honest cost of
+breaking your own rule.
+
 ### The resolution floor
 
 Added 2026-09-02, after the panel was caught presenting a ranking the curve

@@ -88,8 +88,17 @@ including the `No K/DST projected available — take one now` banner (the
 ordering still puts those first, so the signal survives as position in the
 list). A tie still reads as a shared rank badge with an `=`.
 
-**A card is rank, position, name, an ETR tag when there is one, and four
-labelled numbers**: `VORP` (with its ±SE), `ECR`, `BOONE`, `AVAIL`. The label
+**A card is rank, position, name, an ETR tag when there is one, and five
+labelled numbers**: `VORP` (with its ±SE), `ECR`, `BOONE`, `AVAIL` and `+2` —
+the last two being the same pair of horizons the board's `P(next)` and `P(+2)`
+columns carry, measured in the panel's own frame (your next turn and the one
+after it, counted from the pick being ranked). Both read the simulation by
+membership rather than by value: a candidate the simulation does not watch is
+an em dash, not `0%`. `recommend` falls back to `pAvail = 0` for him, which is
+the conservative direction where that number is *used* (`cost = now * (1 −
+pAvail)`) and exactly backwards on a card — unwatched means deep means safe,
+and the card used to print "certainly gone" for a player nobody was waiting
+on. The label
 sits above the value so the numbers line up as a row the eye runs across; the
 old card was two wrapped lines of `key value · key value` and nothing lined up
 with anything. Off it came ADP, `insurance`/`edge`, `now`/`then`/`EV`, `lose by
@@ -118,8 +127,54 @@ is harmless where it is used (`cost = now * (1 - pAvail)` degrades to `now`)
 and exactly backwards as a filter — the first cut read every round-14 receiver
 as 0% to survive and kept 273 of 332 candidates.
 
-The first cut of it also read `league` — a `const` local to `rebuild()` — from
-the new probe builder. `node --check` passes, the page loads, and the
+**Sorting.** Every header sorts, each in its own natural direction: smallest
+ADP first, largest VORP first, and the two survival columns **least likely to
+last first** — `P(next)` and `P(+2)` are read as *who am I about to lose*, so
+the click that answers that question is the first one. A blank cell sinks to
+the bottom **in both directions**, which is not what a sentinel value does: an
+absent ECR held as `1e9` is "worst" ascending and "best" descending, so the
+second click on those columns used to lead the table with rows carrying no
+measurement at all. That applies to `ECR`, `EDGE`, `BOONE`, `P(next)` and
+`P(+2)`; `ETR` is deliberately exempt, because its blank is a real verdict (no
+call either way) and belongs between Take and Avoid. A blank `P(next)` means
+the player is outside the simulation's watched top ~60 — deep enough that
+nobody is waiting on him — and is left as an em dash rather than filled in
+with a 99% nobody measured.
+
+**`late QB` dropdown** — directly under the threshold, `Off` or a round from
+9 to 13: *do not take a quarterback before this round*. It is a constraint on
+**your seat and nothing else**. The other eleven seats keep drafting passers in
+the simulation, so `P(next)`, `P(+2)`, **Safe to wait on** and **Upcoming
+picks** are still the market's honest answer — a quarterback who will not last
+to round 9 keeps showing as gone rather than as someone you are choosing to
+pass on. What it changes is every list and every valuation that is about *your*
+pick:
+
+- the board hides quarterbacks **while you are on the clock**, and only then —
+  any other seat and they stay, or the quarterback someone else just took could
+  not be recorded (the `QB` filter chip greys out to match, and a line says
+  why);
+- **Take now** drops them from the candidate set;
+- the **plan DP** drops them from every turn before the round, which is the
+  half a list filter alone would leave contradicting itself: block the
+  candidate and not the plan and a receiver now is priced against a plan that
+  still means to take a quarterback at your next turn. On the 2025 fixture at
+  the top of round 3 the free plan takes one at `#60`; under a round-9 rule the
+  DP re-solves and takes one at `#120` — it does not simply slide to the first
+  legal turn;
+- **Safe to wait on** drops them from a turn the rule still covers.
+
+The player card is the deliberate exception: open a quarterback from Upcoming
+picks while on the clock and the *draft* button still works, with a note saying
+the rule is why he is not in your lists. The mode is a plan, not a lock — and
+the numbers on that card price the override honestly, since the plan behind
+"rest of the draft" is still embargoed at every later turn. Changing the
+dropdown re-ranks off the cached simulation and never re-sims: your rule does
+not change anyone else's behaviour, so there is nothing new to simulate. The
+setting persists in localStorage with the rest of the draft.
+
+The first cut of the threshold slider also read `league` — a `const` local to
+`rebuild()` — from the new probe builder. `node --check` passes, the page loads, and the
 ReferenceError lands inside a `requestAnimationFrame` callback, so the only
 symptom is that the survival columns and all three sim-dependent panels come up
 blank on every pick that is not yours. `tests/page.mjs` exists because of that:

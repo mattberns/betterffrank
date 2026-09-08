@@ -220,10 +220,10 @@ for (const phrase of ['Not this pick', 'Assumes', 'finishing lineup', 'are a tie
   if (recHtml.includes(phrase)) fails.push(`#recommend still says "${phrase}"`);
 }
 
-/* 6. The card shows the four numbers it is supposed to and nothing it is not.
+/* 6. The card shows the five numbers it is supposed to and nothing it is not.
  *    A card that quietly loses BOONE (the newest of them, and the one fed by a
  *    join that can come back all-null) still renders and still looks fine. */
-for (const lb of ['vorp', 'ecr', 'boone', 'avail']) {
+for (const lb of ['vorp', 'ecr', 'boone', 'avail', '+2']) {
   if (!recHtml.includes(`<span class="lb">${lb}</span>`)
       && !recHtml.includes(`class="lb">${lb}<`)) {
     fails.push(`the card has no ${lb.toUpperCase()} stat`);
@@ -249,6 +249,157 @@ if (boardHasBoone) {
   }
 }
 for (const err of thrown) fails.push(`risk slider: threw ${err.message}`);
+thrown.length = 0;
+
+/* 7. LATE-ROUND QB. One dropdown with four consequences, and each of them is
+ *    a place it could quietly do nothing:
+ *      - your board loses its quarterbacks while YOU are on the clock;
+ *      - it keeps them while anyone else is, or the pick another team just
+ *        made could not be recorded — a failure that would only show up
+ *        mid-draft, with no way out of it;
+ *      - "Take now" loses them as candidates;
+ *      - and the PLAN under it stops scheduling one before the round, which is
+ *        the half a candidate filter alone would leave contradicting itself.
+ *
+ *    Top of round 3, seat 0 on the clock, sampling OFF so the jump is the
+ *    model's argmax and the state is identical on every run. That state is
+ *    chosen because the unconstrained answer USES a quarterback: three of them
+ *    are in the panel and the plan takes one at #60. Run it a round later and
+ *    the seat has already drafted one, and every check below passes vacuously.
+ *    Nothing here asserts on P(avail): the rule binds your seat and not the
+ *    market, so the survival numbers are supposed to be untouched.
+ */
+const teams = payload.model.league.teams;
+const lateEl = document.getElementById('lateqb');
+const setLate = (v) => { lateEl.fire('change', { target: { value: String(v) } }); flushTimers(); };
+const nQbBoard = () => (boardEl.innerHTML.match(/pos-qb/g) || []).length;
+const nQbRec = () => (recEl.innerHTML.match(/pos-qb/g) || []).length;
+// plan steps that schedule a quarterback, as overall pick numbers
+const planQbTurns = () => [...recEl.innerHTML.matchAll(/#(\d+) QB/g)].map((m) => Number(m[1]));
+const roundOf = (pick) => Math.floor((pick - 1) / teams) + 1;
+
+document.getElementById('reset').fire('click', {});
+flushTimers();
+document.getElementById('simsample').fire('change', { target: { checked: false } });
+seatEl.fire('change', { target: { value: '0' } });
+flushTimers();
+document.getElementById('simto').value = String(2 * teams + 1);
+document.getElementById('simgo').fire('click', {});
+flushTimers();
+if (document.getElementById('recommend-hd').textContent !== 'Take now') {
+  fails.push('late-QB: seat 0 is not on the clock at the top of round 3');
+}
+setLate(0);
+const off = { board: nQbBoard(), rec: nQbRec(), plan: planQbTurns() };
+setLate(9);
+const on9 = { board: nQbBoard(), rec: nQbRec(), plan: planQbTurns() };
+setLate(13);
+const on13 = { board: nQbBoard(), rec: nQbRec(), plan: planQbTurns() };
+out.lateQb = { off, on9, on13 };
+
+/* Whether the rule had anything to bite on is REPORTED, not asserted: the
+ * checks below are invariants of the page and hold on any payload, but "a
+ * quarterback was a candidate here with the rule off" is a property of the
+ * board being rendered. It holds on the pytest fixture (2025), where the
+ * caller asserts it, and does not on the live 2026 board, where the model
+ * wants no passer in the first eight rounds at all. Failing here would mean a
+ * test that breaks when the market changes. */
+out.lateQb.testable = { board: off.board > 0, rec: off.rec > 0, plan: off.plan.length > 0 };
+for (const [name, st9] of [['round 9', on9], ['round 13', on13]]) {
+  if (st9.board !== 0) fails.push(`late-QB ${name} left ${st9.board} quarterbacks on your board`);
+  if (st9.rec !== 0) fails.push(`late-QB ${name} left ${st9.rec} quarterbacks in Take now`);
+}
+for (const t of on9.plan) {
+  if (roundOf(t) < 9) fails.push(`round 9: the plan still wants a QB at #${t} (round ${roundOf(t)})`);
+}
+for (const t of on13.plan) {
+  if (roundOf(t) < 13) fails.push(`round 13: the plan still wants a QB at #${t} (round ${roundOf(t)})`);
+}
+// and the rule must MOVE the plan's quarterback rather than merely leave it
+// alone: unconstrained, this board takes one well before either round
+for (const [name, r, st9] of [['round 9', 9, on9], ['round 13', 13, on13]]) {
+  if (st9.plan.length && off.plan.length && st9.plan[0] === off.plan[0]
+      && roundOf(off.plan[0]) < r) {
+    fails.push(`${name}: the plan's QB stayed at #${off.plan[0]}`);
+  }
+}
+// ...and off the clock the board keeps them, or another team's quarterback
+// could never be recorded
+seatEl.fire('change', { target: { value: String(SEAT) } });
+flushTimers();
+out.lateQb.offClockBoard = nQbBoard();
+if (out.lateQb.offClockBoard === 0) {
+  fails.push('late-QB hid quarterbacks while another seat was on the clock');
+}
+// back off: the board is whole again
+seatEl.fire('change', { target: { value: '0' } });
+flushTimers();
+setLate(0);
+out.lateQb.restored = nQbBoard();
+if (out.lateQb.restored !== off.board) {
+  fails.push(`turning the rule off left ${out.lateQb.restored} of ${off.board} quarterbacks`);
+}
+for (const err of thrown) fails.push(`late-QB dropdown: threw ${err.message}`);
+thrown.length = 0;
+
+/* 8. SORTING the two survival columns. Both are read as "who am I about to
+ *    lose", so the first click has to put the LEAST likely to last on top, and
+ *    a blank — a player outside the simulation's watched top ~60 — must sink
+ *    to the bottom whichever way the column points. The second half is the one
+ *    a sentinel value gets wrong: 1e9 is "worst" ascending and "best"
+ *    descending, so the reversed click led the table with rows that carry no
+ *    measurement at all.
+ *
+ *    The header click is dispatched with a fake target rather than a real DOM
+ *    node: the handler only ever asks `closest('th.sortable')`, so a target
+ *    that answers that question is the whole contract. */
+const clickHead = (key) => {
+  boardEl.fire('click', {
+    target: {
+      closest: (sel) => (sel === 'th.sortable' ? { dataset: { key } } : null),
+    },
+  });
+  flushTimers();
+};
+/* [value, ...] down the rendered column: '' for a blank cell. The two survival
+ * columns are the last two `td.surv` of each row, in P(next), P(+2) order. */
+const survColumn = (which) => [...boardEl.innerHTML.matchAll(/<tr data-pid="\d+">[\s\S]*?<\/tr>/g)]
+  .map((m) => {
+    const cells = [...m[0].matchAll(/<td class="num surv[^"]*">([^<]*)<\/td>/g)].map((c) => c[1]);
+    const v = cells[which] === undefined ? '' : cells[which].trim();
+    return v === '—' || v === '&mdash;' ? '' : v;
+  });
+
+const checkSorted = (label, col, wantAsc) => {
+  const vals = survColumn(col);
+  if (vals.length < 20) { fails.push(`${label}: only ${vals.length} rows to sort`); return; }
+  const nums = [], blanks = [];
+  vals.forEach((v, i) => (v === '' ? blanks : nums).push(i));
+  if (!nums.length) { fails.push(`${label}: no measured rows in the column`); return; }
+  if (!blanks.length) { fails.push(`${label}: no blank rows — the sink is untested`); return; }
+  if (Math.min(...blanks) < Math.max(...nums)) {
+    fails.push(`${label}: a blank sorts above a measured row `
+      + `(first blank at ${Math.min(...blanks)}, last value at ${Math.max(...nums)})`);
+  }
+  const seq = nums.map((i) => Number(vals[i].replace('%', '')));
+  for (let i = 1; i < seq.length; i++) {
+    if (wantAsc ? seq[i] < seq[i - 1] : seq[i] > seq[i - 1]) {
+      fails.push(`${label}: not ${wantAsc ? 'ascending' : 'descending'} at row ${i}: `
+        + `${seq[i - 1]}% then ${seq[i]}%`);
+      break;
+    }
+  }
+  return seq;
+};
+
+for (const [key, col] of [['p', 0], ['p2', 1]]) {
+  clickHead(key);                       // first click: the column's natural order
+  const asc = checkSorted(`${key} first click`, col, true);
+  clickHead(key);                       // second click: reversed
+  const desc = checkSorted(`${key} second click`, col, false);
+  out[`sort_${key}`] = { asc: (asc || []).slice(0, 6), desc: (desc || []).slice(0, 6) };
+}
+for (const err of thrown) fails.push(`survival sort: threw ${err.message}`);
 thrown.length = 0;
 
 out.ok = fails.length === 0;

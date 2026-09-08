@@ -152,11 +152,18 @@ footer{grid-column:1/-1;color:var(--faint);font-size:11px;padding:0 4px}
    under the title rather than a line of the rendered list, because a range
    input inside innerHTML that is rebuilt on every `input` event cannot be
    dragged. */
-#rectools{gap:0}
+#rectools{gap:0;row-gap:6px;flex-wrap:wrap}
+#rectools>label{width:100%}
 #riskwrap{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 #risk{flex:1;min-width:80px;padding:0;border:0;background:none;cursor:pointer}
 #riskv{font-family:var(--mono);min-width:58px;text-align:right;color:var(--text)}
 #riskwrap.off #riskv{color:var(--faint);font-weight:400}
+
+/* Late-round QB, on its own line directly under the threshold. It is a
+   strategy switch rather than a view filter — see page.js's embargo() for
+   everything it touches — so it lives with the panel it re-ranks. */
+#lateqbwrap{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+#lateqb{flex:1;min-width:80px}
 
 /* sortable headers */
 th.sortable{cursor:pointer;user-select:none}
@@ -345,6 +352,16 @@ def render(payload: dict, web: Path, out: Path) -> Path:
       <label class="small dim" id="riskwrap"
         title="keep only players LESS likely than this to reach your following turn — the ones you stand to lose by waiting. Full right shows every candidate.">P(avail)&lt;<input
         type="range" id="risk" min="5" max="100" step="5"><b id="riskv"></b></label>
+      <label class="small dim" id="lateqbwrap"
+        title="do not take a quarterback before this round. Your seat only: the board, this panel, the plan behind it and Safe to wait on all drop quarterbacks until the round you name. Everyone else keeps drafting them, so P(avail) is unchanged.">late QB<select
+        id="lateqb">
+        <option value="0">Off</option>
+        <option value="9">Round 9</option>
+        <option value="10">Round 10</option>
+        <option value="11">Round 11</option>
+        <option value="12">Round 12</option>
+        <option value="13">Round 13</option>
+      </select></label>
     </div>
     <div id="recommend"></div>
   </div>

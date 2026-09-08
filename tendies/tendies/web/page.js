@@ -15,6 +15,10 @@
   const WAIT_P = 0.8;        // the panel's threshold
   const RISK_OFF = 100;      // slider at the top of its range = no filter
   const WAIT_N = 14;         // rows per section before it says "+N more"
+  // Late-round QB: the rounds the dropdown offers, and 0 for off. The list is
+  // the validator too — a stored value that is not one of these is off.
+  const LATE_QB_ROUNDS = [0, 9, 10, 11, 12, 13];
+  const QB_POS = M.positions.indexOf('QB');
   // declared up here because load() validates against it, and load() runs first
   const SORT_KEYS = ['adp', 'ecr', 'edge', 'name', 'pos', 'team', 'vorp',
                      'boone', 'etr', 'p', 'p2'];
@@ -47,6 +51,9 @@
     // after the one it is ranking, as a percentage; RISK_OFF (100) keeps every
     // candidate. Persisted like `sort`.
     risk: 50,
+    // Late-round QB: 0 = off, else the first round you will take a passer in.
+    // Persisted like `risk`; see embargo() for what it actually does.
+    lateQb: 0,
     sort: { key: 'adp', dir: 1 },
   });
 
@@ -98,6 +105,7 @@
       if (Number.isFinite(raw.risk)) {
         d.risk = Math.min(RISK_OFF, Math.max(5, Math.round(raw.risk / 5) * 5));
       }
+      if (LATE_QB_ROUNDS.indexOf(raw.lateQb | 0) > 0) d.lateQb = raw.lateQb | 0;
       if (raw.sort && SORT_KEYS.indexOf(raw.sort.key) >= 0) {
         d.sort = { key: raw.sort.key, dir: raw.sort.dir < 0 ? -1 : 1 };
       }
@@ -213,7 +221,7 @@
 
   /** The plan DP for the current state, computed at most once per render. */
   function planNow() {
-    if (!planCache && sim) planCache = E.plan(M, st, ui.seat, sim, spec);
+    if (!planCache && sim) planCache = E.plan(M, st, ui.seat, sim, spec, embargo());
     return planCache;
   }
 
@@ -231,6 +239,8 @@
     return s;
   }
 
+  // Only your own plan is embargoed: `planNow` carries it, and another seat's
+  // plan is the model's belief about HIS draft, which your rule does not bind.
   function planFor(seat, sm) {
     if (seat === ui.seat) return planNow();
     if (seatPlans.has(seat)) return seatPlans.get(seat);
@@ -251,6 +261,33 @@
     if (s < 0) return null;
     return new Set(E.legalPositions(st, s).map(posName));
   }
+
+  /* LATE-ROUND QB. One dropdown, one rule: your seat does not take a
+   * quarterback before round `ui.lateQb`. It is a constraint on you, never on
+   * the eleven seats around you — they keep drafting passers in the sim, so
+   * P(avail), the "Upcoming picks" panel and the whole survival column stay
+   * the market's honest answer rather than a wish. What changes is every list
+   * and every valuation that is about YOUR pick:
+   *
+   *   - the board hides quarterbacks while YOU are on the clock (and only
+   *     then, or you could not record someone else taking one);
+   *   - "Take now" drops them from the candidate set;
+   *   - the plan DP drops them from every turn before the round, so the
+   *     "rest of the draft" number behind each recommendation is the value of
+   *     a plan you would actually follow;
+   *   - "Safe to wait on" drops them from a turn the rule still covers.
+   *
+   * The player card is the deliberate exception: open a quarterback from the
+   * Upcoming panel while on the clock and the draft button still works, with a
+   * note saying the rule is why he is not in your lists. The mode is a plan,
+   * not a lock, and turning it off is one click.
+   */
+  function embargo() {
+    return ui.lateQb > 0 && QB_POS >= 0 ? { pos: QB_POS, round: ui.lateQb } : null;
+  }
+
+  /** Is `pos` embargoed at overall pick `pick`, for your seat? */
+  function barred(pos, pick) { return E.embargoed(embargo(), st, pos, pick); }
 
   function subjectSeat(pid) {
     for (let s = 0; s < ui.teams; s++) if (st.rosters[s].indexOf(pid) >= 0) return s;
@@ -411,14 +448,40 @@
     // first; unlisted players keep ADP order via cmpFor's tiebreak
     etr: (a, b) => (etrKeyOf(a) - etrKeyOf(b))
       || ((board.etrRound[a] || 99) - (board.etrRound[b] || 99)),
-    p: (a, b) => (survOf(b) === null ? -1 : survOf(b)) - (survOf(a) === null ? -1 : survOf(a)),
-    p2: (a, b) => (surv2Of(b) === null ? -1 : surv2Of(b)) - (surv2Of(a) === null ? -1 : surv2Of(a)),
+    /* LEAST likely to last first. The column is read as "who am I about to
+     * lose", so the first click has to put the 4% at the top; sorting the
+     * safest to the top first answers a question nobody is asking on the
+     * clock. Blank (unwatched) is handled by MISSING, not here. */
+    p: (a, b) => survOf(a) - survOf(b),
+    p2: (a, b) => surv2Of(a) - surv2Of(b),
   };
-  const DESC_NATURAL = { edge: 1, vorp: 1, p: 1, p2: 1 };
+  const DESC_NATURAL = { edge: 1, vorp: 1 };
+
+  /* Columns that can be BLANK, and what blank means in each: no expert rank
+   * (ecr, and edge with it), not on Boone's 303 (boone), or outside the
+   * simulation's watched top ~60 (p, p2). All of them sort to the BOTTOM in
+   * both directions — a row with no measurement must never lead a list
+   * ordered by that measurement, which is what a sentinel value does as soon
+   * as you click the header a second time (1e9 is "worst" ascending and
+   * "best" descending). ETR is deliberately NOT here: its blank is a real
+   * verdict — no call either way — and it belongs between Take and Avoid. */
+  const MISSING = {
+    ecr: (pid) => !board.hasEcr[pid],
+    edge: (pid) => edgeOf(pid) === null,
+    boone: (pid) => booneOf(pid) === null,
+    p: (pid) => survOf(pid) === null,
+    p2: (pid) => surv2Of(pid) === null,
+  };
 
   function cmpFor(key, dir) {
     const f = SORTS[key] || SORTS.adp;
+    const miss = MISSING[key];
     return (a, b) => {
+      // outside `dir` on purpose: blanks sink whichever way the column points
+      if (miss) {
+        const ma = miss(a), mb = miss(b);
+        if (ma !== mb) return ma ? 1 : -1;
+      }
       const d = f(a, b);
       // ADP breaks every tie, so the order is total and the table never
       // reshuffles under an equal-valued sort the way a stable-sort-on-zeros did
@@ -441,7 +504,10 @@
     { key: 'etr', head: 'ETR', cls: '',
       title: 'Establish The Run\u2019s take/avoid list and the round it applies to. '
         + 'Only 35 players are on it; blank = no call either way.' },
-    { key: 'p', head: 'P(next)', cls: 'num', title: 'P(still available at your next pick)' },
+    { key: 'p', head: 'P(next)', cls: 'num',
+      title: 'P(still available at your next pick). Sorts least likely to last first. '
+        + 'Blank = outside the simulation\u2019s watched top ~60, i.e. deep enough that '
+        + 'nobody is waiting on him; blanks always sort last.' },
     { key: 'p2', head: 'P(+2)', cls: 'num',
       title: 'P(still available at the pick after that) — coarser, and optimistic: see the panel note' },
     { key: null, head: '', cls: '' },      // the fit button
@@ -452,16 +518,24 @@
     const seat = E.seatOnClock(st);
     const legal = legalNow();
     const openN = seat < 0 ? 0 : E.openPositions(st, seat).length;
-    if (legal && filterPos !== 'ALL' && !legal.has(filterPos)) {
+    // Late-round QB hides quarterbacks from the list ONLY while your own seat
+    // is on the clock. Any other seat and they stay: the board is also how a
+    // pick gets recorded, and hiding them would make it impossible to enter
+    // the quarterback someone else just took.
+    const embOn = seat === ui.seat && barred(QB_POS, E.pickNo(st));
+    if ((legal && filterPos !== 'ALL' && !legal.has(filterPos))
+        || (embOn && filterPos === posName(QB_POS))) {
       filterPos = 'ALL';   // the active filter's position just became illegal
     }
     [...el('filters').children].forEach((c) => {
       c.classList.toggle('on', c.dataset.pos === filterPos);
-      c.disabled = !!legal && c.dataset.pos !== 'ALL' && !legal.has(c.dataset.pos);
+      c.disabled = (!!legal && c.dataset.pos !== 'ALL' && !legal.has(c.dataset.pos))
+        || (embOn && c.dataset.pos === posName(QB_POS));
     });
     const avail = [];
     for (let pid = 0; pid < board.n; pid++) {
       if (st.taken[pid]) continue;
+      if (embOn && board.pos[pid] === QB_POS) continue;
       if (legal && !legal.has(posName(board.pos[pid]))) continue;
       if (filterPos !== 'ALL' && posName(board.pos[pid]) !== filterPos) continue;
       if (query && board.name[pid].toLowerCase().indexOf(query) < 0) continue;
@@ -515,7 +589,11 @@
       ? `<div class="warn pad small">Every remaining pick is owed to an open starting slot —
          ${esc(label(ui.managers[seat]))} can only draft ${[...legal].join(' &middot; ')}.</div>`
       : '';
-    el('board').innerHTML = forced + `<table><thead><tr>${head}</tr></thead>
+    const late = embOn
+      ? `<div class="pad small dim">Late-round QB: quarterbacks are hidden from your board
+         until round ${ui.lateQb}.</div>`
+      : '';
+    el('board').innerHTML = forced + late + `<table><thead><tr>${head}</tr></thead>
       <tbody>${rows.join('')}</tbody></table>` +
       (avail.length > shown.length
         ? `<div class="pad dim small">${avail.length - shown.length} more — search or filter</div>` : '');
@@ -593,7 +671,7 @@
     // live sim against the probe's board, say -- would price availability at
     // one turn and value at another.
     if (!recAll) {
-      recAll = E.recommend(M, R.st, seat, R.sim, E.candidates(R.st, seat), R.spec);
+      recAll = E.recommend(M, R.st, seat, R.sim, E.candidates(R.st, seat), R.spec, embargo());
     }
     const all = recAll;
     if (hd) hd.textContent = R.fwd ? `Your pick \u2014 #${R.pick}` : 'Take now';
@@ -667,8 +745,10 @@
     for (const r of rec) if (!tiers.includes(r.tier)) tiers.push(r.tier);
     const tierSize = (t) => rec.filter((r) => r.tier === t).length;
 
-    /* One card: rank, position, name, an ETR tag when there is one, and four
-     * labelled numbers. Nothing else.
+    /* One card: rank, position, name, an ETR tag when there is one, and five
+     * labelled numbers — the last two being the SAME pair of horizons the
+     * board's P(next) and P(+2) columns carry, measured in R's frame. Nothing
+     * else.
      *
      * What came off, and what it costs: ADP (the panel is already ordered by
      * value against it, and BOONE/ECR are the second opinions worth reading),
@@ -679,7 +759,7 @@
      * the ordering is what the two modes actually change. The player card
      * (`fit`) still breaks out adds-now, the plan and the finishing lineup.
      *
-     * `surv` on the availability number so `.surv.safe` applies: there is no
+     * `surv` on the availability numbers so `.surv.safe` applies: there is no
      * bare `.safe` colour rule, which is the trap the EDGE column sat in. */
     const body = rec.map((r) => {
       const pid = r.pid;
@@ -693,6 +773,18 @@
         : '';
       const st = (label, value) =>
         `<span class="st"><span class="lb">${label}</span><b>${value}</b></span>`;
+      /* Both availability horizons, read off R's simulation with `sv`/`sv2`
+       * rather than off `r.pAvail`. `recommend` falls back to 0 for a player
+       * the simulation does not watch, which is the conservative direction
+       * where that number is USED (`cost = now * (1 - pAvail)`) and exactly
+       * backwards on screen: unwatched means deep means SAFE, and the card was
+       * printing it as `0%`, i.e. "certainly gone". Membership first, so he
+       * reads as an em dash. */
+      const a1 = sv(R.sim, pid), a2 = sv2(R.sim, pid);
+      const av = (lab, v, title) =>
+        `<span class="st" title="${esc(title)}"><span class="lb">${lab}</span><b class="surv ${
+          v === null ? 'dim' : survClass(v)}">${pct(v)}</b></span>`;
+      const turn = (i) => (R.sim.turns && R.sim.turns[i] ? `#${R.sim.turns[i]}` : 'that turn');
       return `<div class="rec">
         <div class="rec-hd"><span class="rk${shared ? ' rk-tie' : ''}">${rank}${
           shared ? '=' : ''}</span>${tag(board.pos[pid])}
@@ -702,8 +794,11 @@
           ${st('vorp', board.vorp[pid].toFixed(0) + se)}
           ${st('ecr', board.hasEcr[pid] ? board.ecr[pid] : '&mdash;')}
           ${st('boone', board.hasBoone[pid] ? board.boone[pid] : '&mdash;')}
-          <span class="st"><span class="lb">avail</span><b class="surv ${
-            survClass(r.pAvail)}">${Math.round(r.pAvail * 100)}%</b></span>
+          ${av('avail', a1, `P(still there at ${turn(1)}) — your next turn. `
+            + 'Blank = outside the simulation\u2019s watched top ~60, i.e. nobody is waiting on him.')}
+          ${av('+2', a2, `P(still there at ${turn(2)}) — the turn after. Coarser and `
+            + 'optimistic: fewer paths, a calibration fitted at one turn, and it assumes '
+            + 'you take nobody in between.')}
         </div>
       </div>`;
     }).join('');
@@ -724,9 +819,14 @@
     const open = new Set(E.openPositions(st, ui.seat));
     const moe = (n) => (100 * Math.sqrt(WAIT_P * (1 - WAIT_P) / Math.max(1, n))).toFixed(1);
 
-    const section = (title, sub, probe, warn) => {
+    /* `turn` is the overall pick this section is about, and it is here for the
+     * embargo: a quarterback you have ruled out until round 9 is not someone
+     * you are "safe to wait on" at pick #40, he is not a candidate at all.
+     * Sections past the embargoed round list them again. */
+    const section = (title, sub, probe, warn, turn) => {
       const hits = sim.pids
-        .filter((pid) => !st.taken[pid] && open.has(board.pos[pid]) && probe(pid) >= WAIT_P)
+        .filter((pid) => !st.taken[pid] && open.has(board.pos[pid]) && probe(pid) >= WAIT_P
+          && !barred(board.pos[pid], turn))
         .sort((a, b) => board.vorp[b] - board.vorp[a]);
       const rows = hits.slice(0, WAIT_N).map((pid) => `<div class="wr">
         ${tag(board.pos[pid])}
@@ -750,7 +850,7 @@
         (pid) => {
           const v = survOf(pid);
           return v === null ? -1 : v;
-        }));
+        }, '', turns[1]));
     }
     if (turns.length > 2 && turns[2] === turns[1] + 1) {
       // Turn of the snake: nothing happens between the two picks, so the second
@@ -767,7 +867,7 @@
           return v === null ? -1 : v;
         },
         '<div class="dim small pad0 proj">read as an upper bound: fewer paths, a calibration '
-        + 'fitted at one turn, and it assumes you take nobody in between.</div>'));
+        + 'fitted at one turn, and it assumes you take nobody in between.</div>', turns[2]));
     }
     el('wait').innerHTML = out.join('') ||
       '<div class="dim pad">No further turns.</div>';
@@ -832,6 +932,16 @@
         : '';
     }
 
+    /* The one place a quarterback still shows up under Late-round QB, and it
+     * says why. The draft button below stays live on purpose: the rule is a
+     * plan, not a lock, and the numbers on this card price the override
+     * honestly — the plan behind "rest of the draft" is still embargoed at
+     * every later turn, so what you are reading is the cost of breaking it. */
+    const embHtml = (seat === ui.seat && !taken && barred(p, E.pickNo(st)))
+      ? `<div class="warn pad small">Late-round QB is on until round ${ui.lateQb}, so he is
+         not on your board or in your recommendations. You can still draft him.</div>`
+      : '';
+
     const onClock = E.seatOnClock(st);
     let draftHtml = '';
     if (!taken && onClock >= 0) {
@@ -868,7 +978,7 @@
       ${taken ? `<div class="warn pad small">Already ${mine ? 'on your roster'
         : 'drafted by ' + esc(label(ui.managers[seat]))} — showing that roster as it
         stands.</div>` : ''}
-      ${capHtml}
+      ${embHtml}${capHtml}
       <h3>${who} starting lineup${taken ? '' : (mine ? ' if you take him' : ' if he takes him')}</h3>
       <table class="slots"><tbody>${rows}</tbody></table>
       <div class="ilrow">lineup <b>${after.toFixed(1)}</b>
@@ -1258,6 +1368,21 @@
   // already computed, so dragging it must not kick off a 2400-path resim.
   el('risk').addEventListener('input', (e) => {
     ui.risk = Number(e.target.value); save(); renderRecommend();
+  });
+
+  /* Late-round QB. It changes what your lists CONTAIN and what the plan DP is
+   * allowed to do, so unlike the threshold slider it cannot be answered off
+   * the cached recommendation — `recAll` and the plan are dropped. It does NOT
+   * touch the simulation: survival is the other eleven seats' behaviour, and
+   * your rule does not change theirs, so re-simming here would burn a second
+   * of wall clock to reproduce the same numbers. */
+  el('lateqb').value = String(ui.lateQb);      // once; the tools row never re-renders
+  el('lateqb').addEventListener('change', (e) => {
+    const v = Number(e.target.value) || 0;
+    ui.lateQb = LATE_QB_ROUNDS.indexOf(v) > 0 ? v : 0;
+    save();
+    planCache = null; recAll = null; seatPlans.clear();
+    renderBoard(); renderPanels();
   });
 
   rebuild();

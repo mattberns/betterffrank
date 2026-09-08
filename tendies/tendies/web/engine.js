@@ -213,6 +213,36 @@ function legalPositions(st, seat) {
   return forced.length ? forced : open;
 }
 
+/* ------------------------------------------------------------- embargo ---
+ * A position the SEAT has ruled out until a given round — "no quarterback
+ * before round 9". It constrains YOUR OWN picks and nothing else: the other
+ * eleven seats draft quarterbacks exactly as they always did, so every
+ * survival probability on the page is still the real market's and a passer who
+ * will not last to round 9 keeps showing as gone rather than as a candidate
+ * you are choosing to pass on. That asymmetry is the whole point — a strategy
+ * rule is not a change to the market's behaviour, and modelling it as one
+ * would quietly make the board easier than it is.
+ *
+ * TWO places have to honour it or the recommendation contradicts itself: the
+ * candidate set at THIS turn (`recommend`) and the plan DP's action set at
+ * every LATER turn (`plan`). Block only the first and a receiver now is priced
+ * against a plan that still means to take a quarterback at your next turn,
+ * which is the plan the rule forbids.
+ *
+ * NOT enforced in `legalPositions`: that is what the LEAGUE allows, checked
+ * for every seat and used to validate real picks. An embargo is a preference,
+ * it applies to one seat, and it must never stop you recording the pick you
+ * actually made. */
+function embargoRound(st, pick) {
+  return Math.floor((pick - 1) / Math.max(1, st.league.teams)) + 1;
+}
+
+/** Does `emb` = {pos, round} bar this seat from taking `pos` at overall pick
+ *  `pick`? Null/round 0 is off, and off is always false. */
+function embargoed(emb, st, pos, pick) {
+  return !!emb && emb.round > 0 && emb.pos === pos && embargoRound(st, pick) < emb.round;
+}
+
 function choiceSet(st, seat, model, kappa) {
   kappa = kappa === undefined ? 1.0 : kappa;
   const cs = {};
@@ -986,13 +1016,17 @@ function planStateOf(spec, counts) {
 /* One backward layer. `availAt(p, k)` is the VORP of the (k+1)-th best player
  * at p still expected at this turn, or -Infinity if the position is exhausted
  * (NOT 0 — under this objective 0 means replacement-level, which is exactly
- * the wrong signal for "there is nobody left"). */
-function planLayer(space, spec, base, cnt0, availAt) {
+ * the wrong signal for "there is nobody left"). `skip` is a position the seat
+ * has embargoed at THIS turn (see embargoed); it is dropped from the action
+ * set, so the layer plans around it instead of through it. */
+function planLayer(space, spec, base, cnt0, availAt, skip) {
   const n = space.n, nPos = space.nPos;
   const v = new Float64Array(n), f = new Int32Array(n), a = new Int8Array(n);
+  const bar = skip === undefined || skip === null ? -1 : skip;   // embargoed here
   for (let i = 0; i < n; i++) {
     let bestF = base.f[i], bestV = base.v[i], bestA = -1;   // BENCH
     for (let p = 0; p < nPos; p++) {
+      if (p === bar) continue;
       const j = space.stepTo[i * nPos + p];
       if (j < 0) continue;
       const k = Math.max(0, space.cnt[i * nPos + p] - cnt0[p]);
@@ -1015,7 +1049,7 @@ function planLayer(space, spec, base, cnt0, availAt) {
  * Per path rather than on the means, because max-of-mean <= mean-of-max: a DP
  * fed average availability quietly throws away the option value of a board
  * that might break your way. */
-function plan(model, st, seat, sim, spec) {
+function plan(model, st, seat, sim, spec, emb) {
   const nPos = spec.nPos;
   const turns = myTurns(st, seat);
   const T = turns.length;
@@ -1030,12 +1064,16 @@ function plan(model, st, seat, sim, spec) {
   const from = MODEL_TURNS + 1;
   const tail = tailAvail(model, st, turns, from, K);
   const at = (buf, off) => (p, k) => (k < K ? buf[off + p * K + k] : -Infinity);
+  // The embargo is per TURN, not per plan: it bars the position at the early
+  // turns and clears itself at the round it names, which is why every layer
+  // asks rather than the caller filtering once.
+  const barAt = (t) => (emb && embargoed(emb, st, emb.pos, turns[t]) ? emb.pos : -1);
 
   // shared tail, solved once; `acts[t]` is the plan's intended action at turn t
   const acts = {};
   let base = { v: new Float64Array(space.n), f: space.termF, a: new Int8Array(space.n) };
   for (let t = T - 1; t >= from; t--) {
-    base = planLayer(space, spec, base, cnt0, at(tail, (t - from) * nPos * K));
+    base = planLayer(space, spec, base, cnt0, at(tail, (t - from) * nPos * K), barAt(t));
     acts[t] = base.a;
   }
 
@@ -1046,7 +1084,8 @@ function plan(model, st, seat, sim, spec) {
     let cur = base;
     for (let t = Math.min(T - 1, MODEL_TURNS); t >= 1; t--) {
       const off = sim && sim.avail ? (s * MODEL_TURNS + (t - 1)) * nPos * K : -1;
-      cur = planLayer(space, spec, cur, cnt0, off >= 0 ? at(sim.avail, off) : at(tail, 0));
+      cur = planLayer(space, spec, cur, cnt0, off >= 0 ? at(sim.avail, off) : at(tail, 0),
+                      barAt(t));
       if (s === 0) acts[t] = cur.a;
     }
     v.set(cur.v, s * space.n);
@@ -1080,13 +1119,13 @@ function planValueAt(pl, j) {
  * Ignored, and said out loud in the UI: taking p also removes him from the
  * opponents' choice sets, which slightly changes their picks. bff/vona.py
  * makes the same assumption. */
-function recommend(model, st, seat, sim, cands, spec) {
+function recommend(model, st, seat, sim, cands, spec, emb) {
   const B = st.board, nPos = B.positions.length, roster = st.rosters[seat];
   spec = spec || lineupSpec(st.league, B.positions, emptyValues(model, st),
                             blindMask(model, B.positions), holdValues(model, B.positions));
   const cut = cutoffs(B, spec, roster);
   const fill = fillBonus(B, spec, roster);
-  const pl = plan(model, st, seat, sim, spec);
+  const pl = plan(model, st, seat, sim, spec, emb);
   const at = (j) => planValueAt(pl, j);
   // Value of spending this turn on nobody. A candidate who cannot beat it adds
   // nothing to the lineup you will finish with, whatever the roster looks like,
@@ -1105,8 +1144,13 @@ function recommend(model, st, seat, sim, cands, spec) {
   const z = model.resolutionZ === undefined ? 1.96 : model.resolutionZ;
 
   const out = [];
+  const here = pickNo(st);
   for (const pid of cands) {
     const p = B.pos[pid];
+    // The embargo drops the position from THIS turn's candidate set; `plan`
+    // above has already dropped it from every later turn it still covers, so
+    // the ranking and the plan under it agree.
+    if (embargoed(emb, st, p, here)) continue;
     const now = marginalAt(cut, B.vorp[pid], p, fill);
     const step = pl.space.stepTo[pl.i0 * nPos + p];
     const j = step >= 0 ? step : pl.i0;          // capped position: a bench pick
@@ -1722,6 +1766,7 @@ const API = {
   marginalAt, cutoffs, fillBonus, holdValues,
   lineupSpec, emptyValues, blindMask, goneBy, openSlots, myTurns, topKAvail,
   planSpace, planStateOf, plan, planPath, planValueAt, recommend, candidates,
+  embargoed, embargoRound,
   insuranceCutoffs, insuranceWeights, assignTiers, tiedScores,
   PLAN_K, PLAN_PATHS, MODEL_TURNS, NO_SE,
 };
