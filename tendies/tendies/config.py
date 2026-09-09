@@ -95,7 +95,18 @@ ECR_SOURCE_BY_SEASON: dict[int, str] = {
 # A half board is admissible only if the parquet says it was captured before
 # kickoff. `source` is written by bff/fp_ecr.py; a file without that column
 # cannot serve any half-pinned season at all.
-PRESEASON_SOURCES = frozenset({"wayback_preseason", "live_preseason"})
+#
+# `live_preseason_filtered` is a live pull made before kickoff where the page's
+# own filters/league settings were set by hand first (bff.fp_ecr
+# --manual-filter). This gate is about HINDSIGHT -- whether the board has seen
+# results -- and a filtered board has not; it is preseason by the same
+# check_preseason assert as an unfiltered one. What it is not is identical in
+# COMPOSITION to the default published consensus that prices the training
+# seasons, which is a train/serve question the pin does not police: the raw
+# payload records the row counts and control diff either side of the pause.
+PRESEASON_SOURCES = frozenset(
+    {"wayback_preseason", "live_preseason", "live_preseason_filtered"}
+)
 
 # Deep market history for the VORP curve only (2012-2026). Not the draft board:
 # the curve needs many seasons per within-position slot, and this league has

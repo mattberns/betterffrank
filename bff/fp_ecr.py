@@ -30,9 +30,22 @@ Leakage: a rankings board is a preseason artifact only while it IS preseason.
 kickoff and refuses to write otherwise -- pulling this page in-season would
 write in-season information into a preseason feature.
 
+`--manual-filter` pauses the headed browser after the board loads so you can
+work the page's OWN controls (league settings, scoring, position/tier filters)
+before anything is read; whatever is on screen when you press Enter is what
+gets cached. The unfiltered row count is checked BEFORE the pause (that is the
+session-gated check, which a legitimately-short filtered board would otherwise
+trip), and the payload records the row count and the form-control diff either
+side of the pause so the cached board says what was done to it. Rows the
+filter hid are simply ABSENT from that season afterwards and `ecr_rank` is an
+ordinal re-rank over what remains, so the provenance label picks up a
+`_filtered` suffix.
+
     uv run python -m bff.fp_ecr --fetch            # cache the live board
     uv run python -m bff.fp_ecr --build            # splice into ecr.parquet
     uv run python -m bff.fp_ecr --fetch --build --season 2026
+    uv run python -m bff.fp_ecr --fetch --build --format half --season 2026 \
+        --refresh --manual-filter                  # set filters by hand first
 """
 
 from __future__ import annotations
@@ -77,6 +90,43 @@ EXTRACT_JS = r"""() => {
       };
     });
   return {headers, rows};
+}"""
+
+# Snapshot of every VISIBLE form control on the page, so a manually filtered
+# board can record what was changed. Deliberately generic: FantasyPros moves
+# its settings UI around, and some of it is custom widgets with no form control
+# at all -- hence the row count is the authoritative evidence that a filter did
+# something, and this is corroboration.
+FILTER_JS = r"""() => {
+  const norm = (s) => (s || "").replace(/\s+/g, " ").trim();
+  const vis = (el) => !!(el.offsetParent || el.getClientRects().length);
+  const lab = (el) => norm(
+    (el.labels && el.labels[0] && el.labels[0].innerText)
+    || el.getAttribute("aria-label") || el.name || el.id || "");
+  const seen = {};
+  const key = (k) => (seen[k] = (seen[k] || 0) + 1) > 1 ? `${k}#${seen[k]}` : k;
+  const out = [];
+  const sel = "select, input[type=checkbox], input[type=radio], "
+            + "input[type=text], input[type=search], input[type=number]";
+  for (const el of document.querySelectorAll(sel)) {
+    if (!vis(el)) continue;
+    const label = lab(el);
+    let value;
+    if (el.tagName === "SELECT")
+      value = [...el.selectedOptions].map((o) => norm(o.innerText)).join(", ");
+    else if (el.type === "checkbox" || el.type === "radio")
+      value = el.checked ? "on" : "off";
+    else value = norm(el.value);
+    out.push({key: key(`${el.name || el.id || el.tagName}|${label}`),
+              label: label, value: value});
+  }
+  for (const el of document.querySelectorAll("[aria-pressed]")) {
+    if (!vis(el)) continue;
+    const label = norm(el.innerText).slice(0, 40);
+    out.push({key: key(`pressed|${label}`), label: label,
+              value: el.getAttribute("aria-pressed")});
+  }
+  return out;
 }"""
 
 _TEAM_RE = re.compile(r"\(([A-Z]{2,3})\)\s*$")
@@ -145,33 +195,88 @@ def check_preseason(season: int, pulled: date,
           f"only, NOT preseason-clean (see check_preseason)")
 
 
-def cmd_fetch(season: int, fmt: str, headless: bool) -> None:
+def _settle(page):
+    """Scroll until the lazy-rendered table stops growing, then extract."""
+    prev, stable = -1, 0
+    for _ in range(40):
+        d = page.evaluate(EXTRACT_JS)
+        n = len(d["rows"]) if d else 0
+        stable = stable + 1 if n == prev else 0
+        if stable >= 2:
+            break
+        prev = n
+        page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+        page.wait_for_timeout(500)
+    return page.evaluate(EXTRACT_JS)
+
+
+def _filter_diff(before, after) -> list[str]:
+    was = {c["key"]: c["value"] for c in (before or [])}
+    out = []
+    for c in after or []:
+        if c["key"] in was and was[c["key"]] != c["value"]:
+            out.append(f"{c['label'] or c['key']}: "
+                       f"{was[c['key']]!r} -> {c['value']!r}")
+    return out
+
+
+def cmd_fetch(season: int, fmt: str, headless: bool,
+              manual_filter: bool = False) -> None:
     _require_state()
+    if manual_filter:
+        if headless:
+            sys.exit("--manual-filter needs a browser you can see and click; "
+                     "drop --headless")
+        if not sys.stdin.isatty():
+            sys.exit("--manual-filter needs an interactive terminal (stdin is "
+                     "not a tty) — run it by hand, not from a pipe or CI")
     from playwright.sync_api import sync_playwright
 
     RAW.mkdir(parents=True, exist_ok=True)
     url = URL.format(slug=SLUGS[fmt], season=season)
+    n_pre, filters = None, None
     with sync_playwright() as pw:
         ctx, close = _new_context(pw, headless=headless)
         page = ctx.new_page()
         page.goto(url, wait_until="domcontentloaded", timeout=120_000)
         page.wait_for_timeout(5000)
-        prev, stable = -1, 0
-        for _ in range(40):
-            d = page.evaluate(EXTRACT_JS)
-            n = len(d["rows"]) if d else 0
-            stable = stable + 1 if n == prev else 0
-            if stable >= 2:
-                break
-            prev = n
-            page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
-            page.wait_for_timeout(500)
-        d = page.evaluate(EXTRACT_JS)
+        d = _settle(page)
+        if manual_filter:
+            # The MIN_ROWS floor is the SESSION-GATED check, and it has to run
+            # here, on the whole board: after a filter, a short board is the
+            # thing you asked for, so the floor can no longer tell "hid every
+            # WR" from "Cloudflare served a stub".
+            n_pre = len(d["rows"]) if d else 0
+            if n_pre < MIN_ROWS:
+                close()
+                sys.exit(f"got {n_pre} rows (< {MIN_ROWS}) BEFORE filtering — "
+                         f"session gated or page changed; not cached")
+            before = page.evaluate(FILTER_JS)
+            print(f"\nChrome is open on the {season} {fmt} board "
+                  f"({n_pre} rows, unfiltered).\n\n"
+                  "  1. Set the filters / league settings you want, on the "
+                  "page itself.\n"
+                  "  2. Let the table finish redrawing.\n"
+                  "  3. Come back here and press Enter. WHAT IS ON SCREEN AT "
+                  "THAT MOMENT\n"
+                  "     is what gets cached — hidden rows are dropped, not "
+                  "remembered.\n")
+            input("press Enter once the filters are set... ")
+            page.wait_for_timeout(1000)
+            d = _settle(page)
+            after = page.evaluate(FILTER_JS)
+            filters = {"before": before, "after": after,
+                       "changed": _filter_diff(before, after),
+                       "url_after": page.url}
         title = page.title()
         close()
-    if not d or len(d["rows"]) < MIN_ROWS:
-        sys.exit(f"got {0 if not d else len(d['rows'])} rows (< {MIN_ROWS}) — "
+    n = 0 if not d else len(d["rows"])
+    if not d or (n < MIN_ROWS and not manual_filter):
+        sys.exit(f"got {n} rows (< {MIN_ROWS}) — "
                  f"session gated or page changed; not cached")
+    if manual_filter and not n:
+        sys.exit("the filtered board is EMPTY — nothing cached, the previous "
+                 "cache (if any) is untouched")
     # the page title carries the season it is actually serving
     m = re.search(r"\b(20\d{2})\b", title)
     assert m and int(m.group(1)) == season, (
@@ -188,12 +293,26 @@ def cmd_fetch(season: int, fmt: str, headless: bool) -> None:
         "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "headers": d["headers"],
         "n_rows": len(d["rows"]),
+        "manual_filter": manual_filter,
+        "n_rows_prefilter": n_pre,
+        "filters": filters,
         "players": d["rows"],
     }
     out = RAW / f"{fmt}_{season}.json"
     out.write_text(json.dumps(payload))
     print(f"cached {len(d['rows'])} rows -> {out.relative_to(ROOT)}")
     print(f"  title: {title}")
+    if manual_filter:
+        print(f"  MANUALLY FILTERED: {n_pre} rows unfiltered -> {n} cached")
+        for line in filters["changed"]:
+            print(f"    {line}")
+        if not filters["changed"]:
+            print("    (no visible form control changed — FantasyPros uses "
+                  "custom widgets for some settings, so this is not proof "
+                  "nothing happened; the row count above is)")
+        if n == n_pre:
+            print("    WARNING: the row count did not move either — check the "
+                  "board is really filtered before you --build it")
 
 
 def build_rows(season: int, fmt: str, allow_revised: bool = False) -> pl.DataFrame:
@@ -202,6 +321,11 @@ def build_rows(season: int, fmt: str, allow_revised: bool = False) -> pl.DataFra
         sys.exit(f"no cached board at {src.relative_to(ROOT)} — run --fetch")
     d = json.loads(src.read_text())
     check_preseason(season, date.fromisoformat(d["pulled"]), allow_revised)
+    if d.get("manual_filter"):
+        print(f"  MANUALLY FILTERED board: {d['n_rows']} rows cached of "
+              f"{d.get('n_rows_prefilter', '?')} unfiltered")
+        for line in (d.get("filters") or {}).get("changed", []):
+            print(f"    {line}")
     idx = {h.upper(): i for i, h in enumerate(d["headers"])}
     # header row carries leading blank/sentiment columns; the data cells start
     # at RK, so locate by offset from RK rather than trusting header indices
@@ -239,6 +363,15 @@ def build_rows(season: int, fmt: str, allow_revised: bool = False) -> pl.DataFra
     df = df.sort(["season", "ecr", "player"]).with_columns(
         pl.col("ecr").rank("ordinal").over("season").cast(pl.Int32).alias("ecr_rank")
     )
+    if d.get("manual_filter") and df.height:
+        # Does the page renumber RK after a filter, or keep the overall rank?
+        # It matters: `ecr` is the DISPLAYED rank and is what the anchor reads
+        # before the ordinal re-rank, so say plainly which one was cached.
+        lo, hi = df["ecr"].min(), df["ecr"].max()
+        shape = ("contiguous 1..n — the page RENUMBERED after the filter"
+                 if hi == df.height and lo == 1
+                 else "GAPPED — the page kept its overall ranks")
+        print(f"  displayed RK {lo:g}-{hi:g} over {df.height} rows: {shape}")
     return join_gsis(df)
 
 
@@ -327,11 +460,22 @@ def cmd_build(season: int, fmt: str, allow_revised: bool = False) -> None:
     _d = json.loads((RAW / f"{fmt}_{season}.json").read_text())
     _pulled = date.fromisoformat(_d["pulled"])
     _w1 = week1(season)
-    new = new.with_columns(
-        pl.lit("live_preseason" if (_w1 is None or _pulled < _w1)
-               else "live_revised").alias("source")
-    )
+    _label = ("live_preseason" if (_w1 is None or _pulled < _w1)
+              else "live_revised")
+    # A hand-filtered board is a DIFFERENT measurement from the published
+    # consensus -- rows the filter hid are absent, not zero -- so it gets its
+    # own label rather than passing as a clean pull.
+    if _d.get("manual_filter"):
+        _label += "_filtered"
+    new = new.with_columns(pl.lit(_label).alias("source"))
     dest = out_path(fmt)
+    if _d.get("manual_filter"):
+        print(f"  source label: {_label}")
+        if dest == ECR:
+            print("  WARNING: a MANUALLY FILTERED board is going into "
+                  f"{dest.name}, the scored anchor. Players the filter hid "
+                  f"have no {season} ECR at all and ecr_rank was re-ranked "
+                  "over what remains.")
     if not dest.exists():
         new.write_parquet(dest)
         print(f"\n{season} {fmt} ECR: created {dest.relative_to(ROOT)} "
@@ -408,6 +552,11 @@ def main() -> None:
                          "post-draft revisions (descriptive use only)")
     ap.add_argument("--refresh", action="store_true",
                     help="re-fetch a season already cached")
+    ap.add_argument("--manual-filter", action="store_true",
+                    help="pause after the board loads so you can set the "
+                         "page's own filters/league settings by hand; what is "
+                         "on screen when you press Enter is what gets cached "
+                         "(headed only, needs a tty, pauses once per season)")
     a = ap.parse_args()
     seasons = _seasons(a.seasons, a.season)
 
@@ -418,7 +567,7 @@ def main() -> None:
                 print(f"{a.format} {yr}: cached, skipping (--refresh to force)")
                 continue
             try:
-                cmd_fetch(yr, a.format, a.headless)
+                cmd_fetch(yr, a.format, a.headless, a.manual_filter)
             except SystemExit as e:
                 print(f"{a.format} {yr}: {e}")
             except Exception as e:
